@@ -1,0 +1,75 @@
+import { z } from 'zod';
+
+// Phone number validation schema
+export const phoneSchema = z.string().regex(/^\+[1-9]\d{1,14}$/, 'Invalid phone number format');
+
+// User schemas
+export const userSchema = z.object({
+  id: z.string().uuid(),
+  phone: phoneSchema,
+  name: z.string().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+// Match schemas
+export const matchStatusSchema = z.enum(['upcoming', 'in_progress', 'completed', 'cancelled']);
+
+export const createMatchSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(100, 'Title too long'),
+  description: z.string().max(500, 'Description too long').optional(),
+  date_time: z.string()
+    .min(1, 'Date and time is required')
+    .refine((dateStr) => {
+      // Handle datetime-local format (YYYY-MM-DDTHH:mm) and convert to Date
+      const date = new Date(dateStr)
+      return !isNaN(date.getTime())
+    }, 'Invalid date format')
+    .refine((dateStr) => {
+      // Ensure the date is at least 30 minutes in the future
+      const selectedDate = new Date(dateStr)
+      const now = new Date()
+      const minTime = new Date(now.getTime() + 30 * 60 * 1000) // 30 minutes from now
+      return selectedDate >= minTime
+    }, 'Match must be scheduled at least 30 minutes in the future'),
+  location: z.string().min(1, 'Location is required').max(200, 'Location too long'),
+  max_players: z.number().min(2).max(20).default(4),
+});
+
+export const matchSchema = z.object({
+  id: z.string().uuid(),
+  creator_id: z.string().uuid(),
+  title: z.string(),
+  description: z.string().optional(),
+  date_time: z.string(),
+  location: z.string(),
+  max_players: z.number(),
+  current_players: z.number(),
+  status: matchStatusSchema,
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+// Participant schemas
+export const participantStatusSchema = z.enum(['joined', 'left', 'maybe']);
+
+export const participantSchema = z.object({
+  id: z.string().uuid(),
+  match_id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  status: participantStatusSchema,
+  joined_at: z.string(),
+});
+
+// API schemas
+export const apiResponseSchema = z.object({
+  data: z.any().optional(),
+  error: z.string().optional(),
+  message: z.string().optional(),
+});
+
+// Export types from schemas
+export type CreateMatchInput = z.infer<typeof createMatchSchema>;
+export type UserInput = z.infer<typeof userSchema>;
+export type MatchInput = z.infer<typeof matchSchema>;
+export type ParticipantInput = z.infer<typeof participantSchema>; 

@@ -1,0 +1,21 @@
+
+> @padel-parrot/web@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+  ▲ Next.js 14.2.29
+  - Local:        http://localhost:3001
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1188ms
+ ○ Compiling / ...
+ ✓ Compiled / in 877ms (756 modules)
+🔗 Using Supabase backend
+ ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ ⚠ Unsupported metadata themeColor is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ GET / 200 in 1105ms
+ ✓ Compiled in 161ms (370 modules)
+[?25h

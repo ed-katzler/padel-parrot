@@ -1,0 +1,24 @@
+{
+  "name": "@padel-parrot/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@padel-parrot/config": "*",
+    "@padel-parrot/shared": "*",
+    "@supabase/supabase-js": "^2.38.5",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  }
+} 
