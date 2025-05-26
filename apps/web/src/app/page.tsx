@@ -164,8 +164,9 @@ export default function HomePage() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              🦜 PadelParrot
+            <img src="/padelparrot-light.svg" alt="PadelParrot Logo" className="mx-auto h-12 mb-2" />
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 sr-only">
+              PadelParrot
             </h1>
             <p className="text-gray-600">
               Organize padel matches with ease
