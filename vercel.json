@@ -1,3 +1,5 @@
 {
+  "buildCommand": "cd ../.. && npm run build --workspace=@padel-parrot/web",
+  "installCommand": "cd ../.. && npm install",
   "outputDirectory": "apps/web/.next"
 } 
