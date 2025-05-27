@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Calendar, MapPin, Users, Share2, Clock, UserPlus, UserMinus, Copy, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Users, Share2, Clock, UserPlus, UserMinus, Copy, ExternalLink, User } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
-import { getMatch, joinMatch, leaveMatch, getCurrentUser, hasUserJoinedMatch } from '@padel-parrot/api-client'
+import { getMatch, joinMatch, leaveMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
 
 interface Match {
@@ -21,6 +21,12 @@ interface Match {
   updated_at: string
 }
 
+interface UserInfo {
+  id: string
+  phone: string
+  name: string | null
+}
+
 export default function MatchDetailsClient({ params }: { params: { id: string } }) {
   const [match, setMatch] = useState<Match | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -29,6 +35,9 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
   const [hasJoined, setHasJoined] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [creator, setCreator] = useState<UserInfo | null>(null)
+  const [participants, setParticipants] = useState<UserInfo[]>([])
+  const [isLoadingParticipants, setIsLoadingParticipants] = useState(false)
 
   useEffect(() => {
     loadCurrentUser()
@@ -65,6 +74,16 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       }
       if (data) {
         setMatch(data)
+        
+        // Load creator information
+        const { data: creatorData, error: creatorError } = await getUserById(data.creator_id)
+        if (!creatorError && creatorData) {
+          setCreator(creatorData)
+        }
+        
+        // Load participants
+        loadParticipants(data.id)
+        
         // Check if current user has joined this match
         if (currentUserId) {
           const { data: hasJoined, error: joinError } = await hasUserJoinedMatch(data.id, currentUserId)
@@ -77,6 +96,20 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       toast.error('Failed to load match details')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadParticipants = async (matchId: string) => {
+    setIsLoadingParticipants(true)
+    try {
+      const { data, error } = await getMatchParticipants(matchId)
+      if (!error && data) {
+        setParticipants(data)
+      }
+    } catch (error) {
+      console.error('Failed to load participants:', error)
+    } finally {
+      setIsLoadingParticipants(false)
     }
   }
 
@@ -95,7 +128,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       setHasJoined(true)
       // Signal that matches list should refresh
       localStorage.setItem('shouldRefreshMatches', 'true')
-      // Refresh match data
+      // Refresh match data and participants
       loadMatch()
     } catch (error) {
       toast.error('Failed to join match')
@@ -119,7 +152,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       setHasJoined(false)
       // Signal that matches list should refresh
       localStorage.setItem('shouldRefreshMatches', 'true')
-      // Refresh match data
+      // Refresh match data and participants
       loadMatch()
     } catch (error) {
       toast.error('Failed to leave match')
@@ -260,6 +293,17 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                 </div>
               </div>
               
+              {creator && (
+                <div className="flex items-center">
+                  <User className="w-5 h-5 text-gray-400 mr-3" />
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      Created by {currentUserId === creator.id ? 'you' : (creator.name || creator.phone)}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex items-center">
                 <Users className="w-5 h-5 text-gray-400 mr-3" />
                 <div>
@@ -282,6 +326,40 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
               </div>
             </div>
           </div>
+
+          {/* Participants List */}
+          {participants.length > 0 && (
+            <div className="card">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Players ({participants.length})
+              </h3>
+              
+              {isLoadingParticipants ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto mb-2"></div>
+                  <p className="text-sm text-gray-600">Loading players...</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {participants.map((participant) => (
+                    <div key={participant.id} className="flex items-center">
+                      <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
+                        <User className="w-4 h-4 text-primary-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {currentUserId === participant.id ? 'You' : (participant.name || 'Player')}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {participant.phone}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="card">

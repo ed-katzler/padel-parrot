@@ -226,4 +226,45 @@ export class MockApiClient implements ApiClient {
   async hasUserJoinedMatch(matchId: string): Promise<ApiResponse<boolean>> {
     return { data: this.joinedMatches.has(matchId), error: null }
   }
+
+  async getMatchParticipants(matchId: string): Promise<ApiResponse<Array<{ id: string; phone: string; name: string | null }>>> {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    const match = this.mockMatches.find(m => m.id === matchId)
+    if (!match) {
+      return { data: null, error: 'Match not found' }
+    }
+
+    // Generate mock participants based on current_players count
+    const participants = []
+    for (let i = 0; i < match.current_players; i++) {
+      participants.push({
+        id: `mock-participant-${i}`,
+        phone: `+123456789${i}`,
+        name: i === 0 ? 'You' : `Player ${i + 1}`
+      })
+    }
+
+    return { data: participants, error: null }
+  }
+
+  async getUserById(userId: string): Promise<ApiResponse<{ id: string; phone: string; name: string | null }>> {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 200))
+    
+    if (userId === this.mockUser.id) {
+      return { data: this.mockUser, error: null }
+    }
+    
+    // Return mock creator info
+    return { 
+      data: { 
+        id: userId, 
+        phone: '+1234567890', 
+        name: 'Match Creator' 
+      }, 
+      error: null 
+    }
+  }
 } 

@@ -398,6 +398,51 @@ class SupabaseApiClient implements ApiClient {
     }
   }
 
+  async getMatchParticipants(matchId: string): Promise<ApiResponse<Array<{ id: string; phone: string; name: string | null }>>> {
+    try {
+      const { data, error } = await this.supabase
+        .from('participants')
+        .select(`
+          users (
+            id,
+            phone,
+            name
+          )
+        `)
+        .eq('match_id', matchId)
+        .eq('status', 'joined')
+
+      if (error) {
+        return { data: null, error: error.message }
+      }
+
+      // Transform the data to flatten the users object
+      const participants = (data || []).map((participant: any) => participant.users).filter(Boolean)
+
+      return { data: participants, error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to get match participants' }
+    }
+  }
+
+  async getUserById(userId: string): Promise<ApiResponse<{ id: string; phone: string; name: string | null }>> {
+    try {
+      const { data, error } = await this.supabase
+        .from('users')
+        .select('id, phone, name')
+        .eq('id', userId)
+        .single()
+
+      if (error) {
+        return { data: null, error: error.message }
+      }
+
+      return { data, error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to get user information' }
+    }
+  }
+
   async getLocations(): Promise<ApiResponse<Location[]>> {
     try {
       const { data, error } = await this.supabase

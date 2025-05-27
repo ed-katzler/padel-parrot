@@ -63,5 +63,7 @@ export interface ApiClient {
   joinMatch(matchId: string, userId: string): Promise<ApiResponse<null>>
   leaveMatch(matchId: string, userId: string): Promise<ApiResponse<null>>
   hasUserJoinedMatch(matchId: string, userId: string): Promise<ApiResponse<boolean>>
+  getMatchParticipants(matchId: string): Promise<ApiResponse<Array<{ id: string; phone: string; name: string | null }>>>
+  getUserById(userId: string): Promise<ApiResponse<{ id: string; phone: string; name: string | null }>>
   getLocations(): Promise<ApiResponse<Location[]>>
 } 

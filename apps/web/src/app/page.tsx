@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, Plus, Calendar, MapPin, Users, LogOut } from 'lucide-react'
+import { Phone, Plus, Calendar, MapPin, Users, LogOut, Lock, Globe } from 'lucide-react'
 import { formatMatchDate, formatMatchTime } from '@padel-parrot/shared'
 import { sendOtp, verifyOtp, getCurrentUser, signOut, getMatches } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
@@ -395,18 +395,12 @@ export default function HomePage() {
                           </h3>
                           {/* Privacy indicator */}
                           {match.is_public ? (
-                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                              Public
+                            <span title="Public match">
+                              <Globe className="w-4 h-4 text-green-600" />
                             </span>
                           ) : (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
-                              Private
-                            </span>
-                          )}
-                          {/* Creator indicator */}
-                          {currentUser && match.creator_id === currentUser.id && (
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                              Created by you
+                            <span title="Private match">
+                              <Lock className="w-4 h-4 text-gray-500" />
                             </span>
                           )}
                         </div>
