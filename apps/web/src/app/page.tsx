@@ -250,12 +250,7 @@ export default function HomePage() {
         <div className="container-app py-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="flex items-center">
-                <img src="/padelparrot-light.svg" alt="PadelParrot Logo" className="h-6 mr-2" />
-                <h1 className="text-xl font-bold text-gray-900">
-                  PadelParrot
-                </h1>
-              </div>
+              <img src="/padelparrot-light.svg" alt="PadelParrot Logo" className="h-6" />
               {currentUser && (
                 <p className="text-sm text-gray-600">
                   {currentUser.name || currentUser.phone}

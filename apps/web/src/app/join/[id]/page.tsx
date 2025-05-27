@@ -152,12 +152,7 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
       <header className="bg-white border-b border-gray-200">
         <div className="container-app py-4">
           <div className="text-center">
-            <div className="flex items-center justify-center mb-1">
-              <img src="/padelparrot-light.svg" alt="PadelParrot Logo" className="h-8 mr-2" />
-              <h1 className="text-2xl font-bold text-gray-900">
-                PadelParrot
-              </h1>
-            </div>
+            <img src="/padelparrot-light.svg" alt="PadelParrot Logo" className="h-8 mx-auto mb-1" />
             <p className="text-gray-600 mt-1">
               You've been invited to join a match
             </p>
@@ -354,12 +349,7 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
           {/* App Info */}
           <div className="card bg-gray-50 border-gray-200">
             <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <img src="/padelparrot-light.svg" alt="PadelParrot Logo" className="h-6 mr-2" />
-                <h4 className="font-semibold text-gray-900">
-                  PadelParrot
-                </h4>
-              </div>
+              <img src="/padelparrot-light.svg" alt="PadelParrot Logo" className="h-6 mx-auto mb-2" />
               <p className="text-sm text-gray-600">
                 The easiest way to organize padel matches
               </p>
