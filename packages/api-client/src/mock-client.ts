@@ -39,6 +39,7 @@ export class MockApiClient implements ApiClient {
   }
 
   private isAuthenticated = false
+  private joinedMatches: Set<string> = new Set() // Track which matches the user has joined
 
   async sendOtp(phone: string): Promise<ApiResponse<null>> {
     // Simulate API delay
@@ -136,6 +137,8 @@ export class MockApiClient implements ApiClient {
     match.current_players += 1
     match.updated_at = new Date().toISOString()
     
+    this.joinedMatches.add(matchId)
+    
     return { data: null, error: null }
   }
 
@@ -156,6 +159,8 @@ export class MockApiClient implements ApiClient {
       match.current_players -= 1
       match.updated_at = new Date().toISOString()
     }
+    
+    this.joinedMatches.delete(matchId)
     
     return { data: null, error: null }
   }
@@ -192,5 +197,9 @@ export class MockApiClient implements ApiClient {
     ]
     
     return { data: mockLocations, error: null }
+  }
+
+  async hasUserJoinedMatch(matchId: string): Promise<ApiResponse<boolean>> {
+    return { data: this.joinedMatches.has(matchId), error: null }
   }
 } 

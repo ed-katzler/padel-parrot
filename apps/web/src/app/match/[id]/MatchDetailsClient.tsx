@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ArrowLeft, Calendar, MapPin, Users, Share2, Clock, UserPlus, UserMinus, Copy, ExternalLink } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
-import { getMatch, joinMatch, leaveMatch, getCurrentUser } from '@padel-parrot/api-client'
+import { getMatch, joinMatch, leaveMatch, getCurrentUser, hasUserJoinedMatch } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
 
 interface Match {
@@ -30,9 +30,17 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    loadMatch()
     loadCurrentUser()
   }, [params.id])
+
+  useEffect(() => {
+    if (currentUserId) {
+      loadMatch()
+    } else {
+      // Still load match even if no current user (for viewing)
+      loadMatch()
+    }
+  }, [currentUserId, params.id])
 
   const loadCurrentUser = async () => {
     try {
@@ -56,8 +64,13 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       }
       if (data) {
         setMatch(data)
-        // In a real app, check if current user is in participants
-        setHasJoined(Math.random() > 0.5) // Mock for now
+        // Check if current user has joined this match
+        if (currentUserId) {
+          const { data: hasJoined, error: joinError } = await hasUserJoinedMatch(data.id, currentUserId)
+          if (!joinError && hasJoined !== null) {
+            setHasJoined(hasJoined)
+          }
+        }
       }
     } catch (error) {
       toast.error('Failed to load match details')

@@ -323,6 +323,26 @@ class SupabaseApiClient implements ApiClient {
     }
   }
 
+  async hasUserJoinedMatch(matchId: string, userId: string): Promise<ApiResponse<boolean>> {
+    try {
+      const { data, error } = await this.supabase
+        .from('participants')
+        .select('id')
+        .eq('match_id', matchId)
+        .eq('user_id', userId)
+        .eq('status', 'joined')
+        .single()
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows found"
+        return { data: null, error: error.message }
+      }
+
+      return { data: !!data, error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to check participation status' }
+    }
+  }
+
   async getLocations(): Promise<ApiResponse<Location[]>> {
     try {
       const { data, error } = await this.supabase
