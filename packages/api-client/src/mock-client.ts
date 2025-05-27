@@ -12,6 +12,7 @@ export class MockApiClient implements ApiClient {
       current_players: 2,
       status: 'upcoming',
       creator_id: 'mock-user-1',
+      is_public: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     },
@@ -25,6 +26,7 @@ export class MockApiClient implements ApiClient {
       current_players: 3,
       status: 'upcoming',
       creator_id: 'mock-user-2',
+      is_public: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
@@ -76,10 +78,31 @@ export class MockApiClient implements ApiClient {
   }
 
   async getMatches(): Promise<ApiResponse<Match[]>> {
+    if (!this.isAuthenticated) {
+      return { data: null, error: 'Must be authenticated to view matches' }
+    }
+    
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500))
     
-    return { data: this.mockMatches, error: null }
+    // Filter matches based on privacy rules:
+    // 1. Public matches
+    // 2. Matches created by current user
+    // 3. Matches the current user has joined
+    const visibleMatches = this.mockMatches.filter(match => {
+      // Show public matches
+      if (match.is_public) return true
+      
+      // Show matches created by current user
+      if (match.creator_id === this.mockUser.id) return true
+      
+      // Show matches the current user has joined
+      if (this.joinedMatches.has(match.id)) return true
+      
+      return false
+    })
+    
+    return { data: visibleMatches, error: null }
   }
 
   async getMatch(id: string): Promise<ApiResponse<Match>> {
@@ -109,6 +132,7 @@ export class MockApiClient implements ApiClient {
       current_players: 1,
       status: 'upcoming',
       creator_id: this.mockUser.id,
+      is_public: matchData.is_public ?? false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }

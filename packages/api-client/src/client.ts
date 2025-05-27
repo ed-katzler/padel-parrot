@@ -134,17 +134,71 @@ class SupabaseApiClient implements ApiClient {
 
   async getMatches(): Promise<ApiResponse<Match[]>> {
     try {
-      const { data, error } = await this.supabase
+      // Get current user to filter matches based on visibility rules
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      
+      if (authError || !user) {
+        return { data: null, error: 'Must be authenticated to view matches' }
+      }
+
+      // Get matches that are either:
+      // 1. Public matches
+      // 2. Matches created by the current user (always visible to creator)
+      // 3. Matches where the current user is a participant
+      
+      const { data: publicMatches, error: publicError } = await this.supabase
         .from('matches')
         .select('*')
         .eq('status', 'upcoming')
+        .eq('is_public', true)
         .order('date_time', { ascending: true })
 
-      if (error) {
-        return { data: null, error: error.message }
+      if (publicError) {
+        return { data: null, error: publicError.message }
       }
 
-      return { data: data || [], error: null }
+      const { data: createdMatches, error: createdError } = await this.supabase
+        .from('matches')
+        .select('*')
+        .eq('status', 'upcoming')
+        .eq('creator_id', user.id)
+        .order('date_time', { ascending: true })
+
+      if (createdError) {
+        return { data: null, error: createdError.message }
+      }
+
+      const { data: participantMatches, error: participantError } = await this.supabase
+        .from('matches')
+        .select(`
+          *,
+          participants!inner(user_id, status)
+        `)
+        .eq('status', 'upcoming')
+        .eq('participants.user_id', user.id)
+        .eq('participants.status', 'joined')
+        .order('date_time', { ascending: true })
+
+      if (participantError) {
+        return { data: null, error: participantError.message }
+      }
+
+      // Combine and deduplicate matches
+      const allMatches = [
+        ...(publicMatches || []),
+        ...(createdMatches || []),
+        ...(participantMatches || [])
+      ]
+
+      // Remove duplicates based on match ID
+      const uniqueMatches = allMatches.filter((match, index, self) => 
+        index === self.findIndex(m => m.id === match.id)
+      )
+
+      // Sort by date_time
+      uniqueMatches.sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime())
+
+      return { data: uniqueMatches, error: null }
     } catch (error) {
       return { data: null, error: 'Failed to load matches' }
     }
@@ -202,7 +256,8 @@ class SupabaseApiClient implements ApiClient {
         .insert({
           ...matchData,
           creator_id: user.id,
-          current_players: 1 // Creator automatically joins
+          current_players: 1, // Creator automatically joins
+          is_public: matchData.is_public ?? false // Default to private
         })
         .select()
         .single()
@@ -419,6 +474,7 @@ export interface Database {
           max_players: number
           current_players: number
           status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled'
+          is_public: boolean
           created_at: string
           updated_at: string
         }
@@ -432,6 +488,7 @@ export interface Database {
           max_players?: number
           current_players?: number
           status?: 'upcoming' | 'in_progress' | 'completed' | 'cancelled'
+          is_public?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -445,6 +502,7 @@ export interface Database {
           max_players?: number
           current_players?: number
           status?: 'upcoming' | 'in_progress' | 'completed' | 'cancelled'
+          is_public?: boolean
           updated_at?: string
         }
       }
