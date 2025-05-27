@@ -388,9 +388,29 @@ export default function HomePage() {
                     onClick={() => handleJoinMatch(match.id)}
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {match.title}
-                      </h3>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {match.title}
+                          </h3>
+                          {/* Privacy indicator */}
+                          {match.is_public ? (
+                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                              Public
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                              Private
+                            </span>
+                          )}
+                          {/* Creator indicator */}
+                          {currentUser && match.creator_id === currentUser.id && (
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                              Created by you
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           isFull

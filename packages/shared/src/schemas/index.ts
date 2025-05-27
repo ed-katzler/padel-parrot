@@ -34,6 +34,7 @@ export const createMatchSchema = z.object({
     }, 'Match must be scheduled at least 30 minutes in the future'),
   location: z.string().min(1, 'Location is required').max(200, 'Location too long'),
   max_players: z.number().min(2).max(20).default(4),
+  is_public: z.boolean().default(false),
 });
 
 export const matchSchema = z.object({
@@ -46,6 +47,7 @@ export const matchSchema = z.object({
   max_players: z.number(),
   current_players: z.number(),
   status: matchStatusSchema,
+  is_public: z.boolean(),
   created_at: z.string(),
   updated_at: z.string(),
 });

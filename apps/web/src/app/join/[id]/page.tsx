@@ -16,6 +16,7 @@ interface Match {
   current_players: number
   status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled'
   creator_id: string
+  is_public: boolean
   created_at: string
   updated_at: string
 }

@@ -80,6 +80,7 @@ export default function CreateMatchPage() {
         date_time: dateTime,
         location: locationInput || data.location,
         max_players: data.max_players,
+        is_public: data.is_public || false,
       })
       
       if (error) {
@@ -331,6 +332,48 @@ export default function CreateMatchPage() {
               {errors.max_players && (
                 <p className="text-error-600 text-sm mt-1">{errors.max_players.message}</p>
               )}
+            </div>
+          </div>
+
+          {/* Privacy Settings */}
+          <div className="card">
+            <div className="flex items-center mb-4">
+              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center mr-3">
+                <Users className="w-4 h-4 text-primary-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Privacy
+              </h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="is_public"
+                    type="checkbox"
+                    {...register('is_public')}
+                    className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                  />
+                </div>
+                <div className="ml-3">
+                  <label htmlFor="is_public" className="font-medium text-gray-900">
+                    Make this match public
+                  </label>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Public matches are visible to all users. Private matches are only visible to you and participants.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-3">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Privacy explained:</h4>
+                <ul className="text-xs text-gray-600 space-y-1">
+                  <li>• <strong>Private (default):</strong> Only you and participants can see this match</li>
+                  <li>• <strong>Public:</strong> Anyone can discover and join this match</li>
+                  <li>• <strong>Share links:</strong> Work for both public and private matches</li>
+                </ul>
+              </div>
             </div>
           </div>
 
