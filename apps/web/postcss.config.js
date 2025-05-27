@@ -1,6 +1,6 @@
 module.exports = {
   plugins: {
-    // tailwindcss: {}, // Temporarily disabled for deployment
-    // autoprefixer: {}, // Temporarily disabled for deployment
+    tailwindcss: {},
+    // autoprefixer: {}, // Keep autoprefixer disabled for now to avoid additional module resolution issues
   },
 } 
