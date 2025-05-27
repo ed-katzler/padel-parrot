@@ -30,11 +30,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title,
         description,
         type: 'website',
-        url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://your-app.vercel.app'}/match/${params.id}`,
+        url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.padelparrot.com'}/join/${params.id}`,
         siteName: 'PadelParrot',
         images: [
           {
-            url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://your-app.vercel.app'}/api/og/match/${params.id}`,
+            url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.padelparrot.com'}/api/og/match/${params.id}`,
             width: 1200,
             height: 630,
             alt: `${match.title} - Padel Match`,
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         card: 'summary_large_image',
         title,
         description,
-        images: [`${process.env.NEXT_PUBLIC_APP_URL || 'https://your-app.vercel.app'}/api/og/match/${params.id}`],
+        images: [`${process.env.NEXT_PUBLIC_APP_URL || 'https://app.padelparrot.com'}/api/og/match/${params.id}`],
       },
     }
   } catch (error) {
