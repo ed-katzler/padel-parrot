@@ -92,6 +92,8 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       
       toast.success('Successfully joined the match!')
       setHasJoined(true)
+      // Signal that matches list should refresh
+      localStorage.setItem('shouldRefreshMatches', 'true')
       // Refresh match data
       loadMatch()
     } catch (error) {
@@ -114,6 +116,8 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       
       toast.success('Successfully left the match')
       setHasJoined(false)
+      // Signal that matches list should refresh
+      localStorage.setItem('shouldRefreshMatches', 'true')
       // Refresh match data
       loadMatch()
     } catch (error) {
@@ -149,6 +153,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
   }
 
   const handleBack = () => {
+    // Force a refresh when going back to ensure homepage data is updated
     window.location.href = '/'
   }
 

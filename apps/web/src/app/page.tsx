@@ -50,6 +50,66 @@ export default function HomePage() {
     }
   }, [isAuthenticated])
 
+  // Refresh matches when page becomes visible (user returns from another tab/page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isAuthenticated) {
+        // Check if we should refresh matches due to actions taken elsewhere
+        const shouldRefresh = localStorage.getItem('shouldRefreshMatches')
+        if (shouldRefresh) {
+          localStorage.removeItem('shouldRefreshMatches')
+          loadMatches()
+        } else {
+          loadMatches()
+        }
+      }
+    }
+
+    const handleFocus = () => {
+      if (isAuthenticated) {
+        // Check if we should refresh matches due to actions taken elsewhere
+        const shouldRefresh = localStorage.getItem('shouldRefreshMatches')
+        if (shouldRefresh) {
+          localStorage.removeItem('shouldRefreshMatches')
+        }
+        loadMatches()
+      }
+    }
+
+    // Listen for page visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [isAuthenticated])
+
+  // Check for refresh signal when component mounts
+  useEffect(() => {
+    if (isAuthenticated) {
+      const shouldRefresh = localStorage.getItem('shouldRefreshMatches')
+      if (shouldRefresh) {
+        localStorage.removeItem('shouldRefreshMatches')
+        loadMatches()
+      }
+    }
+  }, [isAuthenticated])
+
+  // Listen for storage events (when localStorage is updated from other tabs)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'shouldRefreshMatches' && e.newValue === 'true' && isAuthenticated) {
+        localStorage.removeItem('shouldRefreshMatches')
+        loadMatches()
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [isAuthenticated])
+
   const checkAuthStatus = async () => {
     try {
       const { data: user, error } = await getCurrentUser()
