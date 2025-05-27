@@ -1,5 +1,5 @@
 {
-  "installCommand": "cd ../.. && npm install --include=dev",
+  "installCommand": "cd ../.. && npm install && cd apps/web && npm install",
   "buildCommand": "npm run build",
   "outputDirectory": ".next"
 } 
