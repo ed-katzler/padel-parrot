@@ -1,5 +1,12 @@
-# Ignore everything except apps/web
-/*
-!/apps
-/apps/*
+# Keep root workspace files but ignore other apps
+/apps/mobile
+/node_modules
+/.turbo
+/scripts
+/docs
+/tools
+# Keep these essential files
+!/package.json
+!/package-lock.json
+!/turbo.json
 !/apps/web 
