@@ -1,0 +1,5 @@
+# Ignore everything except apps/web
+/*
+!/apps
+/apps/*
+!/apps/web 
