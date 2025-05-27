@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "apps/web/package.json",
-      "use": "@vercel/next"
+      "use": "@vercel/next",
+      "config": {
+        "distDir": ".next"
+      }
     }
   ],
   "routes": [
@@ -16,5 +19,6 @@
     "apps/web/src/app/**": {
       "maxDuration": 30
     }
-  }
+  },
+  "outputDirectory": "apps/web/.next"
 } 
