@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Calendar, MapPin, Users, Share2, Clock, UserPlus, UserMinus, Copy, ExternalLink, User } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Users, Share2, Clock, UserPlus, UserMinus, Copy, ExternalLink, User, Edit3 } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
 import { getMatch, joinMatch, leaveMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
@@ -191,6 +191,10 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
     window.location.href = '/'
   }
 
+  const handleEdit = () => {
+    window.location.href = `/match/${params.id}/edit`
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -236,13 +240,25 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                 Match Details
               </h1>
             </div>
-            <button
-              onClick={handleShare}
-              className="btn-secondary"
-            >
-              <Share2 className="w-4 h-4 mr-2" />
-              Share
-            </button>
+            <div className="flex items-center space-x-2">
+              {/* Edit Button - Only show for creator and upcoming matches */}
+              {match && currentUserId && match.creator_id === currentUserId && match.status === 'upcoming' && (
+                <button
+                  onClick={handleEdit}
+                  className="btn-secondary"
+                >
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Edit
+                </button>
+              )}
+              <button
+                onClick={handleShare}
+                className="btn-secondary"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share
+              </button>
+            </div>
           </div>
         </div>
       </header>

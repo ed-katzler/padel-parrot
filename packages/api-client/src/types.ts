@@ -35,6 +35,15 @@ export interface CreateMatchRequest {
   is_public?: boolean
 }
 
+export interface UpdateMatchRequest {
+  title?: string
+  description?: string
+  date_time?: string
+  location?: string
+  max_players?: number
+  is_public?: boolean
+}
+
 export interface Participant {
   id: string
   match_id: string
@@ -60,6 +69,7 @@ export interface ApiClient {
   getMatches(): Promise<ApiResponse<Match[]>>
   getMatch(id: string): Promise<ApiResponse<Match>>
   createMatch(matchData: CreateMatchRequest): Promise<ApiResponse<Match>>
+  updateMatch(matchId: string, matchData: UpdateMatchRequest): Promise<ApiResponse<Match>>
   joinMatch(matchId: string, userId: string): Promise<ApiResponse<null>>
   leaveMatch(matchId: string, userId: string): Promise<ApiResponse<null>>
   hasUserJoinedMatch(matchId: string, userId: string): Promise<ApiResponse<boolean>>

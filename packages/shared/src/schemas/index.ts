@@ -37,6 +37,28 @@ export const createMatchSchema = z.object({
   is_public: z.boolean().default(false),
 });
 
+export const updateMatchSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(100, 'Title too long').optional(),
+  description: z.string().max(500, 'Description too long').optional(),
+  date_time: z.string()
+    .refine((dateStr) => {
+      // Handle datetime-local format (YYYY-MM-DDTHH:mm) and convert to Date
+      const date = new Date(dateStr)
+      return !isNaN(date.getTime())
+    }, 'Invalid date format')
+    .refine((dateStr) => {
+      // Ensure the date is at least 30 minutes in the future
+      const selectedDate = new Date(dateStr)
+      const now = new Date()
+      const minTime = new Date(now.getTime() + 30 * 60 * 1000) // 30 minutes from now
+      return selectedDate >= minTime
+    }, 'Match must be scheduled at least 30 minutes in the future')
+    .optional(),
+  location: z.string().min(1, 'Location is required').max(200, 'Location too long').optional(),
+  max_players: z.number().min(2).max(20).optional(),
+  is_public: z.boolean().optional(),
+});
+
 export const matchSchema = z.object({
   id: z.string().uuid(),
   creator_id: z.string().uuid(),
@@ -74,4 +96,5 @@ export const apiResponseSchema = z.object({
 export type CreateMatchInput = z.infer<typeof createMatchSchema>;
 export type UserInput = z.infer<typeof userSchema>;
 export type MatchInput = z.infer<typeof matchSchema>;
-export type ParticipantInput = z.infer<typeof participantSchema>; 
+export type ParticipantInput = z.infer<typeof participantSchema>;
+export type UpdateMatchInput = z.infer<typeof updateMatchSchema>; 

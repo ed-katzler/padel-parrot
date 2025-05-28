@@ -1,6 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { MockApiClient } from './mock-client'
-import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location } from './types'
+import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, Participant } from './types'
 
 interface SupabaseConfig {
   url: string
@@ -457,6 +457,74 @@ class SupabaseApiClient implements ApiClient {
       return { data: data || [], error: null }
     } catch (error) {
       return { data: null, error: 'Failed to load locations' }
+    }
+  }
+
+  async updateMatch(matchId: string, matchData: UpdateMatchRequest): Promise<ApiResponse<Match>> {
+    try {
+      console.log('🏓 Starting match update...')
+      
+      // Get current user to verify they are the creator
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      
+      if (authError || !user) {
+        console.error('❌ Authentication check failed:', authError)
+        return { data: null, error: 'Must be authenticated to update match' }
+      }
+
+      console.log('✅ Current user authenticated:', user.id)
+
+      // Get the current match to verify ownership and current state
+      const { data: currentMatch, error: getError } = await this.supabase
+        .from('matches')
+        .select('*')
+        .eq('id', matchId)
+        .single()
+
+      if (getError) {
+        console.error('❌ Failed to get current match:', getError)
+        return { data: null, error: 'Match not found' }
+      }
+
+      if (currentMatch.creator_id !== user.id) {
+        console.error('❌ User is not the creator of this match')
+        return { data: null, error: 'Only the match creator can edit this match' }
+      }
+
+      if (currentMatch.status !== 'upcoming') {
+        console.error('❌ Cannot edit match that is not upcoming')
+        return { data: null, error: 'Can only edit upcoming matches' }
+      }
+
+      // Validate max_players constraint if it's being updated
+      if (matchData.max_players !== undefined && matchData.max_players < currentMatch.current_players) {
+        console.error('❌ Max players cannot be less than current players')
+        return { data: null, error: `Cannot reduce max players below current player count (${currentMatch.current_players})` }
+      }
+
+      console.log('✅ Validation passed, updating match...')
+
+      // Update the match
+      const { data, error } = await this.supabase
+        .from('matches')
+        .update({
+          ...matchData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', matchId)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Match update failed:', error)
+        return { data: null, error: error.message }
+      }
+
+      console.log('✅ Match updated successfully:', data.id)
+      return { data, error: null }
+    } catch (error) {
+      console.error('💥 Unexpected error during match update:', error)
+      return { data: null, error: 'Failed to update match' }
     }
   }
 }

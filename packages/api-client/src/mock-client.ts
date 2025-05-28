@@ -1,4 +1,4 @@
-import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location } from './types'
+import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest } from './types'
 
 export class MockApiClient implements ApiClient {
   private mockMatches: Match[] = [
@@ -139,6 +139,47 @@ export class MockApiClient implements ApiClient {
     
     this.mockMatches.unshift(newMatch)
     return { data: newMatch, error: null }
+  }
+
+  async updateMatch(matchId: string, matchData: UpdateMatchRequest): Promise<ApiResponse<Match>> {
+    if (!this.isAuthenticated) {
+      return { data: null, error: 'Must be authenticated to update match' }
+    }
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    const matchIndex = this.mockMatches.findIndex(m => m.id === matchId)
+    if (matchIndex === -1) {
+      return { data: null, error: 'Match not found' }
+    }
+    
+    const currentMatch = this.mockMatches[matchIndex]
+    
+    // Check if user is the creator
+    if (currentMatch.creator_id !== this.mockUser.id) {
+      return { data: null, error: 'Only the match creator can edit this match' }
+    }
+    
+    // Check if match is upcoming
+    if (currentMatch.status !== 'upcoming') {
+      return { data: null, error: 'Can only edit upcoming matches' }
+    }
+    
+    // Validate max_players constraint
+    if (matchData.max_players !== undefined && matchData.max_players < currentMatch.current_players) {
+      return { data: null, error: `Cannot reduce max players below current player count (${currentMatch.current_players})` }
+    }
+    
+    // Update the match
+    const updatedMatch: Match = {
+      ...currentMatch,
+      ...matchData,
+      updated_at: new Date().toISOString()
+    }
+    
+    this.mockMatches[matchIndex] = updatedMatch
+    return { data: updatedMatch, error: null }
   }
 
   async joinMatch(matchId: string, userId: string): Promise<ApiResponse<null>> {
