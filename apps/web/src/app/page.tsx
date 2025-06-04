@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, Plus, Calendar, MapPin, Users, LogOut, Lock, Globe, ChevronDown, ChevronUp } from 'lucide-react'
+import { Phone, Plus, Calendar, MapPin, Users, LogOut, Lock, Globe, ChevronDown, ChevronUp, User } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, isMatchInPast } from '@padel-parrot/shared'
-import { sendOtp, verifyOtp, getCurrentUser, signOut, getMatches } from '@padel-parrot/api-client'
+import { sendOtp, verifyOtp, getCurrentUser, signOut, getMatches, updateUser } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
 
 interface Match {
@@ -41,6 +41,9 @@ export default function HomePage() {
   const [showPastMatches, setShowPastMatches] = useState(false)
   const [pastMatchesPage, setPastMatchesPage] = useState(1)
   const [isLoadingMorePastMatches, setIsLoadingMorePastMatches] = useState(false)
+  const [showNameModal, setShowNameModal] = useState(false)
+  const [isUpdatingName, setIsUpdatingName] = useState(false)
+  const [nameInput, setNameInput] = useState('')
 
   // Check if user is already authenticated on page load
   useEffect(() => {
@@ -120,6 +123,11 @@ export default function HomePage() {
       if (user && !error) {
         setCurrentUser(user)
         setIsAuthenticated(true)
+        
+        // Show name modal if user doesn't have a name
+        if (!user.name) {
+          setShowNameModal(true)
+        }
       }
     } catch (error) {
       // User not authenticated, which is fine
@@ -183,12 +191,54 @@ export default function HomePage() {
         setCurrentUser(user)
         setIsAuthenticated(true)
         toast.success('Successfully signed in!')
+        
+        // Show name modal if user doesn't have a name
+        if (!user.name) {
+          setShowNameModal(true)
+        }
       }
     } catch (error) {
       toast.error('Failed to verify code')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleSaveName = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!nameInput.trim()) {
+      toast.error('Please enter your name')
+      return
+    }
+
+    setIsUpdatingName(true)
+    try {
+      const { data: updatedUser, error } = await updateUser({ name: nameInput.trim() })
+      if (error) {
+        toast.error(error)
+        return
+      }
+      
+      if (updatedUser) {
+        setCurrentUser(updatedUser)
+        setShowNameModal(false)
+        setNameInput('')
+        toast.success('Welcome to PadelParrot!')
+      }
+    } catch (error) {
+      toast.error('Failed to save name. Please try again.')
+    } finally {
+      setIsUpdatingName(false)
+    }
+  }
+
+  const handleSkipName = () => {
+    setShowNameModal(false)
+    setNameInput('')
+  }
+
+  const handleProfile = () => {
+    window.location.href = '/profile'
   }
 
   const handleSignOut = async () => {
@@ -456,6 +506,13 @@ export default function HomePage() {
                 Create Match
               </button>
               <button
+                onClick={handleProfile}
+                className="btn-secondary"
+                title="Profile"
+              >
+                <User className="w-4 h-4" />
+              </button>
+              <button
                 onClick={handleSignOut}
                 className="btn-secondary"
                 title="Sign Out"
@@ -566,6 +623,65 @@ export default function HomePage() {
           )}
         </div>
       </main>
+      
+      {/* Name Setup Modal */}
+      {showNameModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-primary-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Welcome to PadelParrot!
+              </h3>
+              <p className="text-gray-600">
+                Let's set up your profile. What should other players call you?
+              </p>
+            </div>
+            
+            <form onSubmit={handleSaveName} className="space-y-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  placeholder="Enter your name"
+                  className="input"
+                  autoFocus
+                  maxLength={50}
+                />
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={handleSkipName}
+                  className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  disabled={isUpdatingName}
+                >
+                  Skip for now
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 btn-primary"
+                  disabled={isUpdatingName || !nameInput.trim()}
+                >
+                  {isUpdatingName ? 'Saving...' : 'Save Name'}
+                </button>
+              </div>
+            </form>
+            
+            <p className="text-xs text-gray-500 text-center mt-4">
+              You can always change this later in your profile
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 } 

@@ -44,6 +44,10 @@ export interface UpdateMatchRequest {
   is_public?: boolean
 }
 
+export interface UpdateUserRequest {
+  name?: string
+}
+
 export interface Participant {
   id: string
   match_id: string
@@ -65,6 +69,7 @@ export interface ApiClient {
   sendOtp(phone: string): Promise<ApiResponse<null>>
   verifyOtp(phone: string, token: string): Promise<ApiResponse<User>>
   getCurrentUser(): Promise<ApiResponse<User>>
+  updateUser(userData: UpdateUserRequest): Promise<ApiResponse<User>>
   signOut(): Promise<ApiResponse<null>>
   getMatches(): Promise<ApiResponse<Match[]>>
   getMatch(id: string): Promise<ApiResponse<Match>>

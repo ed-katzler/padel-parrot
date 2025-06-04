@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { MockApiClient } from './mock-client'
-import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, Participant } from './types'
+import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, Participant, UpdateUserRequest } from './types'
 
 interface SupabaseConfig {
   url: string
@@ -104,17 +104,88 @@ class SupabaseApiClient implements ApiClient {
         return { data: null, error: 'Not authenticated' }
       }
 
-      const userData: User = {
-        id: user.id,
-        phone: user.phone || '',
-        name: user.user_metadata?.name || null,
-        created_at: user.created_at,
-        updated_at: user.updated_at || user.created_at
+      // Get user data from our users table to get the most up-to-date name
+      const { data: userData, error: userError } = await this.supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (userError) {
+        // If user doesn't exist in our table, create them
+        const { error: insertError } = await this.supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            phone: user.phone || '',
+            updated_at: new Date().toISOString()
+          })
+
+        if (insertError) {
+          return { data: null, error: 'Failed to create user record' }
+        }
+
+        // Return user with null name
+        const newUser: User = {
+          id: user.id,
+          phone: user.phone || '',
+          name: null,
+          created_at: user.created_at,
+          updated_at: user.updated_at || user.created_at
+        }
+
+        return { data: newUser, error: null }
       }
 
-      return { data: userData, error: null }
+      const userResponse: User = {
+        id: userData.id,
+        phone: userData.phone,
+        name: userData.name,
+        created_at: userData.created_at,
+        updated_at: userData.updated_at
+      }
+
+      return { data: userResponse, error: null }
     } catch (error) {
       return { data: null, error: 'Failed to get current user' }
+    }
+  }
+
+  async updateUser(userData: UpdateUserRequest): Promise<ApiResponse<User>> {
+    try {
+      console.log('👤 Starting user update...')
+      
+      // Get current user
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      
+      if (authError || !user) {
+        console.error('❌ Authentication check failed:', authError)
+        return { data: null, error: 'Must be authenticated to update profile' }
+      }
+
+      console.log('✅ Current user authenticated:', user.id)
+
+      // Update the user in our users table
+      const { data, error } = await this.supabase
+        .from('users')
+        .update({
+          ...userData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ User update failed:', error)
+        return { data: null, error: error.message }
+      }
+
+      console.log('✅ User updated successfully:', data.id)
+      return { data, error: null }
+    } catch (error) {
+      console.error('💥 Unexpected error during user update:', error)
+      return { data: null, error: 'Failed to update profile' }
     }
   }
 

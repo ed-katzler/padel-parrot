@@ -1,4 +1,4 @@
-import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest } from './types'
+import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, UpdateUserRequest } from './types'
 
 export class MockApiClient implements ApiClient {
   private mockMatches: Match[] = [
@@ -67,6 +67,24 @@ export class MockApiClient implements ApiClient {
   async getCurrentUser(): Promise<ApiResponse<User>> {
     if (!this.isAuthenticated) {
       return { data: null, error: 'Not authenticated' }
+    }
+    
+    return { data: this.mockUser, error: null }
+  }
+
+  async updateUser(userData: UpdateUserRequest): Promise<ApiResponse<User>> {
+    if (!this.isAuthenticated) {
+      return { data: null, error: 'Must be authenticated to update profile' }
+    }
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // Update the mock user
+    this.mockUser = {
+      ...this.mockUser,
+      ...userData,
+      updated_at: new Date().toISOString()
     }
     
     return { data: this.mockUser, error: null }

@@ -92,9 +92,14 @@ export const apiResponseSchema = z.object({
   message: z.string().optional(),
 });
 
+export const updateUserSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(50, 'Name too long').optional(),
+});
+
 // Export types from schemas
 export type CreateMatchInput = z.infer<typeof createMatchSchema>;
 export type UserInput = z.infer<typeof userSchema>;
 export type MatchInput = z.infer<typeof matchSchema>;
 export type ParticipantInput = z.infer<typeof participantSchema>;
-export type UpdateMatchInput = z.infer<typeof updateMatchSchema>; 
+export type UpdateMatchInput = z.infer<typeof updateMatchSchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>; 
