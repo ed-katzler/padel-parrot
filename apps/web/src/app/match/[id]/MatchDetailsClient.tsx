@@ -253,8 +253,8 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
     )
   }
 
-  const availableSpots = getAvailableSpots(match.max_players, match.current_players)
-  const isFull = isMatchFull(match.max_players, match.current_players)
+  const availableSpots = getAvailableSpots(match.max_players, participants.length)
+  const isFull = isMatchFull(match.max_players, participants.length)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -367,14 +367,19 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                 <Users className="w-5 h-5 text-gray-400 mr-3" />
                 <div>
                   <p className="font-medium text-gray-900">
-                    {match.current_players}/{match.max_players} players
+                    {participants.length}/{match.max_players} players
+                    {participants.length !== match.current_players && (
+                      <span className="text-xs text-orange-600 ml-2">
+                        (syncing...)
+                      </span>
+                    )}
                   </p>
                   <div className="flex mt-1">
                     {Array.from({ length: match.max_players }).map((_, i) => (
                       <div
                         key={i}
                         className={`w-3 h-3 rounded-full mr-1 ${
-                          i < match.current_players
+                          i < participants.length
                             ? 'bg-primary-500'
                             : 'bg-gray-200'
                         }`}

@@ -219,7 +219,10 @@ class SupabaseApiClient implements ApiClient {
       
       const { data: publicMatches, error: publicError } = await this.supabase
         .from('matches')
-        .select('*')
+        .select(`
+          *,
+          participant_count:participants!match_id(count)
+        `)
         .eq('status', 'upcoming')
         .eq('is_public', true)
         .order('date_time', { ascending: true })
@@ -230,7 +233,10 @@ class SupabaseApiClient implements ApiClient {
 
       const { data: createdMatches, error: createdError } = await this.supabase
         .from('matches')
-        .select('*')
+        .select(`
+          *,
+          participant_count:participants!match_id(count)
+        `)
         .eq('status', 'upcoming')
         .eq('creator_id', user.id)
         .order('date_time', { ascending: true })
@@ -243,6 +249,7 @@ class SupabaseApiClient implements ApiClient {
         .from('matches')
         .select(`
           *,
+          participant_count:participants!match_id(count),
           participants!inner(user_id, status)
         `)
         .eq('status', 'upcoming')
@@ -261,10 +268,20 @@ class SupabaseApiClient implements ApiClient {
         ...(participantMatches || [])
       ]
 
-      // Remove duplicates based on match ID
-      const uniqueMatches = allMatches.filter((match, index, self) => 
-        index === self.findIndex(m => m.id === match.id)
-      )
+      // Remove duplicates based on match ID and update current_players with actual count
+      const uniqueMatches = allMatches
+        .filter((match, index, self) => 
+          index === self.findIndex(m => m.id === match.id)
+        )
+        .map(match => {
+          // Use actual participant count if available
+          const actualCount = match.participant_count?.[0]?.count || match.current_players
+          return {
+            ...match,
+            current_players: actualCount,
+            participant_count: undefined // Remove the helper field
+          }
+        })
 
       // Sort by date_time
       uniqueMatches.sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime())
@@ -394,7 +411,7 @@ class SupabaseApiClient implements ApiClient {
         return { data: null, error: 'Match is full' }
       }
 
-      // Add participant
+      // Add participant (triggers will automatically sync the count)
       const { error: participantError } = await this.supabase
         .from('participants')
         .insert({
@@ -407,13 +424,14 @@ class SupabaseApiClient implements ApiClient {
         return { data: null, error: participantError.message }
       }
 
-      // Increment player count
-      const { error: updateError } = await this.supabase.rpc('increment_match_players', {
+      // Manually sync the count to ensure accuracy
+      const { error: syncError } = await this.supabase.rpc('sync_match_player_count', {
         match_id: matchId
       })
 
-      if (updateError) {
-        return { data: null, error: updateError.message }
+      if (syncError) {
+        console.warn('⚠️ Failed to sync player count:', syncError)
+        // Don't fail the operation for sync errors
       }
 
       return { data: null, error: null }
@@ -424,7 +442,7 @@ class SupabaseApiClient implements ApiClient {
 
   async leaveMatch(matchId: string, userId: string): Promise<ApiResponse<null>> {
     try {
-      // Remove participant
+      // Remove participant (triggers will automatically sync the count)
       const { error: participantError } = await this.supabase
         .from('participants')
         .delete()
@@ -435,13 +453,14 @@ class SupabaseApiClient implements ApiClient {
         return { data: null, error: participantError.message }
       }
 
-      // Decrement player count
-      const { error: updateError } = await this.supabase.rpc('decrement_match_players', {
+      // Manually sync the count to ensure accuracy
+      const { error: syncError } = await this.supabase.rpc('sync_match_player_count', {
         match_id: matchId
       })
 
-      if (updateError) {
-        return { data: null, error: updateError.message }
+      if (syncError) {
+        console.warn('⚠️ Failed to sync player count:', syncError)
+        // Don't fail the operation for sync errors
       }
 
       return { data: null, error: null }
