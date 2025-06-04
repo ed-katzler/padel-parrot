@@ -32,6 +32,7 @@ export const createMatchSchema = z.object({
       const minTime = new Date(now.getTime() + 30 * 60 * 1000) // 30 minutes from now
       return selectedDate >= minTime
     }, 'Match must be scheduled at least 30 minutes in the future'),
+  duration_minutes: z.number().refine((val) => [30, 60, 90, 120].includes(val), 'Duration must be 30, 60, 90, or 120 minutes').default(90),
   location: z.string().min(1, 'Location is required').max(200, 'Location too long'),
   max_players: z.number().min(2).max(20).default(4),
   is_public: z.boolean().default(false),
@@ -54,6 +55,7 @@ export const updateMatchSchema = z.object({
       return selectedDate >= minTime
     }, 'Match must be scheduled at least 30 minutes in the future')
     .optional(),
+  duration_minutes: z.number().refine((val) => [30, 60, 90, 120].includes(val), 'Duration must be 30, 60, 90, or 120 minutes').optional(),
   location: z.string().min(1, 'Location is required').max(200, 'Location too long').optional(),
   max_players: z.number().min(2).max(20).optional(),
   is_public: z.boolean().optional(),

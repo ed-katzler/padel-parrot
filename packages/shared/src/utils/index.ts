@@ -2,11 +2,29 @@ import { format, parseISO, addHours, isBefore, isAfter } from 'date-fns';
 
 // Date utilities
 export const formatMatchDate = (dateString: string): string => {
-  return format(parseISO(dateString), 'PPP p');
+  return format(parseISO(dateString), 'PPP'); // Only date, no time
 };
 
 export const formatMatchTime = (dateString: string): string => {
   return format(parseISO(dateString), 'p');
+};
+
+export const formatDuration = (minutes: number): string => {
+  if (minutes < 60) {
+    return `${minutes} mins`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (remainingMinutes === 0) {
+    return `${hours}h`;
+  }
+  return `${hours}h ${remainingMinutes}m`;
+};
+
+export const formatMatchDateTime = (dateString: string, durationMinutes: number): string => {
+  const startTime = formatMatchTime(dateString);
+  const duration = formatDuration(durationMinutes);
+  return `${startTime} (${duration})`;
 };
 
 export const isMatchUpcoming = (dateString: string): boolean => {

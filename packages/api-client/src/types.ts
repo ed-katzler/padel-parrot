@@ -16,6 +16,7 @@ export interface Match {
   title: string
   description?: string
   date_time: string
+  duration_minutes: number
   location: string
   max_players: number
   current_players: number
@@ -30,6 +31,7 @@ export interface CreateMatchRequest {
   title: string
   description?: string
   date_time: string
+  duration_minutes?: number
   location: string
   max_players?: number
   is_public?: boolean
@@ -39,6 +41,7 @@ export interface UpdateMatchRequest {
   title?: string
   description?: string
   date_time?: string
+  duration_minutes?: number
   location?: string
   max_players?: number
   is_public?: boolean

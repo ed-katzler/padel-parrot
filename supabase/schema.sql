@@ -21,6 +21,7 @@ CREATE TABLE matches (
     title TEXT NOT NULL,
     description TEXT,
     date_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    duration_minutes INTEGER DEFAULT 90 CHECK (duration_minutes IN (30, 60, 90, 120)),
     location TEXT NOT NULL,
     max_players INTEGER DEFAULT 4 CHECK (max_players >= 2),
     current_players INTEGER DEFAULT 1 CHECK (current_players >= 0),
@@ -171,13 +172,14 @@ INSERT INTO users (id, phone, name) VALUES
     ('550e8400-e29b-41d4-a716-446655440000', '+1234567890', 'Test User'),
     ('550e8400-e29b-41d4-a716-446655440001', '+0987654321', 'Demo Player');
 
-INSERT INTO matches (id, creator_id, title, description, date_time, location, max_players, current_players) VALUES 
+INSERT INTO matches (id, creator_id, title, description, date_time, duration_minutes, location, max_players, current_players) VALUES 
     (
         '660e8400-e29b-41d4-a716-446655440000',
         '550e8400-e29b-41d4-a716-446655440000',
         'Evening Padel Session',
         'Casual game at the local club',
         NOW() + INTERVAL '2 days',
+        90,
         'Padel Club Barcelona',
         4,
         2
@@ -188,6 +190,7 @@ INSERT INTO matches (id, creator_id, title, description, date_time, location, ma
         'Weekend Tournament Prep',
         'Practice session before the big tournament',
         NOW() + INTERVAL '3 days',
+        120,
         'Elite Padel Center',
         4,
         3

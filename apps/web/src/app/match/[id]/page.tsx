@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { getMatch } from '@padel-parrot/api-client'
-import { formatMatchDate, formatMatchTime } from '@padel-parrot/shared'
+import { formatMatchDate, formatMatchDateTime } from '@padel-parrot/shared'
 import MatchDetailsClient from './MatchDetailsClient'
 
 interface Props {
@@ -19,9 +19,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 
     const matchDate = formatMatchDate(match.date_time)
-    const matchTime = formatMatchTime(match.date_time)
+    const matchDateTime = formatMatchDateTime(match.date_time, match.duration_minutes)
     const title = `${match.title} - PadelParrot`
-    const description = `Join this padel match on ${matchDate} at ${matchTime} in ${match.location}. ${match.current_players}/${match.max_players} players joined.`
+    const description = `Join this padel match on ${matchDate} at ${matchDateTime} in ${match.location}. ${match.current_players}/${match.max_players} players joined.`
 
     return {
       title,

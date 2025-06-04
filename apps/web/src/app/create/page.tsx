@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { ArrowLeft, Calendar, MapPin, Users, Clock, ChevronDown } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { createMatchSchema, type CreateMatchInput } from '@padel-parrot/shared'
+import { createMatchSchema, type CreateMatchInput, formatDuration } from '@padel-parrot/shared'
 import { createMatch, getCurrentUser, getLocations, type Location } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
 
@@ -214,24 +214,48 @@ export default function CreateMatchPage() {
               </h2>
             </div>
             
-            <div>
-              <label htmlFor="date_time" className="block text-sm font-medium text-gray-700 mb-2">
-                Date & Time *
-              </label>
-              <input
-                id="date_time"
-                type="datetime-local"
-                {...register('date_time')}
-                min={getMinDateTime()}
-                max={getMaxDateTime()}
-                className="input"
-              />
-              {errors.date_time && (
-                <p className="text-error-600 text-sm mt-1">{errors.date_time.message}</p>
-              )}
-              <p className="text-xs text-gray-500 mt-1">
-                Select date and time (must be at least 30 minutes from now)
-              </p>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="date_time" className="block text-sm font-medium text-gray-700 mb-2">
+                  Date & Time *
+                </label>
+                <input
+                  id="date_time"
+                  type="datetime-local"
+                  {...register('date_time')}
+                  min={getMinDateTime()}
+                  max={getMaxDateTime()}
+                  className="input"
+                />
+                {errors.date_time && (
+                  <p className="text-error-600 text-sm mt-1">{errors.date_time.message}</p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Select date and time (must be at least 30 minutes from now)
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="duration_minutes" className="block text-sm font-medium text-gray-700 mb-2">
+                  Duration
+                </label>
+                <select
+                  id="duration_minutes"
+                  {...register('duration_minutes', { valueAsNumber: true })}
+                  className="input"
+                >
+                  <option value={30}>30 minutes</option>
+                  <option value={60}>1 hour</option>
+                  <option value={90}>1.5 hours (recommended)</option>
+                  <option value={120}>2 hours</option>
+                </select>
+                {errors.duration_minutes && (
+                  <p className="text-error-600 text-sm mt-1">{errors.duration_minutes.message}</p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  How long will the match last?
+                </p>
+              </div>
             </div>
           </div>
 

@@ -328,6 +328,7 @@ class SupabaseApiClient implements ApiClient {
           ...matchData,
           creator_id: user.id,
           current_players: 1, // Creator automatically joins
+          duration_minutes: matchData.duration_minutes || 90, // Default to 90 minutes
           is_public: matchData.is_public ?? false // Default to private
         })
         .select()
@@ -711,6 +712,7 @@ export interface Database {
           title: string
           description: string | null
           date_time: string
+          duration_minutes: number
           location: string
           max_players: number
           current_players: number
@@ -725,6 +727,7 @@ export interface Database {
           title: string
           description?: string | null
           date_time: string
+          duration_minutes?: number
           location: string
           max_players?: number
           current_players?: number
@@ -739,6 +742,7 @@ export interface Database {
           title?: string
           description?: string | null
           date_time?: string
+          duration_minutes?: number
           location?: string
           max_players?: number
           current_players?: number

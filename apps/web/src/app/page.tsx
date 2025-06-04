@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Phone, Plus, Calendar, MapPin, Users, LogOut, Lock, Globe, ChevronDown, ChevronUp, User } from 'lucide-react'
-import { formatMatchDate, formatMatchTime, isMatchInPast } from '@padel-parrot/shared'
+import { formatMatchDate, formatMatchTime, formatMatchDateTime, isMatchInPast } from '@padel-parrot/shared'
 import { sendOtp, verifyOtp, getCurrentUser, signOut, getMatches, updateUser } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
 
@@ -11,6 +11,7 @@ interface Match {
   title: string
   description?: string
   date_time: string
+  duration_minutes: number
   location: string
   max_players: number
   current_players: number
@@ -365,7 +366,7 @@ export default function HomePage() {
           }`}>
             <Calendar className="w-4 h-4 mr-2" />
             <span>
-              {formatMatchDate(match.date_time)} at {formatMatchTime(match.date_time)}
+              {formatMatchDate(match.date_time)} at {formatMatchDateTime(match.date_time, match.duration_minutes)}
             </span>
           </div>
           

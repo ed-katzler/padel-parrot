@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Calendar, MapPin, Users, UserPlus, Phone } from 'lucide-react'
-import { formatMatchDate, formatMatchTime, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
+import { formatMatchDate, formatMatchTime, formatMatchDateTime, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
 import { getMatch, sendOtp, verifyOtp, getCurrentUser } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
 
@@ -11,6 +11,7 @@ interface Match {
   title: string
   description?: string
   date_time: string
+  duration_minutes: number
   location: string
   max_players: number
   current_players: number
@@ -193,7 +194,7 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
                     {formatMatchDate(match.date_time)}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {formatMatchTime(match.date_time)}
+                    {formatMatchDateTime(match.date_time, match.duration_minutes)}
                   </p>
                 </div>
               </div>

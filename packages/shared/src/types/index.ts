@@ -14,6 +14,7 @@ export interface Match {
   title: string;
   description?: string;
   date_time: string;
+  duration_minutes: number;
   location: string;
   max_players: number;
   current_players: number;

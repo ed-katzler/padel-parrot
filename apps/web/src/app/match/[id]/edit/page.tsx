@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, Calendar, MapPin, Users, User as UserIcon } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Users, User as UserIcon, Clock } from 'lucide-react'
 import { updateMatchSchema, type UpdateMatchInput } from '@padel-parrot/shared'
 import { getMatch, updateMatch, getCurrentUser, getLocations } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
@@ -13,6 +13,7 @@ interface Match {
   title: string
   description?: string
   date_time: string
+  duration_minutes: number
   location: string
   max_players: number
   current_players: number
@@ -118,6 +119,7 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
         
         setValue('location', data.location)
         setValue('max_players', data.max_players)
+        setValue('duration_minutes', data.duration_minutes)
         setValue('is_public', data.is_public)
         
         setLocationInput(data.location)
@@ -171,6 +173,10 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
       
       if (data.max_players !== match.max_players) {
         updateData.max_players = data.max_players
+      }
+      
+      if (data.duration_minutes !== match.duration_minutes) {
+        updateData.duration_minutes = data.duration_minutes
       }
       
       if (data.is_public !== match.is_public) {
@@ -462,6 +468,40 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
                   Currently {match.current_players} players have joined
                 </p>
               )}
+            </div>
+          </div>
+
+          {/* Duration */}
+          <div className="card">
+            <div className="flex items-center mb-4">
+              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center mr-3">
+                <Clock className="w-4 h-4 text-primary-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Duration
+              </h2>
+            </div>
+            
+            <div>
+              <label htmlFor="duration_minutes" className="block text-sm font-medium text-gray-700 mb-2">
+                Duration
+              </label>
+              <select
+                id="duration_minutes"
+                {...register('duration_minutes', { valueAsNumber: true })}
+                className="input"
+              >
+                <option value={30}>30 minutes</option>
+                <option value={60}>1 hour</option>
+                <option value={90}>1.5 hours</option>
+                <option value={120}>2 hours</option>
+              </select>
+              {errors.duration_minutes && (
+                <p className="text-error-600 text-sm mt-1">{errors.duration_minutes.message}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                How long will the match last?
+              </p>
             </div>
           </div>
 
