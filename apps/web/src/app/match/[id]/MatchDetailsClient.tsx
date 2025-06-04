@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Calendar, MapPin, Users, Share2, Clock, UserPlus, UserMinus, Copy, ExternalLink, User, Edit3 } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Users, Share2, Clock, UserPlus, UserMinus, Copy, ExternalLink, User, Edit3, Trash2 } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
-import { getMatch, joinMatch, leaveMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById } from '@padel-parrot/api-client'
+import { getMatch, joinMatch, leaveMatch, deleteMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
 
 interface Match {
@@ -32,8 +32,10 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
   const [isLoading, setIsLoading] = useState(true)
   const [isJoining, setIsJoining] = useState(false)
   const [isLeaving, setIsLeaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [hasJoined, setHasJoined] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [creator, setCreator] = useState<UserInfo | null>(null)
   const [participants, setParticipants] = useState<UserInfo[]>([])
@@ -195,6 +197,36 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
     window.location.href = `/match/${params.id}/edit`
   }
 
+  const handleDelete = () => {
+    setShowDeleteModal(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!match || !currentUserId) return
+    
+    setIsDeleting(true)
+    try {
+      const { error } = await deleteMatch(match.id)
+      if (error) {
+        toast.error(error)
+        return
+      }
+      
+      toast.success('Match deleted successfully')
+      setShowDeleteModal(false)
+      // Signal that matches list should refresh
+      localStorage.setItem('shouldRefreshMatches', 'true')
+      // Navigate back to home
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 1000)
+    } catch (error) {
+      toast.error('Failed to delete match')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -245,18 +277,28 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
               {match && currentUserId && match.creator_id === currentUserId && match.status === 'upcoming' && (
                 <button
                   onClick={handleEdit}
-                  className="btn-secondary"
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+                  title="Edit match"
                 >
-                  <Edit3 className="w-4 h-4 mr-2" />
-                  Edit
+                  <Edit3 className="w-4 h-4" />
+                </button>
+              )}
+              {/* Delete Button - Only show for creator and upcoming matches */}
+              {match && currentUserId && match.creator_id === currentUserId && match.status === 'upcoming' && (
+                <button
+                  onClick={handleDelete}
+                  className="p-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50"
+                  title="Delete match"
+                >
+                  <Trash2 className="w-4 h-4" />
                 </button>
               )}
               <button
                 onClick={handleShare}
-                className="btn-secondary"
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+                title="Share match"
               >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share
+                <Share2 className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -490,6 +532,48 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Delete Match
+                </h3>
+                <p className="text-sm text-gray-600">
+                  This action cannot be undone
+                </p>
+              </div>
+            </div>
+            
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to delete "{match?.title}"? All participants will be notified and removed from the match.
+            </p>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Match'}
+              </button>
+            </div>
           </div>
         </div>
       )}

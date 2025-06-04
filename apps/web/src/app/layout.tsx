@@ -3,7 +3,7 @@ import { Toaster } from 'react-hot-toast'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'PadelParrot - Organize Padel Matches',
+  title: 'PadelParrot - Organise Padel Matches',
   description: 'Simplify how you organize and join padel matches. Fast, intuitive, mobile-first.',
   keywords: ['padel', 'matches', 'sports', 'organization', 'booking'],
   authors: [{ name: 'PadelParrot Team' }],

@@ -527,6 +527,63 @@ class SupabaseApiClient implements ApiClient {
       return { data: null, error: 'Failed to update match' }
     }
   }
+
+  async deleteMatch(matchId: string): Promise<ApiResponse<null>> {
+    try {
+      console.log('🗑️ Starting match deletion...')
+      
+      // Get current user to verify they are the creator
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      
+      if (authError || !user) {
+        console.error('❌ Authentication check failed:', authError)
+        return { data: null, error: 'Must be authenticated to delete match' }
+      }
+
+      console.log('✅ Current user authenticated:', user.id)
+
+      // Get the current match to verify ownership and current state
+      const { data: currentMatch, error: getError } = await this.supabase
+        .from('matches')
+        .select('*')
+        .eq('id', matchId)
+        .single()
+
+      if (getError) {
+        console.error('❌ Failed to get current match:', getError)
+        return { data: null, error: 'Match not found' }
+      }
+
+      if (currentMatch.creator_id !== user.id) {
+        console.error('❌ User is not the creator of this match')
+        return { data: null, error: 'Only the match creator can delete this match' }
+      }
+
+      if (currentMatch.status !== 'upcoming') {
+        console.error('❌ Cannot delete match that is not upcoming')
+        return { data: null, error: 'Can only delete upcoming matches' }
+      }
+
+      console.log('✅ Validation passed, deleting match...')
+
+      // Delete the match (participants will be deleted automatically due to CASCADE)
+      const { error } = await this.supabase
+        .from('matches')
+        .delete()
+        .eq('id', matchId)
+
+      if (error) {
+        console.error('❌ Match deletion failed:', error)
+        return { data: null, error: error.message }
+      }
+
+      console.log('✅ Match deleted successfully')
+      return { data: null, error: null }
+    } catch (error) {
+      console.error('💥 Unexpected error during match deletion:', error)
+      return { data: null, error: 'Failed to delete match' }
+    }
+  }
 }
 
 // Export the appropriate client based on environment

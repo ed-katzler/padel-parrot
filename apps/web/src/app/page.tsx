@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, Plus, Calendar, MapPin, Users, LogOut, Lock, Globe } from 'lucide-react'
-import { formatMatchDate, formatMatchTime } from '@padel-parrot/shared'
+import { Phone, Plus, Calendar, MapPin, Users, LogOut, Lock, Globe, ChevronDown, ChevronUp } from 'lucide-react'
+import { formatMatchDate, formatMatchTime, isMatchInPast } from '@padel-parrot/shared'
 import { sendOtp, verifyOtp, getCurrentUser, signOut, getMatches } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
 
@@ -38,6 +38,9 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [matches, setMatches] = useState<Match[]>([])
   const [isLoadingMatches, setIsLoadingMatches] = useState(false)
+  const [showPastMatches, setShowPastMatches] = useState(false)
+  const [pastMatchesPage, setPastMatchesPage] = useState(1)
+  const [isLoadingMorePastMatches, setIsLoadingMorePastMatches] = useState(false)
 
   // Check if user is already authenticated on page load
   useEffect(() => {
@@ -220,6 +223,132 @@ export default function HomePage() {
     toast.success('Refreshed matches')
   }
 
+  // Separate matches into upcoming and past
+  const upcomingMatches = matches.filter(match => !isMatchInPast(match.date_time))
+  const pastMatches = matches.filter(match => isMatchInPast(match.date_time))
+  
+  // Sort past matches by date (most recent first)
+  const sortedPastMatches = pastMatches.sort((a, b) => 
+    new Date(b.date_time).getTime() - new Date(a.date_time).getTime()
+  )
+  
+  const PAST_MATCHES_PER_PAGE = 10
+  const displayedPastMatches = sortedPastMatches.slice(0, pastMatchesPage * PAST_MATCHES_PER_PAGE)
+  const hasMorePastMatches = sortedPastMatches.length > displayedPastMatches.length
+
+  const handleTogglePastMatches = () => {
+    setShowPastMatches(!showPastMatches)
+  }
+
+  const handleLoadMorePastMatches = () => {
+    setIsLoadingMorePastMatches(true)
+    // Simulate loading delay for better UX
+    setTimeout(() => {
+      setPastMatchesPage(prev => prev + 1)
+      setIsLoadingMorePastMatches(false)
+    }, 500)
+  }
+
+  const renderMatchCard = (match: Match, isPast: boolean = false) => {
+    const availableSpots = match.max_players - match.current_players
+    const isFull = availableSpots === 0
+    
+    return (
+      <div
+        key={match.id}
+        className={`card hover:shadow-md transition-shadow cursor-pointer ${
+          isPast ? 'bg-gray-50' : ''
+        }`}
+        onClick={() => handleJoinMatch(match.id)}
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className={`text-lg font-semibold ${
+                isPast ? 'text-gray-600' : 'text-gray-900'
+              }`}>
+                {match.title}
+              </h3>
+              {/* Privacy indicator */}
+              {match.is_public ? (
+                <span title="Public match">
+                  <Globe className={`w-4 h-4 ${
+                    isPast ? 'text-gray-400' : 'text-green-600'
+                  }`} />
+                </span>
+              ) : (
+                <span title="Private match">
+                  <Lock className="w-4 h-4 text-gray-400" />
+                </span>
+              )}
+            </div>
+          </div>
+          {!isPast && (
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                isFull
+                  ? 'bg-error-100 text-error-800'
+                  : 'bg-success-100 text-success-800'
+              }`}
+            >
+              {isFull ? 'Full' : `${availableSpots} spots left`}
+            </span>
+          )}
+          {isPast && (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
+              Completed
+            </span>
+          )}
+        </div>
+        
+        {match.description && (
+          <p className={`mb-3 text-sm ${
+            isPast ? 'text-gray-500' : 'text-gray-600'
+          }`}>
+            {match.description}
+          </p>
+        )}
+        
+        <div className="space-y-2 text-sm">
+          <div className={`flex items-center ${
+            isPast ? 'text-gray-500' : 'text-gray-600'
+          }`}>
+            <Calendar className="w-4 h-4 mr-2" />
+            <span>
+              {formatMatchDate(match.date_time)} at {formatMatchTime(match.date_time)}
+            </span>
+          </div>
+          
+          <div className={`flex items-center ${
+            isPast ? 'text-gray-500' : 'text-gray-600'
+          }`}>
+            <MapPin className="w-4 h-4 mr-2" />
+            <span>{match.location}</span>
+          </div>
+          
+          <div className={`flex items-center ${
+            isPast ? 'text-gray-500' : 'text-gray-600'
+          }`}>
+            <Users className="w-4 h-4 mr-2" />
+            <span>{match.current_players}/{match.max_players} players</span>
+            <div className="flex ml-2">
+              {Array.from({ length: match.max_players }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-2 h-2 rounded-full mr-1 ${
+                    i < match.current_players
+                      ? isPast ? 'bg-gray-400' : 'bg-primary-500'
+                      : 'bg-gray-200'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -359,7 +488,7 @@ export default function HomePage() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
               <p className="text-gray-600">Loading matches...</p>
             </div>
-          ) : matches.length === 0 ? (
+          ) : upcomingMatches.length === 0 ? (
             <div className="card text-center py-8">
               <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -377,84 +506,62 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {matches.map((match) => {
-                const availableSpots = match.max_players - match.current_players
-                const isFull = availableSpots === 0
-                
-                return (
-                  <div
-                    key={match.id}
-                    className="card hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => handleJoinMatch(match.id)}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {match.title}
-                          </h3>
-                          {/* Privacy indicator */}
-                          {match.is_public ? (
-                            <span title="Public match">
-                              <Globe className="w-4 h-4 text-green-600" />
-                            </span>
-                          ) : (
-                            <span title="Private match">
-                              <Lock className="w-4 h-4 text-gray-500" />
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          isFull
-                            ? 'bg-error-100 text-error-800'
-                            : 'bg-success-100 text-success-800'
-                        }`}
-                      >
-                        {isFull ? 'Full' : `${availableSpots} spots left`}
-                      </span>
-                    </div>
-                    
-                    {match.description && (
-                      <p className="text-gray-600 mb-3 text-sm">
-                        {match.description}
-                      </p>
-                    )}
-                    
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        <span>
-                          {formatMatchDate(match.date_time)} at {formatMatchTime(match.date_time)}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center text-gray-600">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        <span>{match.location}</span>
-                      </div>
-                      
-                      <div className="flex items-center text-gray-600">
-                        <Users className="w-4 h-4 mr-2" />
-                        <span>{match.current_players}/{match.max_players} players</span>
-                        <div className="flex ml-2">
-                          {Array.from({ length: match.max_players }).map((_, i) => (
-                            <div
-                              key={i}
-                              className={`w-2 h-2 rounded-full mr-1 ${
-                                i < match.current_players
-                                  ? 'bg-primary-500'
-                                  : 'bg-gray-200'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+              {upcomingMatches.map((match) => renderMatchCard(match))}
+            </div>
+          )}
+        </div>
+
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Past Matches
+            </h2>
+            <button
+              onClick={handleTogglePastMatches}
+              className="btn-secondary"
+            >
+              {showPastMatches ? 'Hide Past Matches' : 'Show Past Matches'}
+            </button>
+          </div>
+          
+          {showPastMatches ? (
+            <div className="space-y-4">
+              {displayedPastMatches.length === 0 ? (
+                <div className="card text-center py-8">
+                  <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No past matches yet
+                  </h3>
+                  <p className="text-gray-600">
+                    Past matches will appear here after they're completed
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {displayedPastMatches.map((match) => renderMatchCard(match, true))}
+                  {hasMorePastMatches && (
+                    <button
+                      onClick={handleLoadMorePastMatches}
+                      className="btn-secondary w-full"
+                      disabled={isLoadingMorePastMatches}
+                    >
+                      {isLoadingMorePastMatches ? 'Loading...' : 'Load More'}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="card text-center py-8">
+              <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Past Matches ({sortedPastMatches.length})
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {sortedPastMatches.length === 0 
+                  ? 'No past matches yet' 
+                  : `${sortedPastMatches.length} past matches available`}
+              </p>
             </div>
           )}
         </div>

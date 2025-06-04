@@ -70,6 +70,7 @@ export interface ApiClient {
   getMatch(id: string): Promise<ApiResponse<Match>>
   createMatch(matchData: CreateMatchRequest): Promise<ApiResponse<Match>>
   updateMatch(matchId: string, matchData: UpdateMatchRequest): Promise<ApiResponse<Match>>
+  deleteMatch(matchId: string): Promise<ApiResponse<null>>
   joinMatch(matchId: string, userId: string): Promise<ApiResponse<null>>
   leaveMatch(matchId: string, userId: string): Promise<ApiResponse<null>>
   hasUserJoinedMatch(matchId: string, userId: string): Promise<ApiResponse<boolean>>

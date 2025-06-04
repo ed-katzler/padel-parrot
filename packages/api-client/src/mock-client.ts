@@ -182,6 +182,40 @@ export class MockApiClient implements ApiClient {
     return { data: updatedMatch, error: null }
   }
 
+  async deleteMatch(matchId: string): Promise<ApiResponse<null>> {
+    if (!this.isAuthenticated) {
+      return { data: null, error: 'Must be authenticated to delete match' }
+    }
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    const matchIndex = this.mockMatches.findIndex(m => m.id === matchId)
+    if (matchIndex === -1) {
+      return { data: null, error: 'Match not found' }
+    }
+    
+    const currentMatch = this.mockMatches[matchIndex]
+    
+    // Check if user is the creator
+    if (currentMatch.creator_id !== this.mockUser.id) {
+      return { data: null, error: 'Only the match creator can delete this match' }
+    }
+    
+    // Check if match is upcoming
+    if (currentMatch.status !== 'upcoming') {
+      return { data: null, error: 'Can only delete upcoming matches' }
+    }
+    
+    // Remove the match
+    this.mockMatches.splice(matchIndex, 1)
+    
+    // Remove from joined matches if present
+    this.joinedMatches.delete(matchId)
+    
+    return { data: null, error: null }
+  }
+
   async joinMatch(matchId: string, userId: string): Promise<ApiResponse<null>> {
     if (!this.isAuthenticated) {
       return { data: null, error: 'Must be authenticated to join match' }
