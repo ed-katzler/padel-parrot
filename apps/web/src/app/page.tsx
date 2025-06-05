@@ -547,7 +547,7 @@ export default function HomePage() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">
-              Upcoming Matches
+              My Upcoming Matches
             </h2>
             <button
               onClick={handleRefreshMatches}
@@ -614,12 +614,12 @@ export default function HomePage() {
               <p className="text-gray-600 mb-4">
                 Be the first to create a public match for others to join
               </p>
-              <button
+              {/* <button
                 onClick={handleCreateMatch}
                 className="btn-primary"
               >
                 Create Public Match
-              </button>
+              </button> */}
             </div>
           ) : (
             <div className="space-y-4">
@@ -631,7 +631,7 @@ export default function HomePage() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">
-              Past Matches
+              My Past Matches
             </h2>
             <button
               onClick={handleTogglePastMatches}

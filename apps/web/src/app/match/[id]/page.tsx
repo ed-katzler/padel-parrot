@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   } catch (error) {
     return {
       title: 'PadelParrot',
-      description: 'Organize and join padel matches easily.',
+      description: 'Organise and join padel matches easily.',
     }
   }
 }
