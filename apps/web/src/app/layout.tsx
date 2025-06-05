@@ -4,22 +4,22 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'PadelParrot - Organise Padel Matches',
-  description: 'Simplify how you organize and join padel matches. Fast, intuitive, mobile-first.',
+  description: 'Simplify how you organise and join padel matches. Fast, intuitive, mobile-first.',
   keywords: ['padel', 'matches', 'sports', 'organization', 'booking'],
   authors: [{ name: 'PadelParrot Team' }],
   viewport: 'width=device-width, initial-scale=1',
   themeColor: '#0ea5e9',
   manifest: '/manifest.json',
   openGraph: {
-    title: 'PadelParrot - Organize Padel Matches',
-    description: 'Simplify how you organize and join padel matches',
+    title: 'PadelParrot - Organise Padel Matches',
+    description: 'Simplify how you organise and join padel matches',
     type: 'website',
     locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PadelParrot - Organize Padel Matches',
-    description: 'Simplify how you organize and join padel matches',
+    title: 'PadelParrot - Organise Padel Matches',
+    description: 'Simplify how you organise and join padel matches',
   },
 }
 
