@@ -368,11 +368,6 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                 <div>
                   <p className="font-medium text-gray-900">
                     {participants.length}/{match.max_players} players
-                    {participants.length !== match.current_players && (
-                      <span className="text-xs text-orange-600 ml-2">
-                        (syncing...)
-                      </span>
-                    )}
                   </p>
                   <div className="flex mt-1">
                     {Array.from({ length: match.max_players }).map((_, i) => (
