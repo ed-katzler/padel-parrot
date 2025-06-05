@@ -10,11 +10,14 @@ export const formatMatchTime = (dateString: string): string => {
 };
 
 export const formatDuration = (minutes: number): string => {
-  if (minutes < 60) {
-    return `${minutes} mins`;
+  // Handle invalid or missing duration - default to 90 minutes
+  const validMinutes = !minutes || isNaN(minutes) || minutes <= 0 ? 90 : minutes;
+  
+  if (validMinutes < 60) {
+    return `${validMinutes}mins`;
   }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
+  const hours = Math.floor(validMinutes / 60);
+  const remainingMinutes = validMinutes % 60;
   if (remainingMinutes === 0) {
     return `${hours}h`;
   }

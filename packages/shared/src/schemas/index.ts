@@ -67,6 +67,7 @@ export const matchSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
   date_time: z.string(),
+  duration_minutes: z.number(),
   location: z.string(),
   max_players: z.number(),
   current_players: z.number(),

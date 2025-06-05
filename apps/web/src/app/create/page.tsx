@@ -78,6 +78,7 @@ export default function CreateMatchPage() {
         title: data.title,
         description: data.description,
         date_time: dateTime,
+        duration_minutes: data.duration_minutes,
         location: locationInput || data.location,
         max_players: data.max_players,
         is_public: data.is_public || false,

@@ -339,6 +339,8 @@ class SupabaseApiClient implements ApiClient {
       console.log('✅ User exists in database, creating match...')
 
       // Create match with current_players = 1 (creator automatically joins)
+      // IMPORTANT: duration_minutes must be provided to avoid "(NaNh NaNm)" display issue
+      // The migration 001_add_duration_field.sql must be applied to the database for this to work
       const { data, error } = await this.supabase
         .from('matches')
         .insert({
