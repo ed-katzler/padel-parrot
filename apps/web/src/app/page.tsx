@@ -318,6 +318,9 @@ export default function HomePage() {
   }
 
   const renderMatchCard = (match: Match, isPast: boolean = false) => {
+    // NOTE: match.current_players may be stale due to database sync issues
+    // The Match Details page shows accurate counts by loading actual participants
+    // This will be fixed when database triggers/migrations are properly applied
     const availableSpots = match.max_players - match.current_players
     const isFull = availableSpots === 0
     
