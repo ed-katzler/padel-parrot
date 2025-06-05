@@ -483,7 +483,7 @@ class SupabaseApiClient implements ApiClient {
       }
 
       // Manually sync the count to ensure accuracy
-      const { error: syncError } = await this.supabase.rpc('update_match_participant_count', {
+      const { error: syncError } = await this.supabase.rpc('fix_match_participant_count', {
         target_match_uuid: matchId
       })
 
@@ -512,7 +512,7 @@ class SupabaseApiClient implements ApiClient {
       }
 
       // Manually sync the count to ensure accuracy
-      const { error: syncError } = await this.supabase.rpc('update_match_participant_count', {
+      const { error: syncError } = await this.supabase.rpc('fix_match_participant_count', {
         target_match_uuid: matchId
       })
 
