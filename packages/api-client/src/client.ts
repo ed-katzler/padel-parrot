@@ -1,3 +1,29 @@
+/*
+ * PERMISSIONS SYSTEM DOCUMENTATION
+ * 
+ * This API client implements proper match visibility permissions:
+ * 
+ * PRIVATE MATCHES:
+ * - Only visible to the creator and participants
+ * - Creator can always see their private matches
+ * - Participants can see private matches they've joined
+ * - Others cannot see private matches (even with direct links, they need sharelinks)
+ * 
+ * PUBLIC MATCHES:
+ * - Visible to everyone in the "Public Matches" section
+ * - Once a user joins a public match, it moves to their "Upcoming Matches" section
+ * - Past public matches are only visible to participants/creators in "Past Matches"
+ * - Past public matches are NOT visible to non-participants
+ * 
+ * API METHODS:
+ * - getMyMatches(): Returns private/participant matches (for "Upcoming" and "Past" sections)
+ * - getPublicMatches(): Returns public matches user hasn't joined (for "Public Matches" section)
+ * - getMatches(): Deprecated - use the above two methods instead
+ * 
+ * SUPABASE REQUIREMENTS:
+ * - Migration 001_add_duration_field.sql must be applied for duration_minutes field
+ */
+
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { MockApiClient } from './mock-client'
 import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, Participant, UpdateUserRequest } from './types'
@@ -204,6 +230,12 @@ class SupabaseApiClient implements ApiClient {
   }
 
   async getMatches(): Promise<ApiResponse<Match[]>> {
+    // Legacy method - now returns empty array, use getMyMatches() and getPublicMatches() instead
+    console.warn('getMatches() is deprecated. Use getMyMatches() and getPublicMatches() instead.')
+    return { data: [], error: null }
+  }
+
+  async getMyMatches(): Promise<ApiResponse<Match[]>> {
     try {
       // Get current user to filter matches based on visibility rules
       const { data: { user }, error: authError } = await this.supabase.auth.getUser()
@@ -212,32 +244,14 @@ class SupabaseApiClient implements ApiClient {
         return { data: null, error: 'Must be authenticated to view matches' }
       }
 
-      // Get matches that are either:
-      // 1. Public matches
-      // 2. Matches created by the current user (always visible to creator)
-      // 3. Matches where the current user is a participant
+      // Get matches where the user is either:
+      // 1. The creator (private or public - always visible to creator)
+      // 2. A participant (private or public - visible if they joined)
       
-      const { data: publicMatches, error: publicError } = await this.supabase
-        .from('matches')
-        .select(`
-          *,
-          participant_count:participants!match_id(count)
-        `)
-        .eq('status', 'upcoming')
-        .eq('is_public', true)
-        .order('date_time', { ascending: true })
-
-      if (publicError) {
-        return { data: null, error: publicError.message }
-      }
-
+      // First get matches created by the user
       const { data: createdMatches, error: createdError } = await this.supabase
         .from('matches')
-        .select(`
-          *,
-          participant_count:participants!match_id(count)
-        `)
-        .eq('status', 'upcoming')
+        .select('*')
         .eq('creator_id', user.id)
         .order('date_time', { ascending: true })
 
@@ -245,50 +259,92 @@ class SupabaseApiClient implements ApiClient {
         return { data: null, error: createdError.message }
       }
 
+      // Then get matches where the user is a participant (excluding ones they created to avoid duplicates)
       const { data: participantMatches, error: participantError } = await this.supabase
         .from('matches')
         .select(`
           *,
-          participant_count:participants!match_id(count),
           participants!inner(user_id, status)
         `)
-        .eq('status', 'upcoming')
         .eq('participants.user_id', user.id)
         .eq('participants.status', 'joined')
+        .neq('creator_id', user.id) // Exclude matches they created (already included above)
         .order('date_time', { ascending: true })
 
       if (participantError) {
         return { data: null, error: participantError.message }
       }
 
-      // Combine and deduplicate matches
+      // Combine matches and remove the helper participants field
       const allMatches = [
-        ...(publicMatches || []),
         ...(createdMatches || []),
-        ...(participantMatches || [])
+        ...(participantMatches || []).map(match => {
+          const { participants, ...cleanMatch } = match
+          return cleanMatch
+        })
       ]
 
-      // Remove duplicates based on match ID and update current_players with actual count
-      const uniqueMatches = allMatches
-        .filter((match, index, self) => 
-          index === self.findIndex(m => m.id === match.id)
-        )
-        .map(match => {
-          // Use actual participant count if available
-          const actualCount = match.participant_count?.[0]?.count || match.current_players
-          return {
-            ...match,
-            current_players: actualCount,
-            participant_count: undefined // Remove the helper field
-          }
-        })
-
       // Sort by date_time
-      uniqueMatches.sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime())
+      allMatches.sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime())
 
-      return { data: uniqueMatches, error: null }
+      return { data: allMatches, error: null }
     } catch (error) {
-      return { data: null, error: 'Failed to load matches' }
+      return { data: null, error: 'Failed to load your matches' }
+    }
+  }
+
+  async getPublicMatches(): Promise<ApiResponse<Match[]>> {
+    try {
+      // Get current user to exclude matches they're already involved in
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      
+      if (authError || !user) {
+        return { data: null, error: 'Must be authenticated to view matches' }
+      }
+
+      // Get public matches that are upcoming and where the user is NOT the creator or participant
+      const { data: publicMatches, error: publicError } = await this.supabase
+        .from('matches')
+        .select('*')
+        .eq('is_public', true)
+        .eq('status', 'upcoming')
+        .gte('date_time', new Date().toISOString()) // Only upcoming matches
+        .neq('creator_id', user.id) // Exclude matches they created
+        .order('date_time', { ascending: true })
+
+      if (publicError) {
+        return { data: null, error: publicError.message }
+      }
+
+      // Filter out matches where the user is already a participant
+      if (!publicMatches) {
+        return { data: [], error: null }
+      }
+
+      // Check which matches the user has joined
+      const matchIds = publicMatches.map(match => match.id)
+      if (matchIds.length === 0) {
+        return { data: [], error: null }
+      }
+
+      const { data: participantMatches, error: participantError } = await this.supabase
+        .from('participants')
+        .select('match_id')
+        .eq('user_id', user.id)
+        .eq('status', 'joined')
+        .in('match_id', matchIds)
+
+      if (participantError) {
+        return { data: null, error: participantError.message }
+      }
+
+      // Filter out matches where the user is a participant
+      const joinedMatchIds = new Set((participantMatches || []).map(p => p.match_id))
+      const filteredMatches = publicMatches.filter(match => !joinedMatchIds.has(match.id))
+
+      return { data: filteredMatches, error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to load public matches' }
     }
   }
 

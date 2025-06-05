@@ -98,6 +98,12 @@ export class MockApiClient implements ApiClient {
   }
 
   async getMatches(): Promise<ApiResponse<Match[]>> {
+    // Legacy method - now returns empty array, use getMyMatches() and getPublicMatches() instead
+    console.warn('getMatches() is deprecated. Use getMyMatches() and getPublicMatches() instead.')
+    return { data: [], error: null }
+  }
+
+  async getMyMatches(): Promise<ApiResponse<Match[]>> {
     if (!this.isAuthenticated) {
       return { data: null, error: 'Must be authenticated to view matches' }
     }
@@ -106,13 +112,9 @@ export class MockApiClient implements ApiClient {
     await new Promise(resolve => setTimeout(resolve, 500))
     
     // Filter matches based on privacy rules:
-    // 1. Public matches
-    // 2. Matches created by current user
-    // 3. Matches the current user has joined
-    const visibleMatches = this.mockMatches.filter(match => {
-      // Show public matches
-      if (match.is_public) return true
-      
+    // 1. Matches created by current user (private or public)
+    // 2. Matches the current user has joined (private or public)
+    const myMatches = this.mockMatches.filter(match => {
       // Show matches created by current user
       if (match.creator_id === this.mockUser.id) return true
       
@@ -122,7 +124,40 @@ export class MockApiClient implements ApiClient {
       return false
     })
     
-    return { data: visibleMatches, error: null }
+    return { data: myMatches, error: null }
+  }
+
+  async getPublicMatches(): Promise<ApiResponse<Match[]>> {
+    if (!this.isAuthenticated) {
+      return { data: null, error: 'Must be authenticated to view matches' }
+    }
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // Filter public matches where:
+    // 1. Match is public
+    // 2. Match is upcoming (not past)
+    // 3. User is NOT the creator
+    // 4. User is NOT already a participant
+    const now = new Date()
+    const publicMatches = this.mockMatches.filter(match => {
+      // Must be public
+      if (!match.is_public) return false
+      
+      // Must be upcoming
+      if (new Date(match.date_time) <= now) return false
+      
+      // Must not be created by current user
+      if (match.creator_id === this.mockUser.id) return false
+      
+      // Must not be joined by current user
+      if (this.joinedMatches.has(match.id)) return false
+      
+      return true
+    })
+    
+    return { data: publicMatches, error: null }
   }
 
   async getMatch(id: string): Promise<ApiResponse<Match>> {

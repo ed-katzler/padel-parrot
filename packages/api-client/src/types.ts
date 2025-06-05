@@ -75,6 +75,8 @@ export interface ApiClient {
   updateUser(userData: UpdateUserRequest): Promise<ApiResponse<User>>
   signOut(): Promise<ApiResponse<null>>
   getMatches(): Promise<ApiResponse<Match[]>>
+  getMyMatches(): Promise<ApiResponse<Match[]>>
+  getPublicMatches(): Promise<ApiResponse<Match[]>>
   getMatch(id: string): Promise<ApiResponse<Match>>
   createMatch(matchData: CreateMatchRequest): Promise<ApiResponse<Match>>
   updateMatch(matchId: string, matchData: UpdateMatchRequest): Promise<ApiResponse<Match>>

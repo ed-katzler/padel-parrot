@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Phone, Plus, Calendar, MapPin, Users, LogOut, Lock, Globe, ChevronDown, ChevronUp, User } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, isMatchInPast } from '@padel-parrot/shared'
-import { sendOtp, verifyOtp, getCurrentUser, signOut, getMatches, updateUser } from '@padel-parrot/api-client'
+import { sendOtp, verifyOtp, getCurrentUser, signOut, getMyMatches, getPublicMatches, updateUser } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
 
 interface Match {
@@ -37,14 +37,15 @@ export default function HomePage() {
   const [otpCode, setOtpCode] = useState('')
   const [showOtpInput, setShowOtpInput] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [matches, setMatches] = useState<Match[]>([])
+  const [myMatches, setMyMatches] = useState<Match[]>([])
+  const [publicMatches, setPublicMatches] = useState<Match[]>([])
   const [isLoadingMatches, setIsLoadingMatches] = useState(false)
   const [showPastMatches, setShowPastMatches] = useState(false)
   const [pastMatchesPage, setPastMatchesPage] = useState(1)
   const [isLoadingMorePastMatches, setIsLoadingMorePastMatches] = useState(false)
   const [showNameModal, setShowNameModal] = useState(false)
-  const [isUpdatingName, setIsUpdatingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
+  const [isUpdatingName, setIsUpdatingName] = useState(false)
 
   // Check if user is already authenticated on page load
   useEffect(() => {
@@ -136,18 +137,33 @@ export default function HomePage() {
   }
 
   const loadMatches = async () => {
+    if (!isAuthenticated) return
+    
     setIsLoadingMatches(true)
     try {
-      const { data, error } = await getMatches()
-      if (error) {
-        toast.error(error)
-        setMatches([])
+      // Load both private/participant matches and public matches
+      const [myMatchesResult, publicMatchesResult] = await Promise.all([
+        getMyMatches(),
+        getPublicMatches()
+      ])
+      
+      if (myMatchesResult.error) {
+        toast.error(`Failed to load your matches: ${myMatchesResult.error}`)
+        setMyMatches([])
       } else {
-        setMatches(data || [])
+        setMyMatches(myMatchesResult.data || [])
+      }
+      
+      if (publicMatchesResult.error) {
+        toast.error(`Failed to load public matches: ${publicMatchesResult.error}`)
+        setPublicMatches([])
+      } else {
+        setPublicMatches(publicMatchesResult.data || [])
       }
     } catch (error) {
       toast.error('Failed to load matches')
-      setMatches([])
+      setMyMatches([])
+      setPublicMatches([])
     } finally {
       setIsLoadingMatches(false)
     }
@@ -250,7 +266,8 @@ export default function HomePage() {
       } else {
         setIsAuthenticated(false)
         setCurrentUser(null)
-        setMatches([])
+        setMyMatches([])
+        setPublicMatches([])
         setPhoneNumber('')
         setOtpCode('')
         setShowOtpInput(false)
@@ -275,8 +292,8 @@ export default function HomePage() {
   }
 
   // Separate matches into upcoming and past
-  const upcomingMatches = matches.filter(match => !isMatchInPast(match.date_time))
-  const pastMatches = matches.filter(match => isMatchInPast(match.date_time))
+  const upcomingMatches = myMatches.filter(match => !isMatchInPast(match.date_time))
+  const pastMatches = myMatches.filter(match => isMatchInPast(match.date_time))
   
   // Sort past matches by date (most recent first)
   const sortedPastMatches = pastMatches.sort((a, b) => 
@@ -553,7 +570,7 @@ export default function HomePage() {
                 No matches yet
               </h3>
               <p className="text-gray-600 mb-4">
-                Create your first match to get started
+                Create your first match or join a public match below
               </p>
               <button
                 onClick={handleCreateMatch}
@@ -565,6 +582,48 @@ export default function HomePage() {
           ) : (
             <div className="space-y-4">
               {upcomingMatches.map((match) => renderMatchCard(match))}
+            </div>
+          )}
+        </div>
+
+        {/* Public Matches Section */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Public Matches
+              </h2>
+              <Globe className="w-5 h-5 text-green-600" />
+            </div>
+            <span className="text-sm text-gray-500">
+              Discover matches to join
+            </span>
+          </div>
+          
+          {isLoadingMatches ? (
+            <div className="card text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading public matches...</p>
+            </div>
+          ) : publicMatches.length === 0 ? (
+            <div className="card text-center py-8">
+              <Globe className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No public matches available
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Be the first to create a public match for others to join
+              </p>
+              <button
+                onClick={handleCreateMatch}
+                className="btn-primary"
+              >
+                Create Public Match
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {publicMatches.map((match) => renderMatchCard(match))}
             </div>
           )}
         </div>
