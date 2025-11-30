@@ -41,6 +41,8 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
   const [locations, setLocations] = useState<Location[]>([])
   const [locationInput, setLocationInput] = useState('')
   const [showLocationDropdown, setShowLocationDropdown] = useState(false)
+  const [selectedDate, setSelectedDate] = useState('')
+  const [selectedTime, setSelectedTime] = useState('')
 
   const {
     register,
@@ -104,11 +106,11 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
         setValue('title', data.title)
         setValue('description', data.description || '')
         
+        // Parse date and time separately
         const date = new Date(data.date_time)
-        const localDateTime = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-          .toISOString()
-          .slice(0, 16)
-        setValue('date_time', localDateTime)
+        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+        setSelectedDate(localDate.toISOString().slice(0, 10))
+        setSelectedTime(localDate.toISOString().slice(11, 16))
         
         setValue('location', data.location)
         setValue('max_players', data.max_players)
@@ -147,8 +149,8 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
       if (data.title !== match.title) updateData.title = data.title
       if (data.description !== match.description) updateData.description = data.description
       
-      if (data.date_time) {
-        const newDateTime = new Date(data.date_time).toISOString()
+      if (selectedDate && selectedTime) {
+        const newDateTime = new Date(combineDateAndTime(selectedDate, selectedTime)).toISOString()
         if (newDateTime !== match.date_time) updateData.date_time = newDateTime
       }
       
@@ -206,16 +208,20 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
     }
   }
 
-  const getMinDateTime = () => {
+  const getMinDate = () => {
     const now = new Date()
-    now.setMinutes(now.getMinutes() + 30)
-    return now.toISOString().slice(0, 16)
+    return now.toISOString().slice(0, 10)
   }
 
-  const getMaxDateTime = () => {
+  const getMaxDate = () => {
     const future = new Date()
-    future.setDate(future.getDate() + 30)
-    return future.toISOString().slice(0, 16)
+    future.setDate(future.getDate() + 60)
+    return future.toISOString().slice(0, 10)
+  }
+
+  const combineDateAndTime = (date: string, time: string) => {
+    if (!date || !time) return ''
+    return `${date}T${time}`
   }
 
   const filteredLocations = locations.filter(location =>
@@ -304,21 +310,36 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
               When
             </h2>
             
-            <div>
-              <label htmlFor="date_time" className="block text-sm font-medium text-stone-700 mb-1.5">
-                Date & time
-              </label>
-              <input
-                id="date_time"
-                type="datetime-local"
-                {...register('date_time')}
-                min={getMinDateTime()}
-                max={getMaxDateTime()}
-                className="input"
-              />
-              {errors.date_time && (
-                <p className="text-error-600 text-xs mt-1">{errors.date_time.message}</p>
-              )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="date" className="block text-sm font-medium text-stone-700 mb-1.5">
+                  Date
+                </label>
+                <input
+                  id="date"
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  min={getMinDate()}
+                  max={getMaxDate()}
+                  className="input"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="time" className="block text-sm font-medium text-stone-700 mb-1.5">
+                  Time
+                </label>
+                <input
+                  id="time"
+                  type="time"
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                  className="input"
+                  required
+                />
+              </div>
             </div>
 
             <div>

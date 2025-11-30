@@ -15,6 +15,8 @@ export default function CreateMatchPage() {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false)
   const [locationInput, setLocationInput] = useState('')
   const [isCustomLocation, setIsCustomLocation] = useState(false)
+  const [selectedDate, setSelectedDate] = useState('')
+  const [selectedTime, setSelectedTime] = useState('')
   
   const {
     register,
@@ -56,6 +58,11 @@ export default function CreateMatchPage() {
   }, [locationInput, locations])
 
   const onSubmit = async (data: CreateMatchInput) => {
+    if (!selectedDate || !selectedTime) {
+      toast.error('Please select date and time')
+      return
+    }
+
     setIsLoading(true)
     
     try {
@@ -66,7 +73,7 @@ export default function CreateMatchPage() {
         return
       }
 
-      const dateTime = new Date(data.date_time).toISOString()
+      const dateTime = new Date(combineDateAndTime(selectedDate, selectedTime)).toISOString()
       
       const { data: match, error } = await createMatch({
         title: data.title,
@@ -114,16 +121,20 @@ export default function CreateMatchPage() {
     setValue('location', value)
   }
 
-  const getMinDateTime = () => {
+  const getMinDate = () => {
     const now = new Date()
-    now.setMinutes(now.getMinutes() + 30)
-    return now.toISOString().slice(0, 16)
+    return now.toISOString().slice(0, 10)
   }
 
-  const getMaxDateTime = () => {
+  const getMaxDate = () => {
     const future = new Date()
-    future.setDate(future.getDate() + 30)
-    return future.toISOString().slice(0, 16)
+    future.setDate(future.getDate() + 60)
+    return future.toISOString().slice(0, 10)
+  }
+
+  const combineDateAndTime = (date: string, time: string) => {
+    if (!date || !time) return ''
+    return `${date}T${time}`
   }
 
   return (
@@ -186,21 +197,36 @@ export default function CreateMatchPage() {
               When
             </h2>
             
-            <div>
-              <label htmlFor="date_time" className="block text-sm font-medium text-stone-700 mb-1.5">
-                Date & time
-              </label>
-              <input
-                id="date_time"
-                type="datetime-local"
-                {...register('date_time')}
-                min={getMinDateTime()}
-                max={getMaxDateTime()}
-                className="input"
-              />
-              {errors.date_time && (
-                <p className="text-error-600 text-xs mt-1">{errors.date_time.message}</p>
-              )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="date" className="block text-sm font-medium text-stone-700 mb-1.5">
+                  Date
+                </label>
+                <input
+                  id="date"
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  min={getMinDate()}
+                  max={getMaxDate()}
+                  className="input"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="time" className="block text-sm font-medium text-stone-700 mb-1.5">
+                  Time
+                </label>
+                <input
+                  id="time"
+                  type="time"
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                  className="input"
+                  required
+                />
+              </div>
             </div>
 
             <div>
