@@ -302,7 +302,7 @@ export default function CreateMatchPage() {
               <input
                 type="checkbox"
                 {...register('is_public')}
-                className="mt-0.5 w-4 h-4 text-primary-600 bg-white border-stone-300 rounded focus:ring-primary-500 focus:ring-2"
+                className="mt-0.5 w-4 h-4 text-stone-900 bg-white border-stone-300 rounded focus:ring-stone-500 focus:ring-2"
               />
               <div className="ml-3">
                 <span className="font-medium text-stone-900 text-sm">Public match</span>

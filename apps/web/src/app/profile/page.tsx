@@ -117,7 +117,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-primary-600 mx-auto mb-3"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-stone-600 mx-auto mb-3"></div>
           <p className="text-sm text-stone-500">Loading...</p>
         </div>
       </div>

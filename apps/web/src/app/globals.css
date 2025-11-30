@@ -15,13 +15,13 @@
 }
 
 @layer components {
-  /* Buttons - Flat, minimal design */
+  /* Buttons - Neutral, minimal design */
   .btn {
-    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-all duration-150 ease-smooth focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
   }
   
   .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 active:bg-primary-800;
+    @apply btn bg-stone-900 text-white hover:bg-stone-800 focus:ring-stone-500 active:bg-stone-950;
   }
   
   .btn-secondary {
@@ -29,16 +29,16 @@
   }
   
   .btn-success {
-    @apply btn bg-success-600 text-white hover:bg-success-700 focus:ring-success-500 active:bg-success-800;
+    @apply btn bg-stone-700 text-white hover:bg-stone-600 focus:ring-stone-500 active:bg-stone-800;
   }
   
   .btn-danger {
-    @apply btn bg-error-500 text-white hover:bg-error-600 focus:ring-error-400 active:bg-error-700;
+    @apply btn bg-stone-600 text-white hover:bg-stone-500 focus:ring-stone-400 active:bg-stone-700;
   }
   
   /* Inputs - Clean focus states */
   .input {
-    @apply block w-full rounded-md border border-stone-300 px-3 py-2 text-base text-stone-900 placeholder-stone-400 bg-white transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500;
+    @apply block w-full rounded-md border border-stone-300 px-3 py-2 text-base text-stone-900 placeholder-stone-400 bg-white transition-colors duration-150 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500;
   }
   
   /* Cards - Minimal, borderless feel */
@@ -55,21 +55,25 @@
     @apply mx-auto max-w-md px-4 sm:max-w-lg sm:px-6;
   }
   
-  /* Subtle badge styles */
+  /* Subtle status badges - only place color is used */
   .badge {
     @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
   }
   
-  .badge-success {
-    @apply badge bg-success-50 text-success-700 border border-success-200;
+  .badge-available {
+    @apply badge;
+    background-color: #e8f5e9;
+    color: #2e7d32;
   }
   
-  .badge-error {
-    @apply badge bg-error-50 text-error-700 border border-error-200;
+  .badge-full {
+    @apply badge;
+    background-color: #ffebee;
+    color: #c62828;
   }
   
   .badge-neutral {
-    @apply badge bg-stone-100 text-stone-600 border border-stone-200;
+    @apply badge bg-stone-100 text-stone-500;
   }
 }
 

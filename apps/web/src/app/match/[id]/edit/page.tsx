@@ -226,7 +226,7 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-primary-600 mx-auto mb-3"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-stone-600 mx-auto mb-3"></div>
           <p className="text-sm text-stone-500">Loading...</p>
         </div>
       </div>
@@ -422,7 +422,7 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
               <input
                 type="checkbox"
                 {...register('is_public')}
-                className="mt-0.5 w-4 h-4 text-primary-600 bg-white border-stone-300 rounded focus:ring-primary-500 focus:ring-2"
+                className="mt-0.5 w-4 h-4 text-stone-900 bg-white border-stone-300 rounded focus:ring-stone-500 focus:ring-2"
               />
               <div className="ml-3">
                 <span className="font-medium text-stone-900 text-sm">Public match</span>

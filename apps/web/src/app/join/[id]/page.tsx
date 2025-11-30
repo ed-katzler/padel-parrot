@@ -119,7 +119,7 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-primary-600 mx-auto mb-3"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-stone-600 mx-auto mb-3"></div>
           <p className="text-sm text-stone-500">Loading...</p>
         </div>
       </div>
@@ -166,7 +166,7 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
             <h2 className="text-lg font-semibold text-stone-900 pr-3">
               {match.title}
             </h2>
-            <span className={`flex-shrink-0 ${isFull ? 'badge-error' : 'badge-success'}`}>
+            <span className={`flex-shrink-0 ${isFull ? 'badge-full' : 'badge-available'}`}>
               {isFull ? 'Full' : `${availableSpots} left`}
             </span>
           </div>
@@ -208,7 +208,7 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
                     <div
                       key={i}
                       className={`w-2 h-2 rounded-full ${
-                        i < match.current_players ? 'bg-primary-500' : 'bg-stone-200'
+                        i < match.current_players ? 'bg-stone-500' : 'bg-stone-200'
                       }`}
                     />
                   ))}
@@ -299,8 +299,8 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
           <div className="card text-center">
             {isFull ? (
               <>
-                <div className="w-10 h-10 bg-error-50 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Users className="w-5 h-5 text-error-500" />
+                <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <Users className="w-5 h-5 text-stone-400" />
                 </div>
                 <h3 className="font-medium text-stone-900 mb-1">Match is full</h3>
                 <p className="text-sm text-stone-500 mb-4">No spots available</p>
@@ -313,8 +313,8 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
               </>
             ) : (
               <>
-                <div className="w-10 h-10 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <UserPlus className="w-5 h-5 text-primary-600" />
+                <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <UserPlus className="w-5 h-5 text-stone-600" />
                 </div>
                 <h3 className="font-medium text-stone-900 mb-1">Ready to join!</h3>
                 <p className="text-sm text-stone-500 mb-4">

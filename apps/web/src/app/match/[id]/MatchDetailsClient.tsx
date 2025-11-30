@@ -220,7 +220,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-primary-600 mx-auto mb-3"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-stone-600 mx-auto mb-3"></div>
           <p className="text-sm text-stone-500">Loading...</p>
         </div>
       </div>
@@ -273,10 +273,10 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="p-2 rounded-md hover:bg-error-50 transition-colors"
+                    className="p-2 rounded-md hover:bg-stone-100 transition-colors"
                     title="Delete"
                   >
-                    <Trash2 className="w-4 h-4 text-error-500" />
+                    <Trash2 className="w-4 h-4 text-stone-500" />
                   </button>
                 </>
               )}
@@ -300,7 +300,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
             <h2 className="text-xl font-semibold text-stone-900 pr-3">
               {match.title}
             </h2>
-            <span className={`flex-shrink-0 ${isFull ? 'badge-error' : 'badge-success'}`}>
+            <span className={`flex-shrink-0 ${isFull ? 'badge-full' : 'badge-available'}`}>
               {isFull ? 'Full' : `${availableSpots} left`}
             </span>
           </div>
@@ -351,7 +351,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                     <div
                       key={i}
                       className={`w-2 h-2 rounded-full ${
-                        i < participants.length ? 'bg-primary-500' : 'bg-stone-200'
+                        i < participants.length ? 'bg-stone-500' : 'bg-stone-200'
                       }`}
                     />
                   ))}
@@ -370,7 +370,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
             
             {isLoadingParticipants ? (
               <div className="text-center py-4">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-stone-300 border-t-primary-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-stone-300 border-t-stone-600 mx-auto"></div>
               </div>
             ) : (
               <div className="space-y-2">
@@ -398,8 +398,8 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
         <div className="card">
           {hasJoined ? (
             <div className="text-center">
-              <div className="w-10 h-10 bg-success-50 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Users className="w-5 h-5 text-success-600" />
+              <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Users className="w-5 h-5 text-stone-600" />
               </div>
               <p className="font-medium text-stone-900 mb-1">You're in!</p>
               <p className="text-sm text-stone-500 mb-4">See you at the match</p>
@@ -417,8 +417,8 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
             <div className="text-center">
               {isFull ? (
                 <>
-                  <div className="w-10 h-10 bg-error-50 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Users className="w-5 h-5 text-error-500" />
+                  <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Users className="w-5 h-5 text-stone-400" />
                   </div>
                   <p className="font-medium text-stone-900 mb-1">Match is full</p>
                   <p className="text-sm text-stone-500">No spots available</p>
@@ -495,8 +495,8 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
         <div className="fixed inset-0 bg-stone-900/50 flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="bg-white rounded-lg max-w-sm w-full p-5 animate-scale-in">
             <div className="flex items-start mb-4">
-              <div className="w-10 h-10 bg-error-50 rounded-full flex items-center justify-center mr-3">
-                <Trash2 className="w-5 h-5 text-error-500" />
+              <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mr-3">
+                <Trash2 className="w-5 h-5 text-stone-500" />
               </div>
               <div>
                 <h3 className="font-medium text-stone-900">Delete match?</h3>

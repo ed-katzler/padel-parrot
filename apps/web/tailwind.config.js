@@ -8,57 +8,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Warm orange primary based on brand color #ef6b00
-        primary: {
-          50: '#fff8f1',
-          100: '#feecdc',
-          200: '#fcd9bd',
-          300: '#fac08a',
-          400: '#f79c55',
-          500: '#f47b2a',
-          600: '#ef6b00', // Brand orange
-          700: '#c45a00',
-          800: '#9c4a00',
-          900: '#7d3d00',
-        },
-        // Muted success (warm green-gray)
-        success: {
-          50: '#f6f7f6',
-          100: '#e3e7e3',
-          200: '#c8d1c8',
-          300: '#a3b2a3',
-          400: '#7a8f7a',
-          500: '#5a7a5a',
-          600: '#486248',
-          700: '#3d503d',
-          800: '#344234',
-          900: '#2d382d',
-        },
-        // Muted error (warm red-gray)
-        error: {
-          50: '#fdf6f5',
-          100: '#fae8e6',
-          200: '#f5d0cc',
-          300: '#edada6',
-          400: '#e08075',
-          500: '#cf5c4d',
-          600: '#b84a3b',
-          700: '#993d31',
-          800: '#7f352b',
-          900: '#6a2f27',
-        },
-        // Muted warning
-        warning: {
-          50: '#fdfaf5',
-          100: '#faf2e4',
-          200: '#f4e2c4',
-          300: '#ebcc99',
-          400: '#dfaf66',
-          500: '#d49642',
-          600: '#c07c30',
-          700: '#9f6229',
-          800: '#804f26',
-          900: '#694222',
+        // Status colors only - very subtle
+        status: {
+          available: '#e8f5e9',      // Very light green for "spots available"
+          availableText: '#2e7d32',  // Muted green text
+          full: '#ffebee',           // Very light red for "full"
+          fullText: '#c62828',       // Muted red text
         },
       },
       fontFamily: {

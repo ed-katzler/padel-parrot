@@ -315,14 +315,14 @@ export default function HomePage() {
                 {match.title}
               </h3>
               {match.is_public ? (
-                <Globe className={`w-3.5 h-3.5 flex-shrink-0 ${isPast ? 'text-stone-400' : 'text-primary-600'}`} />
+                <Globe className="w-3.5 h-3.5 flex-shrink-0 text-stone-400" />
               ) : (
                 <Lock className="w-3.5 h-3.5 flex-shrink-0 text-stone-400" />
               )}
             </div>
           </div>
           {!isPast && (
-            <span className={`ml-3 flex-shrink-0 ${isFull ? 'badge-error' : 'badge-success'}`}>
+            <span className={`ml-3 flex-shrink-0 ${isFull ? 'badge-full' : 'badge-available'}`}>
               {isFull ? 'Full' : `${availableSpots} left`}
             </span>
           )}
@@ -355,7 +355,7 @@ export default function HomePage() {
                   key={i}
                   className={`w-1.5 h-1.5 rounded-full ${
                     i < match.current_players
-                      ? isPast ? 'bg-stone-400' : 'bg-primary-500'
+                      ? 'bg-stone-500'
                       : 'bg-stone-200'
                   }`}
                 />
@@ -502,7 +502,7 @@ export default function HomePage() {
           
           {isLoadingMatches ? (
             <div className="card text-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-primary-600 mx-auto mb-3"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-stone-600 mx-auto mb-3"></div>
               <p className="text-sm text-stone-500">Loading...</p>
             </div>
           ) : upcomingMatches.length === 0 ? (
@@ -525,16 +525,13 @@ export default function HomePage() {
 
         {/* Public Matches */}
         <section>
-          <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide">
-              Public Matches
-            </h2>
-            <Globe className="w-3.5 h-3.5 text-primary-600" />
-          </div>
+          <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-3">
+            Public Matches
+          </h2>
           
           {isLoadingMatches ? (
             <div className="card text-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-primary-600 mx-auto mb-3"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-stone-600 mx-auto mb-3"></div>
               <p className="text-sm text-stone-500">Loading...</p>
             </div>
           ) : publicMatches.length === 0 ? (
@@ -591,8 +588,8 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-stone-900/50 flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="bg-white rounded-lg max-w-sm w-full p-6 animate-scale-in">
             <div className="text-center mb-5">
-              <div className="w-12 h-12 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                <User className="w-6 h-6 text-primary-600" />
+              <div className="w-12 h-12 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <User className="w-6 h-6 text-stone-600" />
               </div>
               <h3 className="text-lg font-semibold text-stone-900">
                 Welcome!

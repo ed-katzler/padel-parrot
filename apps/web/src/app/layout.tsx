@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   keywords: ['padel', 'matches', 'sports', 'organization', 'booking'],
   authors: [{ name: 'PadelParrot Team' }],
   viewport: 'width=device-width, initial-scale=1',
-  themeColor: '#ef6b00',
+  themeColor: '#292524',
   manifest: '/manifest.json',
   openGraph: {
     title: 'PadelParrot - Organise Padel Matches',
@@ -50,7 +50,7 @@ export default function RootLayout({
                 background: '#292524',
               },
               iconTheme: {
-                primary: '#ef6b00',
+                primary: '#22c55e',
                 secondary: '#fafaf9',
               },
             },
