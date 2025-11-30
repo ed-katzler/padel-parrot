@@ -217,7 +217,7 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
 
   const getMaxDate = () => {
     const future = new Date()
-    future.setDate(future.getDate() + 60)
+    future.setFullYear(future.getFullYear() + 1)
     return future.toISOString().slice(0, 10)
   }
 
