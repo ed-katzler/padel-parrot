@@ -2,48 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-stone-50 text-stone-900;
   }
 }
 
 @layer components {
+  /* Buttons - Flat, minimal design */
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-all duration-150 ease-smooth focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
   }
   
   .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 active:bg-primary-800;
   }
   
   .btn-secondary {
-    @apply btn bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500;
+    @apply btn bg-stone-100 text-stone-700 hover:bg-stone-200 focus:ring-stone-400 border border-stone-200 active:bg-stone-300;
   }
   
   .btn-success {
-    @apply btn bg-success-600 text-white hover:bg-success-700 focus:ring-success-500;
+    @apply btn bg-success-600 text-white hover:bg-success-700 focus:ring-success-500 active:bg-success-800;
   }
   
   .btn-danger {
-    @apply btn bg-error-600 text-white hover:bg-error-700 focus:ring-error-500;
+    @apply btn bg-error-500 text-white hover:bg-error-600 focus:ring-error-400 active:bg-error-700;
   }
   
+  /* Inputs - Clean focus states */
   .input {
-    @apply block w-full rounded-lg border border-gray-300 px-3 py-2 text-base placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500;
+    @apply block w-full rounded-md border border-stone-300 px-3 py-2 text-base text-stone-900 placeholder-stone-400 bg-white transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500;
   }
   
+  /* Cards - Minimal, borderless feel */
   .card {
-    @apply rounded-lg bg-white p-6 shadow-sm border border-gray-200;
+    @apply rounded-md bg-white p-5 border border-stone-200 transition-all duration-150;
   }
   
+  .card-hover {
+    @apply card hover:border-stone-300 hover:shadow-sm;
+  }
+  
+  /* Container */
   .container-app {
     @apply mx-auto max-w-md px-4 sm:max-w-lg sm:px-6;
   }
-} 
+  
+  /* Subtle badge styles */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+  }
+  
+  .badge-success {
+    @apply badge bg-success-50 text-success-700 border border-success-200;
+  }
+  
+  .badge-error {
+    @apply badge bg-error-50 text-error-700 border border-error-200;
+  }
+  
+  .badge-neutral {
+    @apply badge bg-stone-100 text-stone-600 border border-stone-200;
+  }
+}
+
+@layer utilities {
+  /* Animation utilities */
+  .animate-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  .hover-lift {
+    @apply transition-transform duration-150 hover:-translate-y-0.5;
+  }
+}

@@ -43,7 +43,6 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
         setIsAuthenticated(true)
       }
     } catch (error) {
-      // User not authenticated, which is fine for join page
       setIsAuthenticated(false)
     }
   }
@@ -60,7 +59,7 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
         setMatch(data)
       }
     } catch (error) {
-      toast.error('Failed to load match details')
+      toast.error('Failed to load match')
     } finally {
       setIsLoading(false)
     }
@@ -69,7 +68,7 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!phoneNumber.trim()) {
-      toast.error('Please enter a phone number')
+      toast.error('Enter phone number')
       return
     }
 
@@ -80,10 +79,10 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
         toast.error(error)
       } else {
         setShowOtpInput(true)
-        toast.success('Verification code sent!')
+        toast.success('Code sent!')
       }
     } catch (error) {
-      toast.error('Failed to send verification code')
+      toast.error('Failed to send code')
     } finally {
       setIsSubmitting(false)
     }
@@ -92,7 +91,7 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!otpCode.trim()) {
-      toast.error('Please enter the verification code')
+      toast.error('Enter verification code')
       return
     }
 
@@ -103,26 +102,25 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
         toast.error(error)
       } else if (user) {
         setIsAuthenticated(true)
-        toast.success('Successfully signed in!')
+        toast.success('Signed in!')
       }
     } catch (error) {
-      toast.error('Failed to verify code')
+      toast.error('Failed to verify')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleJoinMatch = () => {
-    // Redirect to match details page where they can complete the join
     window.location.href = `/match/${params.id}`
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading match details...</p>
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-primary-600 mx-auto mb-3"></div>
+          <p className="text-sm text-stone-500">Loading...</p>
         </div>
       </div>
     )
@@ -130,10 +128,10 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
 
   if (!match) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Match not found</h2>
-          <p className="text-gray-600 mb-4">This match may have been deleted or the link is invalid.</p>
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
+        <div className="text-center max-w-sm">
+          <h2 className="text-lg font-medium text-stone-900 mb-2">Match not found</h2>
+          <p className="text-sm text-stone-500 mb-4">This link may be invalid.</p>
           <button 
             onClick={() => window.location.href = '/'}
             className="btn-primary"
@@ -149,216 +147,199 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
   const isFull = isMatchFull(match.max_players, match.current_players)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="container-app py-4">
-          <div className="text-center">
-            <img src="/padelparrot-light.svg" alt="PadelParrot Logo" className="h-8 mx-auto mb-1" />
-            <p className="text-gray-600 mt-1">
-              You've been invited to join a match
-            </p>
-          </div>
+      <header className="bg-white border-b border-stone-200">
+        <div className="container-app py-4 text-center">
+          <img src="/padelparrot-light.svg" alt="PadelParrot" className="h-7 mx-auto mb-1" />
+          <p className="text-sm text-stone-500">
+            You've been invited to join a match
+          </p>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container-app py-6">
-        <div className="space-y-6">
-          {/* Match Preview */}
-          <div className="card">
-            <div className="flex items-start justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">
-                {match.title}
-              </h2>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                isFull
-                  ? 'bg-error-100 text-error-800'
-                  : 'bg-success-100 text-success-800'
-              }`}>
-                {isFull ? 'Full' : `${availableSpots} spots left`}
-              </span>
-            </div>
-            
-            {match.description && (
-              <p className="text-gray-600 mb-4">
-                {match.description}
-              </p>
-            )}
-            
-            <div className="space-y-3">
-              <div className="flex items-center">
-                <Calendar className="w-4 h-4 text-gray-400 mr-3" />
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {formatMatchDate(match.date_time)}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {formatMatchDateTime(match.date_time, match.duration_minutes)}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-center">
-                <MapPin className="w-4 h-4 text-gray-400 mr-3" />
-                <p className="font-medium text-gray-900">
-                  {match.location}
+      <main className="container-app py-6 space-y-4">
+        {/* Match Preview */}
+        <div className="card">
+          <div className="flex items-start justify-between mb-3">
+            <h2 className="text-lg font-semibold text-stone-900 pr-3">
+              {match.title}
+            </h2>
+            <span className={`flex-shrink-0 ${isFull ? 'badge-error' : 'badge-success'}`}>
+              {isFull ? 'Full' : `${availableSpots} left`}
+            </span>
+          </div>
+          
+          {match.description && (
+            <p className="text-stone-600 text-sm mb-4">
+              {match.description}
+            </p>
+          )}
+          
+          <div className="space-y-2.5 text-sm">
+            <div className="flex items-start">
+              <Calendar className="w-4 h-4 text-stone-400 mr-3 mt-0.5" />
+              <div>
+                <p className="font-medium text-stone-900">
+                  {formatMatchDate(match.date_time)}
+                </p>
+                <p className="text-xs text-stone-500">
+                  {formatMatchDateTime(match.date_time, match.duration_minutes)}
                 </p>
               </div>
-              
-              <div className="flex items-center">
-                <Users className="w-4 h-4 text-gray-400 mr-3" />
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {match.current_players}/{match.max_players} players
-                  </p>
-                  <div className="flex mt-1">
-                    {Array.from({ length: match.max_players }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-2.5 h-2.5 rounded-full mr-1 ${
-                          i < match.current_players
-                            ? 'bg-primary-500'
-                            : 'bg-gray-200'
-                        }`}
-                      />
-                    ))}
-                  </div>
+            </div>
+            
+            <div className="flex items-start">
+              <MapPin className="w-4 h-4 text-stone-400 mr-3 mt-0.5" />
+              <p className="font-medium text-stone-900">
+                {match.location}
+              </p>
+            </div>
+            
+            <div className="flex items-start">
+              <Users className="w-4 h-4 text-stone-400 mr-3 mt-0.5" />
+              <div>
+                <p className="font-medium text-stone-900">
+                  {match.current_players}/{match.max_players} players
+                </p>
+                <div className="flex mt-1.5 gap-0.5">
+                  {Array.from({ length: match.max_players }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-2 h-2 rounded-full ${
+                        i < match.current_players ? 'bg-primary-500' : 'bg-stone-200'
+                      }`}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Authentication / Join Section */}
-          {!isAuthenticated ? (
-            <div className="card">
-              <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Sign in to join this match
-                </h3>
-                <p className="text-gray-600">
-                  Quick verification with your phone number
-                </p>
-              </div>
+        {/* Auth / Join */}
+        {!isAuthenticated ? (
+          <div className="card">
+            <div className="text-center mb-5">
+              <h3 className="font-medium text-stone-900 mb-1">
+                Sign in to join
+              </h3>
+              <p className="text-sm text-stone-500">
+                Quick phone verification
+              </p>
+            </div>
 
-              {!showOtpInput ? (
-                <form onSubmit={handleSendOtp}>
-                  <div className="mb-4">
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone Number
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        id="phone"
-                        type="tel"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="+1234567890"
-                        className="input pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="btn-primary w-full"
-                  >
-                    {isSubmitting ? 'Sending...' : 'Send Verification Code'}
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={handleVerifyOtp}>
-                  <div className="mb-4">
-                    <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
-                      Verification Code
-                    </label>
+            {!showOtpInput ? (
+              <form onSubmit={handleSendOtp} className="space-y-4">
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-stone-700 mb-1.5">
+                    Phone number
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-4 h-4" />
                     <input
-                      id="otp"
-                      type="text"
-                      value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value)}
-                      placeholder="123456"
-                      className="input text-center text-lg tracking-widest"
-                      maxLength={6}
+                      id="phone"
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="+1234567890"
+                      className="input pl-10"
                       required
                     />
-                    <p className="text-sm text-gray-500 mt-2">
-                      Enter the 6-digit code sent to {phoneNumber}
-                    </p>
                   </div>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="btn-primary w-full mb-3"
-                  >
-                    {isSubmitting ? 'Verifying...' : 'Verify & Join'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowOtpInput(false)}
-                    className="btn-secondary w-full"
-                  >
-                    Change Number
-                  </button>
-                </form>
-              )}
-            </div>
-          ) : (
-            <div className="card">
-              {isFull ? (
-                <div className="text-center py-6">
-                  <div className="w-16 h-16 bg-error-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="w-8 h-8 text-error-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    This match is full
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Unfortunately, this match has reached its maximum capacity.
-                  </p>
-                  <button 
-                    onClick={() => window.location.href = '/'}
-                    className="btn-secondary"
-                  >
-                    Find Other Matches
-                  </button>
                 </div>
-              ) : (
-                <div className="text-center py-6">
-                  <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <UserPlus className="w-8 h-8 text-primary-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Ready to join!
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    {availableSpots} {availableSpots === 1 ? 'spot' : 'spots'} available in this match
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn-primary w-full"
+                >
+                  {isSubmitting ? 'Sending...' : 'Continue'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOtp} className="space-y-4">
+                <div>
+                  <label htmlFor="otp" className="block text-sm font-medium text-stone-700 mb-1.5">
+                    Verification code
+                  </label>
+                  <input
+                    id="otp"
+                    type="text"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    placeholder="123456"
+                    className="input text-center tracking-widest"
+                    maxLength={6}
+                    required
+                    autoFocus
+                  />
+                  <p className="text-xs text-stone-500 mt-1.5">
+                    Sent to {phoneNumber}
                   </p>
-                  <button
-                    onClick={handleJoinMatch}
-                    className="btn-primary btn-lg"
-                  >
-                    <UserPlus className="w-5 h-5 mr-2" />
-                    Join This Match
-                  </button>
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* App Info */}
-          <div className="card bg-gray-50 border-gray-200">
-            <div className="text-center">
-              <img src="/padelparrot-light.svg" alt="PadelParrot Logo" className="h-6 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">
-                The easiest way to organize padel matches
-              </p>
-            </div>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn-primary w-full"
+                >
+                  {isSubmitting ? 'Verifying...' : 'Sign in'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowOtpInput(false)}
+                  className="btn-secondary w-full"
+                >
+                  Change number
+                </button>
+              </form>
+            )}
           </div>
+        ) : (
+          <div className="card text-center">
+            {isFull ? (
+              <>
+                <div className="w-10 h-10 bg-error-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <Users className="w-5 h-5 text-error-500" />
+                </div>
+                <h3 className="font-medium text-stone-900 mb-1">Match is full</h3>
+                <p className="text-sm text-stone-500 mb-4">No spots available</p>
+                <button 
+                  onClick={() => window.location.href = '/'}
+                  className="btn-secondary"
+                >
+                  Find other matches
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="w-10 h-10 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <UserPlus className="w-5 h-5 text-primary-600" />
+                </div>
+                <h3 className="font-medium text-stone-900 mb-1">Ready to join!</h3>
+                <p className="text-sm text-stone-500 mb-4">
+                  {availableSpots} {availableSpots === 1 ? 'spot' : 'spots'} available
+                </p>
+                <button
+                  onClick={handleJoinMatch}
+                  className="btn-primary"
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Join match
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="card bg-stone-100 border-stone-200 text-center">
+          <img src="/padelparrot-light.svg" alt="PadelParrot" className="h-5 mx-auto mb-1" />
+          <p className="text-xs text-stone-500">
+            The easiest way to organize padel matches
+          </p>
         </div>
       </main>
     </div>
   )
-} 
+}

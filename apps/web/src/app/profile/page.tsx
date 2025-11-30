@@ -89,10 +89,10 @@ export default function ProfilePage() {
       if (updatedUser) {
         setUser(updatedUser)
         setIsEditing(false)
-        toast.success('Profile updated successfully!')
+        toast.success('Saved!')
       }
     } catch (error) {
-      toast.error('Failed to update profile. Please try again.')
+      toast.error('Failed to update')
     } finally {
       setIsUpdating(false)
     }
@@ -115,10 +115,10 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-primary-600 mx-auto mb-3"></div>
+          <p className="text-sm text-stone-500">Loading...</p>
         </div>
       </div>
     )
@@ -126,12 +126,12 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Profile not found</h2>
-          <p className="text-gray-600 mb-4">Please try signing in again.</p>
+          <h2 className="text-lg font-medium text-stone-900 mb-2">Profile not found</h2>
+          <p className="text-sm text-stone-500 mb-4">Please sign in again.</p>
           <button onClick={handleBack} className="btn-primary">
-            Back to Home
+            Back to home
           </button>
         </div>
       </div>
@@ -139,18 +139,18 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="container-app py-4">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200 sticky top-0 z-10">
+        <div className="container-app py-3">
           <div className="flex items-center">
             <button
               onClick={handleBack}
-              className="mr-4 p-2 -ml-2 rounded-lg hover:bg-gray-100"
+              className="mr-3 p-1.5 -ml-1.5 rounded-md hover:bg-stone-100 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5 text-stone-600" />
             </button>
-            <h1 className="text-xl font-bold text-gray-900">
+            <h1 className="font-medium text-stone-900">
               Profile
             </h1>
           </div>
@@ -159,92 +159,74 @@ export default function ProfilePage() {
 
       {/* Main Content */}
       <main className="container-app py-6">
-        <div className="max-w-md mx-auto">
-          {/* Profile Avatar */}
-          <div className="text-center mb-6">
-            <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="w-12 h-12 text-primary-600" />
+        <div className="max-w-sm mx-auto space-y-6">
+          {/* Avatar */}
+          <div className="text-center">
+            <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <User className="w-8 h-8 text-stone-400" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              {user.name || 'Welcome!'}
+            <h2 className="text-lg font-semibold text-stone-900">
+              {user.name || 'Set your name'}
             </h2>
-            <p className="text-gray-600">
-              {user.name ? 'Your PadelParrot profile' : 'Complete your profile to get started'}
-            </p>
           </div>
 
-          {/* Profile Information */}
-          <div className="card space-y-6">
-            {/* Phone Number */}
-            <div className="flex items-center">
-              <Phone className="w-5 h-5 text-gray-400 mr-3" />
+          {/* Info */}
+          <div className="card space-y-5">
+            {/* Phone */}
+            <div className="flex items-start">
+              <Phone className="w-4 h-4 text-stone-400 mr-3 mt-0.5" />
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                </label>
-                <p className="text-gray-900 font-medium">{user.phone}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Phone number cannot be changed
-                </p>
+                <p className="text-xs text-stone-500 mb-0.5">Phone</p>
+                <p className="text-sm font-medium text-stone-900">{user.phone}</p>
               </div>
             </div>
 
             {/* Name */}
             <div className="flex items-start">
-              <User className="w-5 h-5 text-gray-400 mr-3 mt-1" />
+              <User className="w-4 h-4 text-stone-400 mr-3 mt-0.5" />
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Display Name
-                </label>
+                <p className="text-xs text-stone-500 mb-0.5">Display name</p>
                 {isEditing ? (
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-                    <div>
-                      <input
-                        type="text"
-                        {...register('name')}
-                        placeholder="Enter your name"
-                        className="input"
-                        autoFocus
-                      />
-                      {errors.name && (
-                        <p className="text-error-600 text-sm mt-1">{errors.name.message}</p>
-                      )}
-                    </div>
-                    <div className="flex space-x-2">
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+                    <input
+                      type="text"
+                      {...register('name')}
+                      placeholder="Your name"
+                      className="input text-sm"
+                      autoFocus
+                    />
+                    {errors.name && (
+                      <p className="text-error-600 text-xs">{errors.name.message}</p>
+                    )}
+                    <div className="flex gap-2">
                       <button
                         type="submit"
                         disabled={isUpdating}
-                        className="flex-1 btn-primary"
+                        className="btn-primary flex-1 text-xs py-1.5"
                       >
-                        <Save className="w-4 h-4 mr-2" />
+                        <Save className="w-3 h-3 mr-1" />
                         {isUpdating ? 'Saving...' : 'Save'}
                       </button>
                       <button
                         type="button"
                         onClick={handleCancel}
                         disabled={isUpdating}
-                        className="btn-secondary"
+                        className="btn-secondary px-3 py-1.5"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3 h-3" />
                       </button>
                     </div>
                   </form>
                 ) : (
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-900 font-medium">
-                        {user.name || 'Not set'}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        This name will be shown to other players
-                      </p>
-                    </div>
+                    <p className="text-sm font-medium text-stone-900">
+                      {user.name || <span className="text-stone-400">Not set</span>}
+                    </p>
                     <button
                       onClick={handleEdit}
-                      className="p-2 rounded-lg hover:bg-gray-100"
-                      title="Edit name"
+                      className="p-1.5 rounded-md hover:bg-stone-100 transition-colors"
                     >
-                      <Edit3 className="w-4 h-4 text-gray-600" />
+                      <Edit3 className="w-3.5 h-3.5 text-stone-500" />
                     </button>
                   </div>
                 )}
@@ -253,44 +235,30 @@ export default function ProfilePage() {
           </div>
 
           {/* Account Info */}
-          <div className="card mt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Account Information
+          <div className="card">
+            <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">
+              Account
             </h3>
-            <div className="space-y-3 text-sm">
+            <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">Member since:</span>
-                <span className="text-gray-900">
+                <span className="text-stone-500">Member since</span>
+                <span className="text-stone-900">
                   {new Date(user.created_at).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Last updated:</span>
-                <span className="text-gray-900">
-                  {new Date(user.updated_at).toLocaleDateString()}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Help Text */}
+          {/* Help */}
           {!user.name && (
-            <div className="card mt-6 bg-blue-50 border-blue-200">
-              <div className="flex items-start">
-                <User className="w-5 h-5 text-blue-600 mr-3 mt-0.5" />
-                <div>
-                  <h3 className="font-semibold text-blue-900 mb-1">
-                    Complete your profile
-                  </h3>
-                  <p className="text-sm text-blue-700">
-                    Add your name so other players can recognize you in matches. You can change this anytime.
-                  </p>
-                </div>
-              </div>
+            <div className="card bg-stone-100 border-stone-200">
+              <p className="text-sm text-stone-600">
+                Add your name so other players can recognize you in matches.
+              </p>
             </div>
           )}
         </div>
       </main>
     </div>
   )
-} 
+}

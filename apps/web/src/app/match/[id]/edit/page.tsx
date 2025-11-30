@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, Calendar, MapPin, Users, User as UserIcon, Clock } from 'lucide-react'
+import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { updateMatchSchema, type UpdateMatchInput } from '@padel-parrot/shared'
 import { getMatch, updateMatch, getCurrentUser, getLocations } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
@@ -41,14 +41,12 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
   const [locations, setLocations] = useState<Location[]>([])
   const [locationInput, setLocationInput] = useState('')
   const [showLocationDropdown, setShowLocationDropdown] = useState(false)
-  const [isCustomLocation, setIsCustomLocation] = useState(false)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-    watch
   } = useForm<UpdateMatchInput>({
     resolver: zodResolver(updateMatchSchema)
   })
@@ -70,11 +68,10 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
       if (user && !error) {
         setCurrentUserId(user.id)
       } else {
-        toast.error('Please sign in to edit matches')
+        toast.error('Please sign in')
         window.location.href = '/'
       }
     } catch (error) {
-      toast.error('Authentication failed')
       window.location.href = '/'
     }
   }
@@ -92,25 +89,21 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
       if (data) {
         setMatch(data)
         
-        // Check if current user is the creator
         if (currentUserId && data.creator_id !== currentUserId) {
-          toast.error('Only the match creator can edit this match')
+          toast.error('Only the creator can edit')
           window.location.href = `/match/${params.id}`
           return
         }
         
-        // Check if match is editable (upcoming status)
         if (data.status !== 'upcoming') {
           toast.error('Can only edit upcoming matches')
           window.location.href = `/match/${params.id}`
           return
         }
         
-        // Pre-fill the form with current match data
         setValue('title', data.title)
         setValue('description', data.description || '')
         
-        // Convert ISO string to datetime-local format
         const date = new Date(data.date_time)
         const localDateTime = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
           .toISOString()
@@ -149,43 +142,23 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
     setIsUpdating(true)
     
     try {
-      // Only include fields that have actually changed
       const updateData: UpdateMatchInput = {}
       
-      if (data.title !== match.title) {
-        updateData.title = data.title
-      }
-      
-      if (data.description !== match.description) {
-        updateData.description = data.description
-      }
+      if (data.title !== match.title) updateData.title = data.title
+      if (data.description !== match.description) updateData.description = data.description
       
       if (data.date_time) {
         const newDateTime = new Date(data.date_time).toISOString()
-        if (newDateTime !== match.date_time) {
-          updateData.date_time = newDateTime
-        }
+        if (newDateTime !== match.date_time) updateData.date_time = newDateTime
       }
       
-      if (data.location !== match.location) {
-        updateData.location = locationInput || data.location
-      }
+      if (data.location !== match.location) updateData.location = locationInput || data.location
+      if (data.max_players !== match.max_players) updateData.max_players = data.max_players
+      if (data.duration_minutes !== match.duration_minutes) updateData.duration_minutes = data.duration_minutes
+      if (data.is_public !== match.is_public) updateData.is_public = data.is_public
       
-      if (data.max_players !== match.max_players) {
-        updateData.max_players = data.max_players
-      }
-      
-      if (data.duration_minutes !== match.duration_minutes) {
-        updateData.duration_minutes = data.duration_minutes
-      }
-      
-      if (data.is_public !== match.is_public) {
-        updateData.is_public = data.is_public
-      }
-      
-      // If no fields changed, show message and return
       if (Object.keys(updateData).length === 0) {
-        toast.success('No changes to save')
+        toast.success('No changes')
         window.location.href = `/match/${match.id}`
         return
       }
@@ -198,16 +171,14 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
       }
       
       if (updatedMatch) {
-        toast.success('Match updated successfully!')
-        
-        // Navigate back to the match details page
+        toast.success('Saved!')
         setTimeout(() => {
           window.location.href = `/match/${match.id}`
-        }, 1000)
+        }, 500)
       }
       
     } catch (error) {
-      toast.error('Failed to update match. Please try again.')
+      toast.error('Failed to update')
     } finally {
       setIsUpdating(false)
     }
@@ -221,7 +192,6 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
     setLocationInput(location.name)
     setValue('location', location.name)
     setShowLocationDropdown(false)
-    setIsCustomLocation(false)
   }
 
   const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,7 +199,6 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
     setLocationInput(value)
     setValue('location', value)
     
-    // Show dropdown when typing and there are matching locations
     if (value && locations.some(loc => loc.name.toLowerCase().includes(value.toLowerCase()))) {
       setShowLocationDropdown(true)
     } else {
@@ -237,14 +206,12 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
     }
   }
 
-  // Get current date/time for min attribute (30 minutes from now)
   const getMinDateTime = () => {
     const now = new Date()
-    now.setMinutes(now.getMinutes() + 30) // At least 30 minutes in the future
-    return now.toISOString().slice(0, 16) // Format for datetime-local input
+    now.setMinutes(now.getMinutes() + 30)
+    return now.toISOString().slice(0, 16)
   }
 
-  // Get max date (30 days from now)
   const getMaxDateTime = () => {
     const future = new Date()
     future.setDate(future.getDate() + 30)
@@ -257,10 +224,10 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading match...</p>
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-primary-600 mx-auto mb-3"></div>
+          <p className="text-sm text-stone-500">Loading...</p>
         </div>
       </div>
     )
@@ -268,12 +235,11 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
 
   if (!match) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Match not found</h2>
-          <p className="text-gray-600 mb-4">This match may have been deleted or the link is invalid.</p>
+          <h2 className="text-lg font-medium text-stone-900 mb-2">Match not found</h2>
           <button onClick={handleBack} className="btn-primary">
-            Back to Match
+            Back
           </button>
         </div>
       </div>
@@ -281,18 +247,18 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="container-app py-4">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200 sticky top-0 z-10">
+        <div className="container-app py-3">
           <div className="flex items-center">
             <button
               onClick={handleBack}
-              className="mr-4 p-2 -ml-2 rounded-lg hover:bg-gray-100"
+              className="mr-3 p-1.5 -ml-1.5 rounded-md hover:bg-stone-100 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5 text-stone-600" />
             </button>
-            <h1 className="text-xl font-bold text-gray-900">
+            <h1 className="font-medium text-stone-900">
               Edit Match
             </h1>
           </div>
@@ -302,66 +268,45 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
       {/* Main Content */}
       <main className="container-app py-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Match Title */}
-          <div className="card">
-            <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center mr-3">
-                <Calendar className="w-4 h-4 text-primary-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Match Details
-              </h2>
+          {/* Title & Description */}
+          <div className="card space-y-4">
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-stone-700 mb-1.5">
+                Match title
+              </label>
+              <input
+                id="title"
+                type="text"
+                {...register('title')}
+                className="input"
+              />
+              {errors.title && (
+                <p className="text-error-600 text-xs mt-1">{errors.title.message}</p>
+              )}
             </div>
             
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                  Match Title *
-                </label>
-                <input
-                  id="title"
-                  type="text"
-                  {...register('title')}
-                  placeholder="e.g., Evening Padel Session"
-                  className="input"
-                />
-                {errors.title && (
-                  <p className="text-error-600 text-sm mt-1">{errors.title.message}</p>
-                )}
-              </div>
-              
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                  Description (Optional)
-                </label>
-                <textarea
-                  id="description"
-                  {...register('description')}
-                  placeholder="Add any additional details about the match..."
-                  rows={3}
-                  className="input resize-none"
-                />
-                {errors.description && (
-                  <p className="text-error-600 text-sm mt-1">{errors.description.message}</p>
-                )}
-              </div>
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-stone-700 mb-1.5">
+                Description <span className="text-stone-400 font-normal">(optional)</span>
+              </label>
+              <textarea
+                id="description"
+                {...register('description')}
+                rows={2}
+                className="input resize-none"
+              />
             </div>
           </div>
 
           {/* Date & Time */}
-          <div className="card">
-            <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center mr-3">
-                <Calendar className="w-4 h-4 text-primary-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                When
-              </h2>
-            </div>
+          <div className="card space-y-4">
+            <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide">
+              When
+            </h2>
             
             <div>
-              <label htmlFor="date_time" className="block text-sm font-medium text-gray-700 mb-2">
-                Date & Time *
+              <label htmlFor="date_time" className="block text-sm font-medium text-stone-700 mb-1.5">
+                Date & time
               </label>
               <input
                 id="date_time"
@@ -372,56 +317,64 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
                 className="input"
               />
               {errors.date_time && (
-                <p className="text-error-600 text-sm mt-1">{errors.date_time.message}</p>
+                <p className="text-error-600 text-xs mt-1">{errors.date_time.message}</p>
               )}
-              <p className="text-sm text-gray-500 mt-1">
-                Must be at least 30 minutes in the future
-              </p>
+            </div>
+
+            <div>
+              <label htmlFor="duration_minutes" className="block text-sm font-medium text-stone-700 mb-1.5">
+                Duration
+              </label>
+              <select
+                id="duration_minutes"
+                {...register('duration_minutes', { valueAsNumber: true })}
+                className="input"
+              >
+                <option value={60}>1 hour</option>
+                <option value={90}>1.5 hours</option>
+                <option value={120}>2 hours</option>
+              </select>
             </div>
           </div>
 
           {/* Location */}
           <div className="card">
-            <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center mr-3">
-                <MapPin className="w-4 h-4 text-primary-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Where
-              </h2>
-            </div>
+            <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-4">
+              Where
+            </h2>
             
             <div className="relative">
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
-                Location *
+              <label htmlFor="location" className="block text-sm font-medium text-stone-700 mb-1.5">
+                Location
               </label>
-              <input
-                id="location"
-                type="text"
-                value={locationInput}
-                onChange={handleLocationInputChange}
-                onFocus={() => filteredLocations.length > 0 && setShowLocationDropdown(true)}
-                placeholder="Enter or select a location"
-                className="input"
-                autoComplete="off"
-              />
+              <div className="relative">
+                <input
+                  id="location"
+                  type="text"
+                  value={locationInput}
+                  onChange={handleLocationInputChange}
+                  onFocus={() => filteredLocations.length > 0 && setShowLocationDropdown(true)}
+                  className="input pr-10"
+                  autoComplete="off"
+                />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400" />
+              </div>
               {errors.location && (
-                <p className="text-error-600 text-sm mt-1">{errors.location.message}</p>
+                <p className="text-error-600 text-xs mt-1">{errors.location.message}</p>
               )}
               
-              {/* Location Dropdown */}
               {showLocationDropdown && filteredLocations.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                <div className="absolute z-20 w-full mt-1 bg-white border border-stone-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
                   {filteredLocations.map((location) => (
                     <button
                       key={location.id}
                       type="button"
                       onClick={() => handleLocationSelect(location)}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                      className="w-full px-3 py-2.5 text-left hover:bg-stone-50 border-b border-stone-100 last:border-b-0 transition-colors"
                     >
-                      <div className="font-medium text-gray-900">{location.name}</div>
+                      <div className="font-medium text-stone-900 text-sm">{location.name}</div>
                       {location.address && (
-                        <div className="text-sm text-gray-600">{location.address}</div>
+                        <div className="text-xs text-stone-500">{location.address}</div>
                       )}
                     </button>
                   ))}
@@ -432,18 +385,13 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
 
           {/* Players */}
           <div className="card">
-            <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center mr-3">
-                <Users className="w-4 h-4 text-primary-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Players
-              </h2>
-            </div>
+            <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-4">
+              Players
+            </h2>
             
             <div>
-              <label htmlFor="max_players" className="block text-sm font-medium text-gray-700 mb-2">
-                Maximum Players
+              <label htmlFor="max_players" className="block text-sm font-medium text-stone-700 mb-1.5">
+                Maximum players
               </label>
               <select
                 id="max_players"
@@ -456,102 +404,49 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
                     value={num}
                     disabled={match && num < match.current_players}
                   >
-                    {num} players {match && num < match.current_players ? '(below current players)' : ''}
+                    {num} players {match && num < match.current_players ? '(below current)' : ''}
                   </option>
                 ))}
               </select>
-              {errors.max_players && (
-                <p className="text-error-600 text-sm mt-1">{errors.max_players.message}</p>
-              )}
               {match && (
-                <p className="text-sm text-gray-500 mt-1">
-                  Currently {match.current_players} players have joined
+                <p className="text-xs text-stone-500 mt-1.5">
+                  {match.current_players} players have joined
                 </p>
               )}
             </div>
           </div>
 
-          {/* Duration */}
-          <div className="card">
-            <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center mr-3">
-                <Clock className="w-4 h-4 text-primary-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Duration
-              </h2>
-            </div>
-            
-            <div>
-              <label htmlFor="duration_minutes" className="block text-sm font-medium text-gray-700 mb-2">
-                Duration
-              </label>
-              <select
-                id="duration_minutes"
-                {...register('duration_minutes', { valueAsNumber: true })}
-                className="input"
-              >
-                <option value={30}>30 minutes</option>
-                <option value={60}>1 hour</option>
-                <option value={90}>1.5 hours</option>
-                <option value={120}>2 hours</option>
-              </select>
-              {errors.duration_minutes && (
-                <p className="text-error-600 text-sm mt-1">{errors.duration_minutes.message}</p>
-              )}
-              <p className="text-xs text-gray-500 mt-1">
-                How long will the match last?
-              </p>
-            </div>
-          </div>
-
           {/* Privacy */}
           <div className="card">
-            <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center mr-3">
-                <Users className="w-4 h-4 text-primary-600" />
+            <label className="flex items-start cursor-pointer">
+              <input
+                type="checkbox"
+                {...register('is_public')}
+                className="mt-0.5 w-4 h-4 text-primary-600 bg-white border-stone-300 rounded focus:ring-primary-500 focus:ring-2"
+              />
+              <div className="ml-3">
+                <span className="font-medium text-stone-900 text-sm">Public match</span>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Anyone can discover and join
+                </p>
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Privacy
-              </h2>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <div className="flex items-center h-5">
-                  <input
-                    id="is_public"
-                    type="checkbox"
-                    {...register('is_public')}
-                    className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
-                  />
-                </div>
-                <div className="ml-3">
-                  <label htmlFor="is_public" className="font-medium text-gray-900">
-                    Make this match public
-                  </label>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Public matches are visible to all users. Private matches are only visible to you and participants.
-                  </p>
-                </div>
-              </div>
-            </div>
+            </label>
           </div>
 
-          {/* Submit Button */}
-          <div className="card">
+          {/* Submit */}
+          <div className="space-y-2">
             <button
               type="submit"
               disabled={isUpdating}
-              className="btn-primary w-full py-3 text-base"
+              className="btn-primary w-full py-3"
             >
-              {isUpdating ? 'Updating Match...' : 'Update Match'}
+              {isUpdating ? 'Saving...' : 'Save changes'}
             </button>
             
             <button
               type="button"
               onClick={handleBack}
-              className="w-full mt-3 py-2 text-gray-600 hover:text-gray-800"
+              className="btn-secondary w-full"
             >
               Cancel
             </button>
@@ -560,4 +455,4 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
       </main>
     </div>
   )
-} 
+}

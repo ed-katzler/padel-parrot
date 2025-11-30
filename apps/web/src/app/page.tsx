@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, Plus, Calendar, MapPin, Users, LogOut, Lock, Globe, ChevronDown, ChevronUp, User } from 'lucide-react'
+import { Phone, Plus, Calendar, MapPin, Users, LogOut, Lock, Globe, User } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, isMatchInPast } from '@padel-parrot/shared'
 import { sendOtp, verifyOtp, getCurrentUser, signOut, getMyMatches, getPublicMatches, updateUser } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
@@ -47,23 +47,19 @@ export default function HomePage() {
   const [nameInput, setNameInput] = useState('')
   const [isUpdatingName, setIsUpdatingName] = useState(false)
 
-  // Check if user is already authenticated on page load
   useEffect(() => {
     checkAuthStatus()
   }, [])
 
-  // Load matches when authenticated
   useEffect(() => {
     if (isAuthenticated) {
       loadMatches()
     }
   }, [isAuthenticated])
 
-  // Refresh matches when page becomes visible (user returns from another tab/page)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden && isAuthenticated) {
-        // Check if we should refresh matches due to actions taken elsewhere
         const shouldRefresh = localStorage.getItem('shouldRefreshMatches')
         if (shouldRefresh) {
           localStorage.removeItem('shouldRefreshMatches')
@@ -76,7 +72,6 @@ export default function HomePage() {
 
     const handleFocus = () => {
       if (isAuthenticated) {
-        // Check if we should refresh matches due to actions taken elsewhere
         const shouldRefresh = localStorage.getItem('shouldRefreshMatches')
         if (shouldRefresh) {
           localStorage.removeItem('shouldRefreshMatches')
@@ -85,7 +80,6 @@ export default function HomePage() {
       }
     }
 
-    // Listen for page visibility changes
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('focus', handleFocus)
 
@@ -95,7 +89,6 @@ export default function HomePage() {
     }
   }, [isAuthenticated])
 
-  // Check for refresh signal when component mounts
   useEffect(() => {
     if (isAuthenticated) {
       const shouldRefresh = localStorage.getItem('shouldRefreshMatches')
@@ -106,7 +99,6 @@ export default function HomePage() {
     }
   }, [isAuthenticated])
 
-  // Listen for storage events (when localStorage is updated from other tabs)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'shouldRefreshMatches' && e.newValue === 'true' && isAuthenticated) {
@@ -126,13 +118,12 @@ export default function HomePage() {
         setCurrentUser(user)
         setIsAuthenticated(true)
         
-        // Show name modal if user doesn't have a name
         if (!user.name) {
           setShowNameModal(true)
         }
       }
     } catch (error) {
-      // User not authenticated, which is fine
+      // User not authenticated
     }
   }
 
@@ -141,7 +132,6 @@ export default function HomePage() {
     
     setIsLoadingMatches(true)
     try {
-      // Load both private/participant matches and public matches
       const [myMatchesResult, publicMatchesResult] = await Promise.all([
         getMyMatches(),
         getPublicMatches()
@@ -207,9 +197,8 @@ export default function HomePage() {
       } else if (user) {
         setCurrentUser(user)
         setIsAuthenticated(true)
-        toast.success('Successfully signed in!')
+        toast.success('Welcome!')
         
-        // Show name modal if user doesn't have a name
         if (!user.name) {
           setShowNameModal(true)
         }
@@ -243,7 +232,7 @@ export default function HomePage() {
         toast.success('Welcome to PadelParrot!')
       }
     } catch (error) {
-      toast.error('Failed to save name. Please try again.')
+      toast.error('Failed to save name')
     } finally {
       setIsUpdatingName(false)
     }
@@ -271,7 +260,7 @@ export default function HomePage() {
         setPhoneNumber('')
         setOtpCode('')
         setShowOtpInput(false)
-        toast.success('Signed out successfully')
+        toast.success('Signed out')
       }
     } catch (error) {
       toast.error('Failed to sign out')
@@ -286,16 +275,9 @@ export default function HomePage() {
     window.location.href = `/match/${matchId}`
   }
 
-  const handleRefreshMatches = () => {
-    loadMatches()
-    toast.success('Refreshed matches')
-  }
-
-  // Separate matches into upcoming and past
   const upcomingMatches = myMatches.filter(match => !isMatchInPast(match.date_time))
   const pastMatches = myMatches.filter(match => isMatchInPast(match.date_time))
   
-  // Sort past matches by date (most recent first)
   const sortedPastMatches = pastMatches.sort((a, b) => 
     new Date(b.date_time).getTime() - new Date(a.date_time).getTime()
   )
@@ -310,106 +292,71 @@ export default function HomePage() {
 
   const handleLoadMorePastMatches = () => {
     setIsLoadingMorePastMatches(true)
-    // Simulate loading delay for better UX
     setTimeout(() => {
       setPastMatchesPage(prev => prev + 1)
       setIsLoadingMorePastMatches(false)
-    }, 500)
+    }, 300)
   }
 
   const renderMatchCard = (match: Match, isPast: boolean = false) => {
-    // NOTE: match.current_players may be stale due to database sync issues
-    // The Match Details page shows accurate counts by loading actual participants
-    // This will be fixed when database triggers/migrations are properly applied
     const availableSpots = match.max_players - match.current_players
     const isFull = availableSpots === 0
     
     return (
       <div
         key={match.id}
-        className={`card hover:shadow-md transition-shadow cursor-pointer ${
-          isPast ? 'bg-gray-50' : ''
-        }`}
+        className={`card-hover cursor-pointer ${isPast ? 'opacity-75' : ''}`}
         onClick={() => handleJoinMatch(match.id)}
       >
         <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className={`text-lg font-semibold ${
-                isPast ? 'text-gray-600' : 'text-gray-900'
-              }`}>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className={`font-medium truncate ${isPast ? 'text-stone-500' : 'text-stone-900'}`}>
                 {match.title}
               </h3>
-              {/* Privacy indicator */}
               {match.is_public ? (
-                <span title="Public match">
-                  <Globe className={`w-4 h-4 ${
-                    isPast ? 'text-gray-400' : 'text-green-600'
-                  }`} />
-                </span>
+                <Globe className={`w-3.5 h-3.5 flex-shrink-0 ${isPast ? 'text-stone-400' : 'text-primary-600'}`} />
               ) : (
-                <span title="Private match">
-                  <Lock className="w-4 h-4 text-gray-400" />
-                </span>
+                <Lock className="w-3.5 h-3.5 flex-shrink-0 text-stone-400" />
               )}
             </div>
           </div>
           {!isPast && (
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                isFull
-                  ? 'bg-error-100 text-error-800'
-                  : 'bg-success-100 text-success-800'
-              }`}
-            >
-              {isFull ? 'Full' : `${availableSpots} spots left`}
+            <span className={`ml-3 flex-shrink-0 ${isFull ? 'badge-error' : 'badge-success'}`}>
+              {isFull ? 'Full' : `${availableSpots} left`}
             </span>
           )}
           {isPast && (
-            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
-              Completed
+            <span className="ml-3 flex-shrink-0 badge-neutral">
+              Past
             </span>
           )}
         </div>
         
-        {match.description && (
-          <p className={`mb-3 text-sm ${
-            isPast ? 'text-gray-500' : 'text-gray-600'
-          }`}>
-            {match.description}
-          </p>
-        )}
-        
-        <div className="space-y-2 text-sm">
-          <div className={`flex items-center ${
-            isPast ? 'text-gray-500' : 'text-gray-600'
-          }`}>
-            <Calendar className="w-4 h-4 mr-2" />
-            <span>
-              {formatMatchDate(match.date_time)} at {formatMatchDateTime(match.date_time, match.duration_minutes)}
+        <div className="space-y-1.5 text-sm">
+          <div className={`flex items-center ${isPast ? 'text-stone-400' : 'text-stone-600'}`}>
+            <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="truncate">
+              {formatMatchDate(match.date_time)} · {formatMatchTime(match.date_time)}
             </span>
           </div>
           
-          <div className={`flex items-center ${
-            isPast ? 'text-gray-500' : 'text-gray-600'
-          }`}>
-            <MapPin className="w-4 h-4 mr-2" />
-            <span>{match.location}</span>
+          <div className={`flex items-center ${isPast ? 'text-stone-400' : 'text-stone-600'}`}>
+            <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="truncate">{match.location}</span>
           </div>
           
-          <div className={`flex items-center ${
-            isPast ? 'text-gray-500' : 'text-gray-600'
-          }`}>
-            <Users className="w-4 h-4 mr-2" />
-            <span>{match.current_players}/{match.max_players} players</span>
-            <div className="flex ml-2">
+          <div className={`flex items-center ${isPast ? 'text-stone-400' : 'text-stone-600'}`}>
+            <Users className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span>{match.current_players}/{match.max_players}</span>
+            <div className="flex ml-2 gap-0.5">
               {Array.from({ length: match.max_players }).map((_, i) => (
                 <div
                   key={i}
-                  className={`w-2 h-2 rounded-full mr-1 ${
+                  className={`w-1.5 h-1.5 rounded-full ${
                     i < match.current_players
-                      ? isPast ? 'bg-gray-400' : 'bg-primary-500'
-                      : 'bg-gray-200'
+                      ? isPast ? 'bg-stone-400' : 'bg-primary-500'
+                      : 'bg-stone-200'
                   }`}
                 />
               ))}
@@ -420,29 +367,27 @@ export default function HomePage() {
     )
   }
 
+  // Login screen
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-sm animate-fade-in">
           <div className="text-center mb-8">
-            <img src="/padelparrot-light.svg" alt="PadelParrot Logo" className="mx-auto h-12 mb-2" />
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 sr-only">
-              PadelParrot
-            </h1>
-            <p className="text-gray-600">
-              Organize padel matches with ease
+            <img src="/padelparrot-light.svg" alt="PadelParrot" className="mx-auto h-10 mb-4" />
+            <p className="text-stone-500 text-sm">
+              Organise padel matches with ease
             </p>
           </div>
 
           <div className="card">
             {!showOtpInput ? (
-              <form onSubmit={handleSendOtp}>
-                <div className="mb-4">
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number
+              <form onSubmit={handleSendOtp} className="space-y-4">
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-stone-700 mb-1.5">
+                    Phone number
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-4 h-4" />
                     <input
                       id="phone"
                       type="tel"
@@ -459,14 +404,14 @@ export default function HomePage() {
                   disabled={isLoading}
                   className="btn-primary w-full"
                 >
-                  {isLoading ? 'Sending...' : 'Send Code'}
+                  {isLoading ? 'Sending...' : 'Continue'}
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleVerifyOtp}>
-                <div className="mb-4">
-                  <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
-                    Verification Code
+              <form onSubmit={handleVerifyOtp} className="space-y-4">
+                <div>
+                  <label htmlFor="otp" className="block text-sm font-medium text-stone-700 mb-1.5">
+                    Verification code
                   </label>
                   <input
                     id="otp"
@@ -474,27 +419,28 @@ export default function HomePage() {
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value)}
                     placeholder="123456"
-                    className="input text-center text-lg tracking-widest"
+                    className="input text-center tracking-widest"
                     maxLength={6}
                     required
+                    autoFocus
                   />
-                  <p className="text-sm text-gray-500 mt-2">
-                    Enter the 6-digit code sent to {phoneNumber}
+                  <p className="text-xs text-stone-500 mt-1.5">
+                    Sent to {phoneNumber}
                   </p>
                 </div>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="btn-primary w-full mb-3"
+                  className="btn-primary w-full"
                 >
-                  {isLoading ? 'Verifying...' : 'Verify Code'}
+                  {isLoading ? 'Verifying...' : 'Sign in'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowOtpInput(false)}
                   className="btn-secondary w-full"
                 >
-                  Change Number
+                  Change number
                 </button>
               </form>
             )}
@@ -504,39 +450,40 @@ export default function HomePage() {
     )
   }
 
+  // Main app
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="container-app py-4">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200 sticky top-0 z-10">
+        <div className="container-app py-3">
           <div className="flex items-center justify-between">
-            <div>
-              <img src="/padelparrot-light.svg" alt="PadelParrot Logo" className="h-6" />
-              {currentUser && (
-                <p className="text-sm text-gray-600">
-                  {currentUser.name || currentUser.phone}
-                </p>
+            <div className="flex items-center gap-3">
+              <img src="/padelparrot-light.svg" alt="PadelParrot" className="h-6" />
+              {currentUser?.name && (
+                <span className="text-sm text-stone-500 hidden sm:inline">
+                  {currentUser.name}
+                </span>
               )}
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={handleCreateMatch}
                 className="btn-primary"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Match
+                <Plus className="w-4 h-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">New match</span>
               </button>
               <button
                 onClick={handleProfile}
-                className="btn-secondary"
+                className="btn-secondary p-2"
                 title="Profile"
               >
                 <User className="w-4 h-4" />
               </button>
               <button
                 onClick={handleSignOut}
-                className="btn-secondary"
-                title="Sign Out"
+                className="btn-secondary p-2"
+                title="Sign out"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -546,115 +493,79 @@ export default function HomePage() {
       </header>
 
       {/* Main Content */}
-      <main className="container-app py-6">
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              My Upcoming Matches
-            </h2>
-            <button
-              onClick={handleRefreshMatches}
-              className="btn-secondary"
-              disabled={isLoadingMatches}
-            >
-              {isLoadingMatches ? 'Loading...' : 'Refresh'}
-            </button>
-          </div>
+      <main className="container-app py-6 space-y-8">
+        {/* My Upcoming Matches */}
+        <section>
+          <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-3">
+            My Matches
+          </h2>
           
           {isLoadingMatches ? (
             <div className="card text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading matches...</p>
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-primary-600 mx-auto mb-3"></div>
+              <p className="text-sm text-stone-500">Loading...</p>
             </div>
           ) : upcomingMatches.length === 0 ? (
             <div className="card text-center py-8">
-              <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No matches yet
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Create your first match or join a public match below
-              </p>
+              <Calendar className="w-8 h-8 text-stone-300 mx-auto mb-3" />
+              <p className="text-stone-600 mb-4">No upcoming matches</p>
               <button
                 onClick={handleCreateMatch}
                 className="btn-primary"
               >
-                Create Match
+                Create your first match
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {upcomingMatches.map((match) => renderMatchCard(match))}
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Public Matches Section */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Public Matches
-              </h2>
-              <Globe className="w-5 h-5 text-green-600" />
-            </div>
-            <span className="text-sm text-gray-500">
-              Discover matches to join
-            </span>
+        {/* Public Matches */}
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide">
+              Public Matches
+            </h2>
+            <Globe className="w-3.5 h-3.5 text-primary-600" />
           </div>
           
           {isLoadingMatches ? (
             <div className="card text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading public matches...</p>
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-primary-600 mx-auto mb-3"></div>
+              <p className="text-sm text-stone-500">Loading...</p>
             </div>
           ) : publicMatches.length === 0 ? (
             <div className="card text-center py-8">
-              <Globe className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No public matches available
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Be the first to create a public match for others to join
-              </p>
-              {/* <button
-                onClick={handleCreateMatch}
-                className="btn-primary"
-              >
-                Create Public Match
-              </button> */}
+              <Globe className="w-8 h-8 text-stone-300 mx-auto mb-3" />
+              <p className="text-stone-600">No public matches available</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {publicMatches.map((match) => renderMatchCard(match))}
             </div>
           )}
-        </div>
+        </section>
 
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              My Past Matches
-            </h2>
-            <button
-              onClick={handleTogglePastMatches}
-              className="btn-secondary"
-            >
-              {showPastMatches ? 'Hide Past Matches' : 'Show Past Matches'}
-            </button>
-          </div>
+        {/* Past Matches */}
+        <section>
+          <button
+            onClick={handleTogglePastMatches}
+            className="flex items-center gap-2 text-sm font-medium text-stone-500 uppercase tracking-wide mb-3 hover:text-stone-700 transition-colors"
+          >
+            Past Matches ({sortedPastMatches.length})
+            <span className="text-xs normal-case font-normal">
+              {showPastMatches ? '− Hide' : '+ Show'}
+            </span>
+          </button>
           
-          {showPastMatches ? (
-            <div className="space-y-4">
+          {showPastMatches && (
+            <div className="space-y-3 animate-fade-in">
               {displayedPastMatches.length === 0 ? (
                 <div className="card text-center py-8">
-                  <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No past matches yet
-                  </h3>
-                  <p className="text-gray-600">
-                    Past matches will appear here after they're completed
-                  </p>
+                  <p className="text-stone-500">No past matches</p>
                 </div>
               ) : (
                 <>
@@ -665,86 +576,64 @@ export default function HomePage() {
                       className="btn-secondary w-full"
                       disabled={isLoadingMorePastMatches}
                     >
-                      {isLoadingMorePastMatches ? 'Loading...' : 'Load More'}
+                      {isLoadingMorePastMatches ? 'Loading...' : 'Load more'}
                     </button>
                   )}
                 </>
               )}
             </div>
-          ) : (
-            <div className="card text-center py-8">
-              <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Past Matches ({sortedPastMatches.length})
-              </h3>
-              <p className="text-gray-600 mb-4">
-                {sortedPastMatches.length === 0 
-                  ? 'No past matches yet' 
-                  : `${sortedPastMatches.length} past matches available`}
-              </p>
-            </div>
           )}
-        </div>
+        </section>
       </main>
       
       {/* Name Setup Modal */}
       {showNameModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="w-8 h-8 text-primary-600" />
+        <div className="fixed inset-0 bg-stone-900/50 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-lg max-w-sm w-full p-6 animate-scale-in">
+            <div className="text-center mb-5">
+              <div className="w-12 h-12 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                <User className="w-6 h-6 text-primary-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Welcome to PadelParrot!
+              <h3 className="text-lg font-semibold text-stone-900">
+                Welcome!
               </h3>
-              <p className="text-gray-600">
-                Let's set up your profile. What should other players call you?
+              <p className="text-sm text-stone-500 mt-1">
+                What should we call you?
               </p>
             </div>
             
             <form onSubmit={handleSaveName} className="space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Name
-                </label>
-                <input
-                  id="name"
-                  type="text"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  placeholder="Enter your name"
-                  className="input"
-                  autoFocus
-                  maxLength={50}
-                />
-              </div>
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                placeholder="Your name"
+                className="input"
+                autoFocus
+                maxLength={50}
+              />
               
-              <div className="flex space-x-3">
+              <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={handleSkipName}
-                  className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="flex-1 btn-secondary"
                   disabled={isUpdatingName}
                 >
-                  Skip for now
+                  Skip
                 </button>
                 <button
                   type="submit"
                   className="flex-1 btn-primary"
                   disabled={isUpdatingName || !nameInput.trim()}
                 >
-                  {isUpdatingName ? 'Saving...' : 'Save Name'}
+                  {isUpdatingName ? 'Saving...' : 'Continue'}
                 </button>
               </div>
             </form>
-            
-            <p className="text-xs text-gray-500 text-center mt-4">
-              You can always change this later in your profile
-            </p>
           </div>
         </div>
       )}
     </div>
   )
-} 
+}

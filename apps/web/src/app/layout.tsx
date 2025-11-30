@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   keywords: ['padel', 'matches', 'sports', 'organization', 'booking'],
   authors: [{ name: 'PadelParrot Team' }],
   viewport: 'width=device-width, initial-scale=1',
-  themeColor: '#0ea5e9',
+  themeColor: '#ef6b00',
   manifest: '/manifest.json',
   openGraph: {
     title: 'PadelParrot - Organise Padel Matches',
@@ -31,25 +31,36 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-stone-50">
           {children}
         </div>
         <Toaster
           position="top-center"
           toastOptions={{
-            duration: 4000,
+            duration: 3000,
             style: {
-              background: '#363636',
-              color: '#fff',
+              background: '#292524',
+              color: '#fafaf9',
+              fontSize: '14px',
+              borderRadius: '6px',
+              padding: '12px 16px',
             },
             success: {
               style: {
-                background: '#22c55e',
+                background: '#292524',
+              },
+              iconTheme: {
+                primary: '#ef6b00',
+                secondary: '#fafaf9',
               },
             },
             error: {
               style: {
-                background: '#ef4444',
+                background: '#292524',
+              },
+              iconTheme: {
+                primary: '#cf5c4d',
+                secondary: '#fafaf9',
               },
             },
           }}
@@ -57,4 +68,4 @@ export default function RootLayout({
       </body>
     </html>
   )
-} 
+}
