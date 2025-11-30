@@ -6,6 +6,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createMatchSchema, type CreateMatchInput } from '@padel-parrot/shared'
 import { createMatch, getCurrentUser, getLocations, type Location } from '@padel-parrot/api-client'
+import DatePicker from '@/components/DatePicker'
+import TimePicker from '@/components/TimePicker'
 import toast from 'react-hot-toast'
 
 export default function CreateMatchPage() {
@@ -197,36 +199,28 @@ export default function CreateMatchPage() {
               When
             </h2>
             
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="date" className="block text-sm font-medium text-stone-700 mb-1.5">
-                  Date
-                </label>
-                <input
-                  id="date"
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  min={getMinDate()}
-                  max={getMaxDate()}
-                  className="input"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="time" className="block text-sm font-medium text-stone-700 mb-1.5">
-                  Time
-                </label>
-                <input
-                  id="time"
-                  type="time"
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="input"
-                  required
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                Date
+              </label>
+              <DatePicker
+                value={selectedDate}
+                onChange={setSelectedDate}
+                minDate={getMinDate()}
+                maxDate={getMaxDate()}
+                placeholder="Select date"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                Time
+              </label>
+              <TimePicker
+                value={selectedTime}
+                onChange={setSelectedTime}
+                placeholder="Select time"
+              />
             </div>
 
             <div>
