@@ -1,385 +1,66 @@
-'use client'
+import { Metadata } from 'next'
+import { getMatch } from '@padel-parrot/api-client'
+import { formatMatchDate, formatMatchDateTime } from '@padel-parrot/shared'
+import JoinMatchClient from './JoinMatchClient'
 
-import { useState, useEffect } from 'react'
-import { Calendar, MapPin, Users, UserPlus, Phone } from 'lucide-react'
-import { formatMatchDate, formatMatchTime, formatMatchDateTime, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
-import { getMatch, sendOtp, verifyOtp, getCurrentUser } from '@padel-parrot/api-client'
-import toast from 'react-hot-toast'
-
-interface Match {
-  id: string
-  title: string
-  description?: string
-  date_time: string
-  duration_minutes: number
-  location: string
-  max_players: number
-  current_players: number
-  status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled'
-  creator_id: string
-  is_public: boolean
-  created_at: string
-  updated_at: string
+interface Props {
+  params: { id: string }
 }
 
-export default function JoinMatchPage({ params }: { params: { id: string } }) {
-  const [match, setMatch] = useState<Match | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [otpCode, setOtpCode] = useState('')
-  const [showOtpInput, setShowOtpInput] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    loadMatch()
-    checkAuthStatus()
-  }, [params.id])
-
-  const checkAuthStatus = async () => {
-    try {
-      const { data: user, error } = await getCurrentUser()
-      if (user && !error) {
-        setIsAuthenticated(true)
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  try {
+    const { data: match, error } = await getMatch(params.id)
+    
+    if (error || !match) {
+      return {
+        title: 'Join Match - PadelParrot',
+        description: 'Join this padel match on PadelParrot.',
       }
-    } catch (error) {
-      setIsAuthenticated(false)
-    }
-  }
-
-  const loadMatch = async () => {
-    setIsLoading(true)
-    try {
-      const { data, error } = await getMatch(params.id)
-      if (error) {
-        toast.error(error)
-        return
-      }
-      if (data) {
-        setMatch(data)
-      }
-    } catch (error) {
-      toast.error('Failed to load match')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!phoneNumber.trim()) {
-      toast.error('Enter phone number')
-      return
     }
 
-    setIsSubmitting(true)
-    try {
-      const { error } = await sendOtp(phoneNumber)
-      if (error) {
-        toast.error(error)
-      } else {
-        setShowOtpInput(true)
-        toast.success('Code sent!')
-      }
-    } catch (error) {
-      toast.error('Failed to send code')
-    } finally {
-      setIsSubmitting(false)
+    const matchDate = formatMatchDate(match.date_time)
+    const matchDateTime = formatMatchDateTime(match.date_time, match.duration_minutes)
+    const spotsLeft = match.max_players - match.current_players
+    const statusEmoji = spotsLeft === 0 ? '🔴' : spotsLeft <= 2 ? '🟡' : '🟢'
+    
+    const title = `${statusEmoji} ${match.title} - Join on PadelParrot`
+    const description = `🎾 ${match.title}\n📅 ${matchDate} at ${matchDateTime}\n📍 ${match.location}\n👥 ${match.current_players}/${match.max_players} players${spotsLeft > 0 ? ` - ${spotsLeft} spots left!` : ' - FULL'}`
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.padelparrot.com'
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title: `🎾 ${match.title}`,
+        description,
+        type: 'website',
+        url: `${appUrl}/join/${params.id}`,
+        siteName: 'PadelParrot',
+        images: [
+          {
+            url: `${appUrl}/api/og/match/${params.id}`,
+            width: 1200,
+            height: 630,
+            alt: `${match.title} - Padel Match`,
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `🎾 ${match.title}`,
+        description,
+        images: [`${appUrl}/api/og/match/${params.id}`],
+      },
+    }
+  } catch (error) {
+    return {
+      title: 'Join Match - PadelParrot',
+      description: 'Organise and join padel matches easily.',
     }
   }
+}
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!otpCode.trim()) {
-      toast.error('Enter verification code')
-      return
-    }
-
-    setIsSubmitting(true)
-    try {
-      const { data: user, error } = await verifyOtp(phoneNumber, otpCode)
-      if (error) {
-        toast.error(error)
-      } else if (user) {
-        setIsAuthenticated(true)
-        toast.success('Signed in!')
-      }
-    } catch (error) {
-      toast.error('Failed to verify')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleJoinMatch = () => {
-    window.location.href = `/match/${params.id}`
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
-        <div className="text-center">
-          <div 
-            className="animate-spin rounded-full h-6 w-6 mx-auto mb-3"
-            style={{ 
-              border: '2px solid rgb(var(--color-border-light))',
-              borderTopColor: 'rgb(var(--color-text-muted))'
-            }}
-          />
-          <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!match) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
-        <div className="text-center max-w-sm">
-          <h2 className="text-lg font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Match not found</h2>
-          <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>This link may be invalid.</p>
-          <button 
-            onClick={() => window.location.href = '/'}
-            className="btn btn-primary"
-          >
-            Go to PadelParrot
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  const availableSpots = getAvailableSpots(match.max_players, match.current_players)
-  const isFull = isMatchFull(match.max_players, match.current_players)
-
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
-      {/* Header */}
-      <header style={{ backgroundColor: 'rgb(var(--color-surface))', borderBottom: '1px solid rgb(var(--color-border-light))' }}>
-        <div className="container-app py-5 text-center">
-          <img src="/padelparrot-light.svg" alt="PadelParrot" className="h-7 mx-auto mb-2" />
-          <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            You've been invited to join a match
-          </p>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container-app py-6 space-y-4">
-        {/* Match Preview */}
-        <div className="card">
-          <div className="flex items-start justify-between mb-4">
-            <h2 className="text-xl font-semibold pr-3" style={{ color: 'rgb(var(--color-text))' }}>
-              {match.title}
-            </h2>
-            <span className={`flex-shrink-0 badge ${isFull ? 'badge-full' : 'badge-available'}`}>
-              {isFull ? 'Full' : `${availableSpots} left`}
-            </span>
-          </div>
-          
-          {match.description && (
-            <p className="text-sm mb-5" style={{ color: 'rgb(var(--color-text-muted))' }}>
-              {match.description}
-            </p>
-          )}
-          
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-              >
-                <Calendar className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
-              </div>
-              <div>
-                <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                  {formatMatchDate(match.date_time)}
-                </p>
-                <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  {formatMatchDateTime(match.date_time, match.duration_minutes)}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-              >
-                <MapPin className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text))' }}>
-                  {match.location}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-              >
-                <Users className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
-              </div>
-              <div>
-                <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                  {match.current_players}/{match.max_players} players
-                </p>
-                <div className="flex mt-2 gap-1">
-                  {Array.from({ length: match.max_players }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-2 h-2 rounded-full"
-                      style={{ 
-                        backgroundColor: i < match.current_players 
-                          ? 'rgb(var(--color-text-muted))' 
-                          : 'rgb(var(--color-border-light))'
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Auth / Join */}
-        {!isAuthenticated ? (
-          <div className="card">
-            <div className="text-center mb-6">
-              <h3 className="font-semibold mb-1" style={{ color: 'rgb(var(--color-text))' }}>
-                Sign in to join
-              </h3>
-              <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                Quick phone verification
-              </p>
-            </div>
-
-            {!showOtpInput ? (
-              <form onSubmit={handleSendOtp} className="space-y-4">
-                <div className="form-field">
-                  <label htmlFor="phone" className="form-label">
-                    Phone number
-                  </label>
-                  <div className="relative">
-                    <Phone 
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                      style={{ color: 'rgb(var(--color-text-subtle))' }}
-                    />
-                    <input
-                      id="phone"
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="+1234567890"
-                      className="input"
-                      style={{ paddingLeft: '2.5rem' }}
-                      required
-                    />
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="btn btn-primary w-full"
-                >
-                  {isSubmitting ? 'Sending...' : 'Continue'}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <div className="form-field">
-                  <label htmlFor="otp" className="form-label">
-                    Verification code
-                  </label>
-                  <input
-                    id="otp"
-                    type="text"
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value)}
-                    placeholder="123456"
-                    className="input"
-                    style={{ textAlign: 'center', letterSpacing: '0.25em' }}
-                    maxLength={6}
-                    required
-                    autoFocus
-                  />
-                  <p className="form-hint">
-                    Sent to {phoneNumber}
-                  </p>
-                </div>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="btn btn-primary w-full"
-                >
-                  {isSubmitting ? 'Verifying...' : 'Sign in'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowOtpInput(false)}
-                  className="btn btn-secondary w-full"
-                >
-                  Change number
-                </button>
-              </form>
-            )}
-          </div>
-        ) : (
-          <div className="card text-center">
-            {isFull ? (
-              <>
-                <div 
-                  className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
-                  style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-                >
-                  <Users className="w-6 h-6" style={{ color: 'rgb(var(--color-text-subtle))' }} />
-                </div>
-                <h3 className="font-semibold mb-1" style={{ color: 'rgb(var(--color-text))' }}>Match is full</h3>
-                <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>No spots available</p>
-                <button 
-                  onClick={() => window.location.href = '/'}
-                  className="btn btn-secondary"
-                >
-                  Find other matches
-                </button>
-              </>
-            ) : (
-              <>
-                <div 
-                  className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
-                  style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-                >
-                  <UserPlus className="w-6 h-6" style={{ color: 'rgb(var(--color-text-muted))' }} />
-                </div>
-                <h3 className="font-semibold mb-1" style={{ color: 'rgb(var(--color-text))' }}>Ready to join!</h3>
-                <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  {availableSpots} {availableSpots === 1 ? 'spot' : 'spots'} available
-                </p>
-                <button
-                  onClick={handleJoinMatch}
-                  className="btn btn-primary"
-                >
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Join match
-                </button>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Footer */}
-        <div 
-          className="card text-center"
-          style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-        >
-          <img src="/padelparrot-light.svg" alt="PadelParrot" className="h-5 mx-auto mb-1" />
-          <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            The easiest way to organize padel matches
-          </p>
-        </div>
-      </main>
-    </div>
-  )
+export default function JoinMatchPage({ params }: Props) {
+  return <JoinMatchClient params={params} />
 }
