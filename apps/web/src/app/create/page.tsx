@@ -2,9 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { ArrowLeft, ChevronDown, MapPin, Globe, Lock } from 'lucide-react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { createMatchSchema, type CreateMatchInput } from '@padel-parrot/shared'
 import { createMatch, getCurrentUser, getLocations, type Location } from '@padel-parrot/api-client'
 import DatePicker from '@/components/DatePicker'
 import TimePicker from '@/components/TimePicker'
@@ -23,6 +20,10 @@ export default function CreateMatchPage() {
   const [locations, setLocations] = useState<Location[]>([])
   const [filteredLocations, setFilteredLocations] = useState<Location[]>([])
   const [showLocationDropdown, setShowLocationDropdown] = useState(false)
+  
+  // Form state
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [locationInput, setLocationInput] = useState('')
   const [isCustomLocation, setIsCustomLocation] = useState(false)
   const [selectedDate, setSelectedDate] = useState('')
@@ -31,18 +32,8 @@ export default function CreateMatchPage() {
   const [selectedPlayers, setSelectedPlayers] = useState(4)
   const [isPublic, setIsPublic] = useState(false)
   
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-  } = useForm<CreateMatchInput>({
-    resolver: zodResolver(createMatchSchema),
-    defaultValues: {
-      max_players: 4,
-      duration_minutes: 90,
-    },
-  })
+  // Validation errors
+  const [errors, setErrors] = useState<{ title?: string; location?: string; datetime?: string }>({})
 
   useEffect(() => {
     const loadLocations = async () => {
@@ -71,14 +62,38 @@ export default function CreateMatchPage() {
     }
   }, [locationInput, locations])
 
-  const onSubmit = async (data: CreateMatchInput) => {
-    if (!selectedDate || !selectedTime) {
-      toast.error('Please select date and time')
-      return
+  const validateForm = (): boolean => {
+    const newErrors: { title?: string; location?: string; datetime?: string } = {}
+    
+    if (!title.trim()) {
+      newErrors.title = 'Title is required'
+    } else if (title.length > 100) {
+      newErrors.title = 'Title is too long'
     }
+    
+    if (!locationInput.trim()) {
+      newErrors.location = 'Location is required'
+    }
+    
+    if (!selectedDate || !selectedTime) {
+      newErrors.datetime = 'Please select date and time'
+    } else {
+      const dateTime = new Date(`${selectedDate}T${selectedTime}`)
+      const now = new Date()
+      const minTime = new Date(now.getTime() + 30 * 60 * 1000)
+      if (dateTime < minTime) {
+        newErrors.datetime = 'Match must be at least 30 minutes in the future'
+      }
+    }
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
-    if (!locationInput) {
-      toast.error('Please enter a location')
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!validateForm()) {
       return
     }
 
@@ -92,11 +107,11 @@ export default function CreateMatchPage() {
         return
       }
 
-      const dateTime = new Date(combineDateAndTime(selectedDate, selectedTime)).toISOString()
+      const dateTime = new Date(`${selectedDate}T${selectedTime}`).toISOString()
       
-      const { data: match, error } = await createMatch({
-        title: data.title,
-        description: data.description,
+      console.log('Creating match with:', {
+        title,
+        description,
         date_time: dateTime,
         duration_minutes: selectedDuration,
         location: locationInput,
@@ -104,7 +119,18 @@ export default function CreateMatchPage() {
         is_public: isPublic,
       })
       
+      const { data: match, error } = await createMatch({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        date_time: dateTime,
+        duration_minutes: selectedDuration,
+        location: locationInput.trim(),
+        max_players: selectedPlayers,
+        is_public: isPublic,
+      })
+      
       if (error) {
+        console.error('Create match error:', error)
         toast.error(error)
         return
       }
@@ -117,6 +143,7 @@ export default function CreateMatchPage() {
       }
       
     } catch (error) {
+      console.error('Create match exception:', error)
       toast.error('Failed to create match')
     } finally {
       setIsLoading(false)
@@ -129,15 +156,14 @@ export default function CreateMatchPage() {
 
   const handleLocationSelect = (location: Location) => {
     setLocationInput(location.name)
-    setValue('location', location.name)
     setShowLocationDropdown(false)
     setIsCustomLocation(false)
+    setErrors(prev => ({ ...prev, location: undefined }))
   }
 
   const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setLocationInput(value)
-    setValue('location', value)
+    setLocationInput(e.target.value)
+    setErrors(prev => ({ ...prev, location: undefined }))
   }
 
   const getMinDate = () => {
@@ -149,11 +175,6 @@ export default function CreateMatchPage() {
     const future = new Date()
     future.setFullYear(future.getFullYear() + 1)
     return future.toISOString().slice(0, 10)
-  }
-
-  const combineDateAndTime = (date: string, time: string) => {
-    if (!date || !time) return ''
-    return `${date}T${time}`
   }
 
   return (
@@ -186,7 +207,7 @@ export default function CreateMatchPage() {
 
       {/* Main Content */}
       <main className="container-app py-6 pb-32">
-        <form id="create-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form id="create-form" onSubmit={handleSubmit} className="space-y-6">
           
           {/* Card 1: Match Details */}
           <div className="card">
@@ -200,12 +221,16 @@ export default function CreateMatchPage() {
               <input
                 id="title"
                 type="text"
-                {...register('title')}
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value)
+                  setErrors(prev => ({ ...prev, title: undefined }))
+                }}
                 placeholder="e.g., Evening Padel Session"
                 className="input"
               />
               {errors.title && (
-                <p className="form-error">{errors.title.message}</p>
+                <p className="form-error">{errors.title}</p>
               )}
             </div>
             
@@ -216,7 +241,8 @@ export default function CreateMatchPage() {
               </label>
               <textarea
                 id="description"
-                {...register('description')}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 placeholder="Any additional details..."
                 rows={2}
                 className="input"
@@ -280,7 +306,10 @@ export default function CreateMatchPage() {
                   <label className="form-label">Date</label>
                   <DatePicker
                     value={selectedDate}
-                    onChange={setSelectedDate}
+                    onChange={(date) => {
+                      setSelectedDate(date)
+                      setErrors(prev => ({ ...prev, datetime: undefined }))
+                    }}
                     minDate={getMinDate()}
                     maxDate={getMaxDate()}
                     placeholder="Select date"
@@ -290,11 +319,17 @@ export default function CreateMatchPage() {
                   <label className="form-label">Time</label>
                   <TimePicker
                     value={selectedTime}
-                    onChange={setSelectedTime}
+                    onChange={(time) => {
+                      setSelectedTime(time)
+                      setErrors(prev => ({ ...prev, datetime: undefined }))
+                    }}
                     placeholder="Select time"
                   />
                 </div>
               </div>
+              {errors.datetime && (
+                <p className="form-error">{errors.datetime}</p>
+              )}
             </div>
 
             {/* Duration - Segmented Control */}
@@ -383,7 +418,7 @@ export default function CreateMatchPage() {
               )}
               
               {errors.location && (
-                <p className="form-error">{errors.location.message}</p>
+                <p className="form-error">{errors.location}</p>
               )}
             </div>
           </div>
@@ -402,7 +437,6 @@ export default function CreateMatchPage() {
           <button
             type="submit"
             form="create-form"
-            onClick={handleSubmit(onSubmit)}
             disabled={isLoading}
             className="btn btn-primary w-full"
             style={{ padding: 'var(--space-4)' }}
