@@ -117,10 +117,16 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-stone-600 mx-auto mb-3"></div>
-          <p className="text-sm text-stone-500">Loading...</p>
+          <div 
+            className="animate-spin rounded-full h-6 w-6 mx-auto mb-3"
+            style={{ 
+              border: '2px solid rgb(var(--color-border-light))',
+              borderTopColor: 'rgb(var(--color-text-muted))'
+            }}
+          />
+          <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Loading...</p>
         </div>
       </div>
     )
@@ -128,13 +134,13 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
 
   if (!match) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
         <div className="text-center max-w-sm">
-          <h2 className="text-lg font-medium text-stone-900 mb-2">Match not found</h2>
-          <p className="text-sm text-stone-500 mb-4">This link may be invalid.</p>
+          <h2 className="text-lg font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Match not found</h2>
+          <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>This link may be invalid.</p>
           <button 
             onClick={() => window.location.href = '/'}
-            className="btn-primary"
+            className="btn btn-primary"
           >
             Go to PadelParrot
           </button>
@@ -147,12 +153,12 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
   const isFull = isMatchFull(match.max_players, match.current_players)
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
       {/* Header */}
-      <header className="bg-white border-b border-stone-200">
-        <div className="container-app py-4 text-center">
-          <img src="/padelparrot-light.svg" alt="PadelParrot" className="h-7 mx-auto mb-1" />
-          <p className="text-sm text-stone-500">
+      <header style={{ backgroundColor: 'rgb(var(--color-surface))', borderBottom: '1px solid rgb(var(--color-border-light))' }}>
+        <div className="container-app py-5 text-center">
+          <img src="/padelparrot-light.svg" alt="PadelParrot" className="h-7 mx-auto mb-2" />
+          <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
             You've been invited to join a match
           </p>
         </div>
@@ -162,54 +168,74 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
       <main className="container-app py-6 space-y-4">
         {/* Match Preview */}
         <div className="card">
-          <div className="flex items-start justify-between mb-3">
-            <h2 className="text-lg font-semibold text-stone-900 pr-3">
+          <div className="flex items-start justify-between mb-4">
+            <h2 className="text-xl font-semibold pr-3" style={{ color: 'rgb(var(--color-text))' }}>
               {match.title}
             </h2>
-            <span className={`flex-shrink-0 ${isFull ? 'badge-full' : 'badge-available'}`}>
+            <span className={`flex-shrink-0 badge ${isFull ? 'badge-full' : 'badge-available'}`}>
               {isFull ? 'Full' : `${availableSpots} left`}
             </span>
           </div>
           
           {match.description && (
-            <p className="text-stone-600 text-sm mb-4">
+            <p className="text-sm mb-5" style={{ color: 'rgb(var(--color-text-muted))' }}>
               {match.description}
             </p>
           )}
           
-          <div className="space-y-2.5 text-sm">
-            <div className="flex items-start">
-              <Calendar className="w-4 h-4 text-stone-400 mr-3 mt-0.5" />
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div 
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+              >
+                <Calendar className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+              </div>
               <div>
-                <p className="font-medium text-stone-900">
+                <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                   {formatMatchDate(match.date_time)}
                 </p>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                   {formatMatchDateTime(match.date_time, match.duration_minutes)}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-start">
-              <MapPin className="w-4 h-4 text-stone-400 mr-3 mt-0.5" />
-              <p className="font-medium text-stone-900">
-                {match.location}
-              </p>
+            <div className="flex items-start gap-3">
+              <div 
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+              >
+                <MapPin className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text))' }}>
+                  {match.location}
+                </p>
+              </div>
             </div>
             
-            <div className="flex items-start">
-              <Users className="w-4 h-4 text-stone-400 mr-3 mt-0.5" />
+            <div className="flex items-start gap-3">
+              <div 
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+              >
+                <Users className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+              </div>
               <div>
-                <p className="font-medium text-stone-900">
+                <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                   {match.current_players}/{match.max_players} players
                 </p>
-                <div className="flex mt-1.5 gap-0.5">
+                <div className="flex mt-2 gap-1">
                   {Array.from({ length: match.max_players }).map((_, i) => (
                     <div
                       key={i}
-                      className={`w-2 h-2 rounded-full ${
-                        i < match.current_players ? 'bg-stone-500' : 'bg-stone-200'
-                      }`}
+                      className="w-2 h-2 rounded-full"
+                      style={{ 
+                        backgroundColor: i < match.current_players 
+                          ? 'rgb(var(--color-text-muted))' 
+                          : 'rgb(var(--color-border-light))'
+                      }}
                     />
                   ))}
                 </div>
@@ -221,30 +247,34 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
         {/* Auth / Join */}
         {!isAuthenticated ? (
           <div className="card">
-            <div className="text-center mb-5">
-              <h3 className="font-medium text-stone-900 mb-1">
+            <div className="text-center mb-6">
+              <h3 className="font-semibold mb-1" style={{ color: 'rgb(var(--color-text))' }}>
                 Sign in to join
               </h3>
-              <p className="text-sm text-stone-500">
+              <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
                 Quick phone verification
               </p>
             </div>
 
             {!showOtpInput ? (
               <form onSubmit={handleSendOtp} className="space-y-4">
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-stone-700 mb-1.5">
+                <div className="form-field">
+                  <label htmlFor="phone" className="form-label">
                     Phone number
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-4 h-4" />
+                    <Phone 
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                      style={{ color: 'rgb(var(--color-text-subtle))' }}
+                    />
                     <input
                       id="phone"
                       type="tel"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       placeholder="+1234567890"
-                      className="input pl-10"
+                      className="input"
+                      style={{ paddingLeft: '2.5rem' }}
                       required
                     />
                   </div>
@@ -252,15 +282,15 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn-primary w-full"
+                  className="btn btn-primary w-full"
                 >
                   {isSubmitting ? 'Sending...' : 'Continue'}
                 </button>
               </form>
             ) : (
               <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <div>
-                  <label htmlFor="otp" className="block text-sm font-medium text-stone-700 mb-1.5">
+                <div className="form-field">
+                  <label htmlFor="otp" className="form-label">
                     Verification code
                   </label>
                   <input
@@ -269,26 +299,27 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value)}
                     placeholder="123456"
-                    className="input text-center tracking-widest"
+                    className="input"
+                    style={{ textAlign: 'center', letterSpacing: '0.25em' }}
                     maxLength={6}
                     required
                     autoFocus
                   />
-                  <p className="text-xs text-stone-500 mt-1.5">
+                  <p className="form-hint">
                     Sent to {phoneNumber}
                   </p>
                 </div>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn-primary w-full"
+                  className="btn btn-primary w-full"
                 >
                   {isSubmitting ? 'Verifying...' : 'Sign in'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowOtpInput(false)}
-                  className="btn-secondary w-full"
+                  className="btn btn-secondary w-full"
                 >
                   Change number
                 </button>
@@ -299,30 +330,36 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
           <div className="card text-center">
             {isFull ? (
               <>
-                <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Users className="w-5 h-5 text-stone-400" />
+                <div 
+                  className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                  style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+                >
+                  <Users className="w-6 h-6" style={{ color: 'rgb(var(--color-text-subtle))' }} />
                 </div>
-                <h3 className="font-medium text-stone-900 mb-1">Match is full</h3>
-                <p className="text-sm text-stone-500 mb-4">No spots available</p>
+                <h3 className="font-semibold mb-1" style={{ color: 'rgb(var(--color-text))' }}>Match is full</h3>
+                <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>No spots available</p>
                 <button 
                   onClick={() => window.location.href = '/'}
-                  className="btn-secondary"
+                  className="btn btn-secondary"
                 >
                   Find other matches
                 </button>
               </>
             ) : (
               <>
-                <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <UserPlus className="w-5 h-5 text-stone-600" />
+                <div 
+                  className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                  style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+                >
+                  <UserPlus className="w-6 h-6" style={{ color: 'rgb(var(--color-text-muted))' }} />
                 </div>
-                <h3 className="font-medium text-stone-900 mb-1">Ready to join!</h3>
-                <p className="text-sm text-stone-500 mb-4">
+                <h3 className="font-semibold mb-1" style={{ color: 'rgb(var(--color-text))' }}>Ready to join!</h3>
+                <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>
                   {availableSpots} {availableSpots === 1 ? 'spot' : 'spots'} available
                 </p>
                 <button
                   onClick={handleJoinMatch}
-                  className="btn-primary"
+                  className="btn btn-primary"
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
                   Join match
@@ -333,9 +370,12 @@ export default function JoinMatchPage({ params }: { params: { id: string } }) {
         )}
 
         {/* Footer */}
-        <div className="card bg-stone-100 border-stone-200 text-center">
+        <div 
+          className="card text-center"
+          style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+        >
           <img src="/padelparrot-light.svg" alt="PadelParrot" className="h-5 mx-auto mb-1" />
-          <p className="text-xs text-stone-500">
+          <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
             The easiest way to organize padel matches
           </p>
         </div>

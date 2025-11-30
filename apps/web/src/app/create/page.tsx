@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, ChevronDown } from 'lucide-react'
+import { ArrowLeft, ChevronDown, MapPin, Globe, Lock } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createMatchSchema, type CreateMatchInput } from '@padel-parrot/shared'
@@ -9,6 +9,14 @@ import { createMatch, getCurrentUser, getLocations, type Location } from '@padel
 import DatePicker from '@/components/DatePicker'
 import TimePicker from '@/components/TimePicker'
 import toast from 'react-hot-toast'
+
+const DURATION_OPTIONS = [
+  { value: 60, label: '1h' },
+  { value: 90, label: '1.5h' },
+  { value: 120, label: '2h' },
+]
+
+const PLAYER_OPTIONS = [2, 4, 6, 8]
 
 export default function CreateMatchPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -19,6 +27,9 @@ export default function CreateMatchPage() {
   const [isCustomLocation, setIsCustomLocation] = useState(false)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
+  const [selectedDuration, setSelectedDuration] = useState(90)
+  const [selectedPlayers, setSelectedPlayers] = useState(4)
+  const [isPublic, setIsPublic] = useState(false)
   
   const {
     register,
@@ -29,6 +40,7 @@ export default function CreateMatchPage() {
     resolver: zodResolver(createMatchSchema),
     defaultValues: {
       max_players: 4,
+      duration_minutes: 90,
     },
   })
 
@@ -65,6 +77,11 @@ export default function CreateMatchPage() {
       return
     }
 
+    if (!locationInput) {
+      toast.error('Please enter a location')
+      return
+    }
+
     setIsLoading(true)
     
     try {
@@ -81,10 +98,10 @@ export default function CreateMatchPage() {
         title: data.title,
         description: data.description,
         date_time: dateTime,
-        duration_minutes: data.duration_minutes,
-        location: locationInput || data.location,
-        max_players: data.max_players,
-        is_public: data.is_public || false,
+        duration_minutes: selectedDuration,
+        location: locationInput,
+        max_players: selectedPlayers,
+        is_public: isPublic,
       })
       
       if (error) {
@@ -140,18 +157,27 @@ export default function CreateMatchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200 sticky top-0 z-10">
-        <div className="container-app py-3">
+      <header 
+        className="sticky top-0 z-10 backdrop-blur-sm"
+        style={{ 
+          backgroundColor: 'rgb(var(--color-surface) / 0.8)',
+          borderBottom: '1px solid rgb(var(--color-border-light))'
+        }}
+      >
+        <div className="container-app py-4">
           <div className="flex items-center">
             <button
               onClick={handleBack}
-              className="mr-3 p-1.5 -ml-1.5 rounded-md hover:bg-stone-100 transition-colors"
+              className="mr-3 p-2 -ml-2 rounded-lg transition-colors"
+              style={{ backgroundColor: 'transparent' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              <ArrowLeft className="w-5 h-5 text-stone-600" />
+              <ArrowLeft className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
             </button>
-            <h1 className="font-medium text-stone-900">
+            <h1 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text))' }}>
               Create Match
             </h1>
           </div>
@@ -159,13 +185,17 @@ export default function CreateMatchPage() {
       </header>
 
       {/* Main Content */}
-      <main className="container-app py-6">
+      <main className="container-app py-6 pb-32">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Title & Description */}
-          <div className="card space-y-4">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-stone-700 mb-1.5">
-                Match title
+          
+          {/* Card 1: Match Details */}
+          <div className="card">
+            <h2 className="section-header">Match Details</h2>
+            
+            {/* Title */}
+            <div className="form-field">
+              <label htmlFor="title" className="form-label">
+                Title
               </label>
               <input
                 id="title"
@@ -175,79 +205,122 @@ export default function CreateMatchPage() {
                 className="input"
               />
               {errors.title && (
-                <p className="text-error-600 text-xs mt-1">{errors.title.message}</p>
+                <p className="form-error">{errors.title.message}</p>
               )}
             </div>
             
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-stone-700 mb-1.5">
-                Description <span className="text-stone-400 font-normal">(optional)</span>
+            {/* Description */}
+            <div className="form-field">
+              <label htmlFor="description" className="form-label">
+                Description <span style={{ color: 'rgb(var(--color-text-subtle))', fontWeight: 400 }}>(optional)</span>
               </label>
               <textarea
                 id="description"
                 {...register('description')}
                 placeholder="Any additional details..."
                 rows={2}
-                className="input resize-none"
-              />
-            </div>
-          </div>
-
-          {/* Date & Time */}
-          <div className="card space-y-4">
-            <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide">
-              When
-            </h2>
-            
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                Date
-              </label>
-              <DatePicker
-                value={selectedDate}
-                onChange={setSelectedDate}
-                minDate={getMinDate()}
-                maxDate={getMaxDate()}
-                placeholder="Select date"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                Time
-              </label>
-              <TimePicker
-                value={selectedTime}
-                onChange={setSelectedTime}
-                placeholder="Select time"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="duration_minutes" className="block text-sm font-medium text-stone-700 mb-1.5">
-                Duration
-              </label>
-              <select
-                id="duration_minutes"
-                {...register('duration_minutes', { valueAsNumber: true })}
                 className="input"
-              >
-                <option value={60}>1 hour</option>
-                <option value={90}>1.5 hours</option>
-                <option value={120}>2 hours</option>
-              </select>
+                style={{ resize: 'none' }}
+              />
+            </div>
+
+            {/* Players */}
+            <div className="form-field">
+              <label className="form-label">Players</label>
+              <div className="option-buttons">
+                {PLAYER_OPTIONS.map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() => setSelectedPlayers(count)}
+                    className={`option-btn ${selectedPlayers === count ? 'active' : ''}`}
+                  >
+                    {count}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Public Toggle */}
+            <div className="form-field">
+              <div className="toggle-container">
+                <div className="flex items-center gap-3">
+                  {isPublic ? (
+                    <Globe className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+                  ) : (
+                    <Lock className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>
+                      {isPublic ? 'Public match' : 'Private match'}
+                    </p>
+                    <p className="text-xs" style={{ color: 'rgb(var(--color-text-subtle))' }}>
+                      {isPublic ? 'Anyone can discover and join' : 'Only people with the link can join'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPublic(!isPublic)}
+                  className={`toggle-switch ${isPublic ? 'active' : ''}`}
+                  aria-pressed={isPublic}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Location */}
+          {/* Card 2: Schedule & Location */}
           <div className="card">
-            <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-4">
-              Where
-            </h2>
+            <h2 className="section-header">Schedule & Location</h2>
             
-            <div className="relative">
-              <label htmlFor="location" className="block text-sm font-medium text-stone-700 mb-1.5">
-                Location
+            {/* Date & Time - Side by side */}
+            <div className="form-field">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="form-label">Date</label>
+                  <DatePicker
+                    value={selectedDate}
+                    onChange={setSelectedDate}
+                    minDate={getMinDate()}
+                    maxDate={getMaxDate()}
+                    placeholder="Select date"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Time</label>
+                  <TimePicker
+                    value={selectedTime}
+                    onChange={setSelectedTime}
+                    placeholder="Select time"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Duration - Segmented Control */}
+            <div className="form-field">
+              <label className="form-label">Duration</label>
+              <div className="segmented-control">
+                {DURATION_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setSelectedDuration(option.value)}
+                    className={selectedDuration === option.value ? 'active' : ''}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Location */}
+            <div className="form-field">
+              <label htmlFor="location" className="form-label">
+                <span className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Location
+                </span>
               </label>
               <div className="relative">
                 <input
@@ -257,92 +330,87 @@ export default function CreateMatchPage() {
                   onChange={handleLocationInputChange}
                   onFocus={() => setShowLocationDropdown(true)}
                   placeholder="Search or enter location"
-                  className="input pr-10"
+                  className="input"
+                  style={{ paddingRight: '2.5rem' }}
                   autoComplete="off"
                 />
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400" />
+                <ChevronDown 
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none"
+                  style={{ color: 'rgb(var(--color-text-subtle))' }}
+                />
+                
+                {showLocationDropdown && filteredLocations.length > 0 && (
+                  <div 
+                    className="absolute z-20 w-full mt-1 rounded-lg overflow-hidden"
+                    style={{ 
+                      backgroundColor: 'rgb(var(--color-surface))',
+                      border: '1px solid rgb(var(--color-border-light))',
+                      boxShadow: 'var(--shadow-md)',
+                      maxHeight: '12rem',
+                      overflowY: 'auto'
+                    }}
+                  >
+                    {filteredLocations.map((location) => (
+                      <button
+                        key={location.id}
+                        type="button"
+                        onClick={() => handleLocationSelect(location)}
+                        className="w-full px-4 py-3 text-left transition-colors"
+                        style={{ 
+                          borderBottom: '1px solid rgb(var(--color-border-light))'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <div className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
+                          {location.name}
+                        </div>
+                        {location.address && (
+                          <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                            {location.address}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               
-              {showLocationDropdown && filteredLocations.length > 0 && (
-                <div className="absolute z-20 w-full mt-1 bg-white border border-stone-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                  {filteredLocations.map((location) => (
-                    <button
-                      key={location.id}
-                      type="button"
-                      onClick={() => handleLocationSelect(location)}
-                      className="w-full px-3 py-2.5 text-left hover:bg-stone-50 border-b border-stone-100 last:border-b-0 transition-colors"
-                    >
-                      <div className="font-medium text-stone-900 text-sm">{location.name}</div>
-                      {location.address && (
-                        <div className="text-xs text-stone-500">{location.address}</div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-              
               {isCustomLocation && locationInput && (
-                <p className="text-xs text-stone-500 mt-1.5">
-                  Custom location: "{locationInput}"
+                <p className="form-hint">
+                  Using custom location: "{locationInput}"
                 </p>
               )}
               
               {errors.location && (
-                <p className="text-error-600 text-xs mt-1">{errors.location.message}</p>
+                <p className="form-error">{errors.location.message}</p>
               )}
             </div>
           </div>
-
-          {/* Players */}
-          <div className="card">
-            <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-4">
-              Players
-            </h2>
-            
-            <div>
-              <label htmlFor="max_players" className="block text-sm font-medium text-stone-700 mb-1.5">
-                Maximum players
-              </label>
-              <select
-                id="max_players"
-                {...register('max_players', { valueAsNumber: true })}
-                className="input"
-              >
-                <option value={2}>2 players</option>
-                <option value={4}>4 players</option>
-                <option value={6}>6 players</option>
-                <option value={8}>8 players</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Privacy */}
-          <div className="card">
-            <label className="flex items-start cursor-pointer">
-              <input
-                type="checkbox"
-                {...register('is_public')}
-                className="mt-0.5 w-4 h-4 text-stone-900 bg-white border-stone-300 rounded focus:ring-stone-500 focus:ring-2"
-              />
-              <div className="ml-3">
-                <span className="font-medium text-stone-900 text-sm">Public match</span>
-                <p className="text-xs text-stone-500 mt-0.5">
-                  Anyone can discover and join this match
-                </p>
-              </div>
-            </label>
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="btn-primary w-full py-3"
-          >
-            {isLoading ? 'Creating...' : 'Create match'}
-          </button>
         </form>
       </main>
+
+      {/* Sticky Submit Button */}
+      <div 
+        className="fixed bottom-0 left-0 right-0 p-4 backdrop-blur-sm"
+        style={{ 
+          backgroundColor: 'rgb(var(--color-surface) / 0.9)',
+          borderTop: '1px solid rgb(var(--color-border-light))'
+        }}
+      >
+        <div className="container-app">
+          <button
+            type="submit"
+            form="create-form"
+            onClick={handleSubmit(onSubmit)}
+            disabled={isLoading}
+            className="btn btn-primary w-full"
+            style={{ padding: 'var(--space-4)' }}
+          >
+            {isLoading ? 'Creating...' : 'Create Match'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

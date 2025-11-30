@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   keywords: ['padel', 'matches', 'sports', 'organization', 'booking'],
   authors: [{ name: 'PadelParrot Team' }],
   viewport: 'width=device-width, initial-scale=1',
-  themeColor: '#292524',
+  themeColor: '#1c1917', // stone-900
   manifest: '/manifest.json',
   openGraph: {
     title: 'PadelParrot - Organise Padel Matches',
@@ -31,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="min-h-screen bg-stone-50">
+        <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
           {children}
         </div>
         <Toaster
@@ -39,28 +39,22 @@ export default function RootLayout({
           toastOptions={{
             duration: 3000,
             style: {
-              background: '#292524',
-              color: '#fafaf9',
+              background: 'rgb(28 25 23)', // --color-text
+              color: 'rgb(250 250 249)',   // --color-bg
               fontSize: '14px',
-              borderRadius: '6px',
-              padding: '12px 16px',
+              borderRadius: 'var(--radius-md)',
+              padding: 'var(--space-3) var(--space-4)',
             },
             success: {
-              style: {
-                background: '#292524',
-              },
               iconTheme: {
-                primary: '#22c55e',
-                secondary: '#fafaf9',
+                primary: 'rgb(46 125 50)',  // --color-success-text
+                secondary: 'rgb(250 250 249)',
               },
             },
             error: {
-              style: {
-                background: '#292524',
-              },
               iconTheme: {
-                primary: '#cf5c4d',
-                secondary: '#fafaf9',
+                primary: 'rgb(198 40 40)',  // --color-error-text
+                secondary: 'rgb(250 250 249)',
               },
             },
           }}

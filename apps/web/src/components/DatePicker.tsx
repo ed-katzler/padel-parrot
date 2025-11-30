@@ -141,40 +141,61 @@ export default function DatePicker({
         onClick={() => setIsOpen(!isOpen)}
         className="input w-full text-left flex items-center justify-between"
       >
-        <span className={value ? 'text-stone-900' : 'text-stone-400'}>
+        <span style={{ color: value ? 'rgb(var(--color-text))' : 'rgb(var(--color-text-subtle))' }}>
           {value ? formatDisplayDate(value) : placeholder}
         </span>
-        <Calendar className="w-4 h-4 text-stone-400" />
+        <Calendar className="w-4 h-4" style={{ color: 'rgb(var(--color-text-subtle))' }} />
       </button>
 
       {/* Calendar Dropdown */}
       {isOpen && (
-        <div className="absolute z-30 mt-1 w-72 bg-white border border-stone-200 rounded-lg shadow-lg p-4 animate-fade-in">
+        <div 
+          className="absolute z-30 mt-1 w-72 rounded-lg animate-scale-in"
+          style={{ 
+            backgroundColor: 'rgb(var(--color-surface))',
+            border: '1px solid rgb(var(--color-border-light))',
+            boxShadow: 'var(--shadow-md)',
+            padding: 'var(--space-4)'
+          }}
+        >
           {/* Month Navigation */}
           <div className="flex items-center justify-between mb-4">
             <button
               type="button"
               onClick={goToPreviousMonth}
-              className="p-1.5 rounded-md hover:bg-stone-100 transition-colors"
+              className="p-2 rounded-lg transition-colors"
+              style={{ backgroundColor: 'transparent' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              <ChevronLeft className="w-4 h-4 text-stone-600" />
+              <ChevronLeft className="w-4 h-4" style={{ color: 'rgb(var(--color-text-muted))' }} />
             </button>
-            <span className="text-sm font-medium text-stone-900">
+            <span 
+              className="text-sm font-semibold"
+              style={{ color: 'rgb(var(--color-text))' }}
+            >
               {MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </span>
             <button
               type="button"
               onClick={goToNextMonth}
-              className="p-1.5 rounded-md hover:bg-stone-100 transition-colors"
+              className="p-2 rounded-lg transition-colors"
+              style={{ backgroundColor: 'transparent' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              <ChevronRight className="w-4 h-4 text-stone-600" />
+              <ChevronRight className="w-4 h-4" style={{ color: 'rgb(var(--color-text-muted))' }} />
             </button>
           </div>
 
           {/* Day Headers */}
           <div className="grid grid-cols-7 mb-2">
             {DAYS.map((day) => (
-              <div key={day} className="text-center text-xs font-medium text-stone-500 py-1">
+              <div 
+                key={day} 
+                className="text-center text-xs font-medium py-1"
+                style={{ color: 'rgb(var(--color-text-muted))' }}
+              >
                 {day}
               </div>
             ))}
@@ -189,19 +210,33 @@ export default function DatePicker({
                     type="button"
                     onClick={() => handleDayClick(day)}
                     disabled={isDateDisabled(day)}
-                    className={`
-                      w-full h-full rounded-md text-sm font-medium transition-colors
-                      ${isSelected(day) 
-                        ? 'bg-stone-900 text-white' 
-                        : isToday(day)
-                          ? 'bg-stone-100 text-stone-900'
-                          : 'text-stone-700 hover:bg-stone-50'
+                    className="w-full h-full rounded-lg text-sm font-medium transition-all"
+                    style={{
+                      backgroundColor: isSelected(day) 
+                        ? 'rgb(var(--color-interactive))' 
+                        : isToday(day) 
+                          ? 'rgb(var(--color-interactive-muted))' 
+                          : 'transparent',
+                      color: isSelected(day) 
+                        ? 'rgb(var(--color-surface))' 
+                        : isDateDisabled(day)
+                          ? 'rgb(var(--color-border))'
+                          : 'rgb(var(--color-text-secondary))',
+                      cursor: isDateDisabled(day) ? 'not-allowed' : 'pointer',
+                      opacity: isDateDisabled(day) ? 0.5 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected(day) && !isDateDisabled(day)) {
+                        e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'
                       }
-                      ${isDateDisabled(day) 
-                        ? 'text-stone-300 cursor-not-allowed hover:bg-transparent' 
-                        : ''
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected(day) && !isToday(day)) {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                      } else if (isToday(day) && !isSelected(day)) {
+                        e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'
                       }
-                    `}
+                    }}
                   >
                     {day}
                   </button>
@@ -211,7 +246,10 @@ export default function DatePicker({
           </div>
 
           {/* Today Button */}
-          <div className="mt-3 pt-3 border-t border-stone-100">
+          <div 
+            className="mt-3 pt-3"
+            style={{ borderTop: '1px solid rgb(var(--color-border-light))' }}
+          >
             <button
               type="button"
               onClick={() => {
@@ -222,7 +260,10 @@ export default function DatePicker({
                   setIsOpen(false)
                 }
               }}
-              className="w-full text-sm text-stone-600 hover:text-stone-900 transition-colors py-1"
+              className="w-full text-sm py-1 transition-colors"
+              style={{ color: 'rgb(var(--color-text-muted))' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'rgb(var(--color-text))'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'rgb(var(--color-text-muted))'}
             >
               Today
             </button>
@@ -232,4 +273,3 @@ export default function DatePicker({
     </div>
   )
 }
-

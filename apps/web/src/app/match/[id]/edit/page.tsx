@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, ChevronDown } from 'lucide-react'
+import { ArrowLeft, ChevronDown, MapPin, Globe, Lock } from 'lucide-react'
 import { updateMatchSchema, type UpdateMatchInput } from '@padel-parrot/shared'
 import { getMatch, updateMatch, getCurrentUser, getLocations } from '@padel-parrot/api-client'
 import DatePicker from '@/components/DatePicker'
@@ -35,6 +35,12 @@ interface Location {
   updated_at: string
 }
 
+const DURATION_OPTIONS = [
+  { value: 60, label: '1h' },
+  { value: 90, label: '1.5h' },
+  { value: 120, label: '2h' },
+]
+
 export default function EditMatchPage({ params }: { params: { id: string } }) {
   const [match, setMatch] = useState<Match | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -45,6 +51,9 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
+  const [selectedDuration, setSelectedDuration] = useState(90)
+  const [selectedPlayers, setSelectedPlayers] = useState(4)
+  const [isPublic, setIsPublic] = useState(false)
 
   const {
     register,
@@ -114,12 +123,10 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
         setSelectedDate(localDate.toISOString().slice(0, 10))
         setSelectedTime(localDate.toISOString().slice(11, 16))
         
-        setValue('location', data.location)
-        setValue('max_players', data.max_players)
-        setValue('duration_minutes', data.duration_minutes)
-        setValue('is_public', data.is_public)
-        
         setLocationInput(data.location)
+        setSelectedDuration(data.duration_minutes)
+        setSelectedPlayers(data.max_players)
+        setIsPublic(data.is_public)
       }
     } catch (error) {
       toast.error('Failed to load match')
@@ -156,10 +163,10 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
         if (newDateTime !== match.date_time) updateData.date_time = newDateTime
       }
       
-      if (data.location !== match.location) updateData.location = locationInput || data.location
-      if (data.max_players !== match.max_players) updateData.max_players = data.max_players
-      if (data.duration_minutes !== match.duration_minutes) updateData.duration_minutes = data.duration_minutes
-      if (data.is_public !== match.is_public) updateData.is_public = data.is_public
+      if (locationInput !== match.location) updateData.location = locationInput
+      if (selectedPlayers !== match.max_players) updateData.max_players = selectedPlayers
+      if (selectedDuration !== match.duration_minutes) updateData.duration_minutes = selectedDuration
+      if (isPublic !== match.is_public) updateData.is_public = isPublic
       
       if (Object.keys(updateData).length === 0) {
         toast.success('No changes')
@@ -194,14 +201,12 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
 
   const handleLocationSelect = (location: Location) => {
     setLocationInput(location.name)
-    setValue('location', location.name)
     setShowLocationDropdown(false)
   }
 
   const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setLocationInput(value)
-    setValue('location', value)
     
     if (value && locations.some(loc => loc.name.toLowerCase().includes(value.toLowerCase()))) {
       setShowLocationDropdown(true)
@@ -230,12 +235,24 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
     location.name.toLowerCase().includes(locationInput.toLowerCase())
   )
 
+  // Get valid player options (can't go below current players)
+  const getPlayerOptions = () => {
+    const minPlayers = match ? match.current_players : 2
+    return [2, 4, 6, 8].filter(n => n >= minPlayers)
+  }
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-stone-600 mx-auto mb-3"></div>
-          <p className="text-sm text-stone-500">Loading...</p>
+          <div 
+            className="animate-spin rounded-full h-6 w-6 mx-auto mb-3"
+            style={{ 
+              border: '2px solid rgb(var(--color-border-light))',
+              borderTopColor: 'rgb(var(--color-text-muted))'
+            }}
+          />
+          <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Loading...</p>
         </div>
       </div>
     )
@@ -243,10 +260,10 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
 
   if (!match) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
         <div className="text-center">
-          <h2 className="text-lg font-medium text-stone-900 mb-2">Match not found</h2>
-          <button onClick={handleBack} className="btn-primary">
+          <h2 className="text-lg font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Match not found</h2>
+          <button onClick={handleBack} className="btn btn-primary">
             Back
           </button>
         </div>
@@ -255,18 +272,27 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200 sticky top-0 z-10">
-        <div className="container-app py-3">
+      <header 
+        className="sticky top-0 z-10 backdrop-blur-sm"
+        style={{ 
+          backgroundColor: 'rgb(var(--color-surface) / 0.8)',
+          borderBottom: '1px solid rgb(var(--color-border-light))'
+        }}
+      >
+        <div className="container-app py-4">
           <div className="flex items-center">
             <button
               onClick={handleBack}
-              className="mr-3 p-1.5 -ml-1.5 rounded-md hover:bg-stone-100 transition-colors"
+              className="mr-3 p-2 -ml-2 rounded-lg transition-colors"
+              style={{ backgroundColor: 'transparent' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              <ArrowLeft className="w-5 h-5 text-stone-600" />
+              <ArrowLeft className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
             </button>
-            <h1 className="font-medium text-stone-900">
+            <h1 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text))' }}>
               Edit Match
             </h1>
           </div>
@@ -274,13 +300,17 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
       </header>
 
       {/* Main Content */}
-      <main className="container-app py-6">
+      <main className="container-app py-6 pb-32">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Title & Description */}
-          <div className="card space-y-4">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-stone-700 mb-1.5">
-                Match title
+          
+          {/* Card 1: Match Details */}
+          <div className="card">
+            <h2 className="section-header">Match Details</h2>
+            
+            {/* Title */}
+            <div className="form-field">
+              <label htmlFor="title" className="form-label">
+                Title
               </label>
               <input
                 id="title"
@@ -289,78 +319,128 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
                 className="input"
               />
               {errors.title && (
-                <p className="text-error-600 text-xs mt-1">{errors.title.message}</p>
+                <p className="form-error">{errors.title.message}</p>
               )}
             </div>
             
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-stone-700 mb-1.5">
-                Description <span className="text-stone-400 font-normal">(optional)</span>
+            {/* Description */}
+            <div className="form-field">
+              <label htmlFor="description" className="form-label">
+                Description <span style={{ color: 'rgb(var(--color-text-subtle))', fontWeight: 400 }}>(optional)</span>
               </label>
               <textarea
                 id="description"
                 {...register('description')}
                 rows={2}
-                className="input resize-none"
-              />
-            </div>
-          </div>
-
-          {/* Date & Time */}
-          <div className="card space-y-4">
-            <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide">
-              When
-            </h2>
-            
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                Date
-              </label>
-              <DatePicker
-                value={selectedDate}
-                onChange={setSelectedDate}
-                minDate={getMinDate()}
-                maxDate={getMaxDate()}
-                placeholder="Select date"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                Time
-              </label>
-              <TimePicker
-                value={selectedTime}
-                onChange={setSelectedTime}
-                placeholder="Select time"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="duration_minutes" className="block text-sm font-medium text-stone-700 mb-1.5">
-                Duration
-              </label>
-              <select
-                id="duration_minutes"
-                {...register('duration_minutes', { valueAsNumber: true })}
                 className="input"
-              >
-                <option value={60}>1 hour</option>
-                <option value={90}>1.5 hours</option>
-                <option value={120}>2 hours</option>
-              </select>
+                style={{ resize: 'none' }}
+              />
+            </div>
+
+            {/* Players */}
+            <div className="form-field">
+              <label className="form-label">
+                Players
+                {match && match.current_players > 0 && (
+                  <span style={{ color: 'rgb(var(--color-text-subtle))', fontWeight: 400 }}>
+                    {' '}({match.current_players} joined)
+                  </span>
+                )}
+              </label>
+              <div className="option-buttons">
+                {getPlayerOptions().map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() => setSelectedPlayers(count)}
+                    className={`option-btn ${selectedPlayers === count ? 'active' : ''}`}
+                  >
+                    {count}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Public Toggle */}
+            <div className="form-field">
+              <div className="toggle-container">
+                <div className="flex items-center gap-3">
+                  {isPublic ? (
+                    <Globe className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+                  ) : (
+                    <Lock className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>
+                      {isPublic ? 'Public match' : 'Private match'}
+                    </p>
+                    <p className="text-xs" style={{ color: 'rgb(var(--color-text-subtle))' }}>
+                      {isPublic ? 'Anyone can discover and join' : 'Only people with the link can join'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPublic(!isPublic)}
+                  className={`toggle-switch ${isPublic ? 'active' : ''}`}
+                  aria-pressed={isPublic}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Location */}
+          {/* Card 2: Schedule & Location */}
           <div className="card">
-            <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-4">
-              Where
-            </h2>
+            <h2 className="section-header">Schedule & Location</h2>
             
-            <div className="relative">
-              <label htmlFor="location" className="block text-sm font-medium text-stone-700 mb-1.5">
-                Location
+            {/* Date & Time - Side by side */}
+            <div className="form-field">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="form-label">Date</label>
+                  <DatePicker
+                    value={selectedDate}
+                    onChange={setSelectedDate}
+                    minDate={getMinDate()}
+                    maxDate={getMaxDate()}
+                    placeholder="Select date"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Time</label>
+                  <TimePicker
+                    value={selectedTime}
+                    onChange={setSelectedTime}
+                    placeholder="Select time"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Duration - Segmented Control */}
+            <div className="form-field">
+              <label className="form-label">Duration</label>
+              <div className="segmented-control">
+                {DURATION_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setSelectedDuration(option.value)}
+                    className={selectedDuration === option.value ? 'active' : ''}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Location */}
+            <div className="form-field">
+              <label htmlFor="location" className="form-label">
+                <span className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Location
+                </span>
               </label>
               <div className="relative">
                 <input
@@ -369,105 +449,86 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
                   value={locationInput}
                   onChange={handleLocationInputChange}
                   onFocus={() => filteredLocations.length > 0 && setShowLocationDropdown(true)}
-                  className="input pr-10"
+                  className="input"
+                  style={{ paddingRight: '2.5rem' }}
                   autoComplete="off"
                 />
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone-400" />
+                <ChevronDown 
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none"
+                  style={{ color: 'rgb(var(--color-text-subtle))' }}
+                />
+                
+                {showLocationDropdown && filteredLocations.length > 0 && (
+                  <div 
+                    className="absolute z-20 w-full mt-1 rounded-lg overflow-hidden"
+                    style={{ 
+                      backgroundColor: 'rgb(var(--color-surface))',
+                      border: '1px solid rgb(var(--color-border-light))',
+                      boxShadow: 'var(--shadow-md)',
+                      maxHeight: '12rem',
+                      overflowY: 'auto'
+                    }}
+                  >
+                    {filteredLocations.map((location) => (
+                      <button
+                        key={location.id}
+                        type="button"
+                        onClick={() => handleLocationSelect(location)}
+                        className="w-full px-4 py-3 text-left transition-colors"
+                        style={{ 
+                          borderBottom: '1px solid rgb(var(--color-border-light))'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <div className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
+                          {location.name}
+                        </div>
+                        {location.address && (
+                          <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                            {location.address}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               {errors.location && (
-                <p className="text-error-600 text-xs mt-1">{errors.location.message}</p>
-              )}
-              
-              {showLocationDropdown && filteredLocations.length > 0 && (
-                <div className="absolute z-20 w-full mt-1 bg-white border border-stone-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                  {filteredLocations.map((location) => (
-                    <button
-                      key={location.id}
-                      type="button"
-                      onClick={() => handleLocationSelect(location)}
-                      className="w-full px-3 py-2.5 text-left hover:bg-stone-50 border-b border-stone-100 last:border-b-0 transition-colors"
-                    >
-                      <div className="font-medium text-stone-900 text-sm">{location.name}</div>
-                      {location.address && (
-                        <div className="text-xs text-stone-500">{location.address}</div>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                <p className="form-error">{errors.location.message}</p>
               )}
             </div>
-          </div>
-
-          {/* Players */}
-          <div className="card">
-            <h2 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-4">
-              Players
-            </h2>
-            
-            <div>
-              <label htmlFor="max_players" className="block text-sm font-medium text-stone-700 mb-1.5">
-                Maximum players
-              </label>
-              <select
-                id="max_players"
-                {...register('max_players', { valueAsNumber: true })}
-                className="input"
-              >
-                {Array.from({ length: 19 }, (_, i) => i + 2).map((num) => (
-                  <option 
-                    key={num} 
-                    value={num}
-                    disabled={match && num < match.current_players}
-                  >
-                    {num} players {match && num < match.current_players ? '(below current)' : ''}
-                  </option>
-                ))}
-              </select>
-              {match && (
-                <p className="text-xs text-stone-500 mt-1.5">
-                  {match.current_players} players have joined
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Privacy */}
-          <div className="card">
-            <label className="flex items-start cursor-pointer">
-              <input
-                type="checkbox"
-                {...register('is_public')}
-                className="mt-0.5 w-4 h-4 text-stone-900 bg-white border-stone-300 rounded focus:ring-stone-500 focus:ring-2"
-              />
-              <div className="ml-3">
-                <span className="font-medium text-stone-900 text-sm">Public match</span>
-                <p className="text-xs text-stone-500 mt-0.5">
-                  Anyone can discover and join
-                </p>
-              </div>
-            </label>
-          </div>
-
-          {/* Submit */}
-          <div className="space-y-2">
-            <button
-              type="submit"
-              disabled={isUpdating}
-              className="btn-primary w-full py-3"
-            >
-              {isUpdating ? 'Saving...' : 'Save changes'}
-            </button>
-            
-            <button
-              type="button"
-              onClick={handleBack}
-              className="btn-secondary w-full"
-            >
-              Cancel
-            </button>
           </div>
         </form>
       </main>
+
+      {/* Sticky Submit Buttons */}
+      <div 
+        className="fixed bottom-0 left-0 right-0 p-4 backdrop-blur-sm"
+        style={{ 
+          backgroundColor: 'rgb(var(--color-surface) / 0.9)',
+          borderTop: '1px solid rgb(var(--color-border-light))'
+        }}
+      >
+        <div className="container-app space-y-2">
+          <button
+            type="submit"
+            onClick={handleSubmit(onSubmit)}
+            disabled={isUpdating}
+            className="btn btn-primary w-full"
+            style={{ padding: 'var(--space-4)' }}
+          >
+            {isUpdating ? 'Saving...' : 'Save Changes'}
+          </button>
+          <button
+            type="button"
+            onClick={handleBack}
+            className="btn btn-secondary w-full"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

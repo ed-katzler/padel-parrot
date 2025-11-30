@@ -218,10 +218,16 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-stone-300 border-t-stone-600 mx-auto mb-3"></div>
-          <p className="text-sm text-stone-500">Loading...</p>
+          <div 
+            className="animate-spin rounded-full h-6 w-6 mx-auto mb-3"
+            style={{ 
+              border: '2px solid rgb(var(--color-border-light))',
+              borderTopColor: 'rgb(var(--color-text-muted))'
+            }}
+          />
+          <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Loading...</p>
         </div>
       </div>
     )
@@ -229,11 +235,11 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
 
   if (!match) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
         <div className="text-center">
-          <h2 className="text-lg font-medium text-stone-900 mb-2">Match not found</h2>
-          <p className="text-sm text-stone-500 mb-4">This match may have been deleted.</p>
-          <button onClick={handleBack} className="btn-primary">
+          <h2 className="text-lg font-medium mb-2" style={{ color: 'rgb(var(--color-text))' }}>Match not found</h2>
+          <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>This match may have been deleted.</p>
+          <button onClick={handleBack} className="btn btn-primary">
             Back to home
           </button>
         </div>
@@ -245,47 +251,65 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
   const isFull = isMatchFull(match.max_players, participants.length)
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200 sticky top-0 z-10">
-        <div className="container-app py-3">
+      <header 
+        className="sticky top-0 z-10 backdrop-blur-sm"
+        style={{ 
+          backgroundColor: 'rgb(var(--color-surface) / 0.8)',
+          borderBottom: '1px solid rgb(var(--color-border-light))'
+        }}
+      >
+        <div className="container-app py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <button
                 onClick={handleBack}
-                className="mr-3 p-1.5 -ml-1.5 rounded-md hover:bg-stone-100 transition-colors"
+                className="mr-3 p-2 -ml-2 rounded-lg transition-colors"
+                style={{ backgroundColor: 'transparent' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                <ArrowLeft className="w-5 h-5 text-stone-600" />
+                <ArrowLeft className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
               </button>
-              <h1 className="font-medium text-stone-900">
+              <h1 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text))' }}>
                 Match Details
               </h1>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               {match && currentUserId && match.creator_id === currentUserId && match.status === 'upcoming' && (
                 <>
                   <button
                     onClick={handleEdit}
-                    className="p-2 rounded-md hover:bg-stone-100 transition-colors"
+                    className="p-2 rounded-lg transition-colors"
+                    style={{ backgroundColor: 'transparent' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     title="Edit"
                   >
-                    <Edit3 className="w-4 h-4 text-stone-600" />
+                    <Edit3 className="w-4 h-4" style={{ color: 'rgb(var(--color-text-muted))' }} />
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="p-2 rounded-md hover:bg-stone-100 transition-colors"
+                    className="p-2 rounded-lg transition-colors"
+                    style={{ backgroundColor: 'transparent' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     title="Delete"
                   >
-                    <Trash2 className="w-4 h-4 text-stone-500" />
+                    <Trash2 className="w-4 h-4" style={{ color: 'rgb(var(--color-text-subtle))' }} />
                   </button>
                 </>
               )}
               <button
                 onClick={handleShare}
-                className="p-2 rounded-md hover:bg-stone-100 transition-colors"
+                className="p-2 rounded-lg transition-colors"
+                style={{ backgroundColor: 'transparent' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 title="Share"
               >
-                <Share2 className="w-4 h-4 text-stone-600" />
+                <Share2 className="w-4 h-4" style={{ color: 'rgb(var(--color-text-muted))' }} />
               </button>
             </div>
           </div>
@@ -297,62 +321,89 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
         {/* Match Info */}
         <div className="card">
           <div className="flex items-start justify-between mb-4">
-            <h2 className="text-xl font-semibold text-stone-900 pr-3">
+            <h2 className="text-xl font-semibold pr-3" style={{ color: 'rgb(var(--color-text))' }}>
               {match.title}
             </h2>
-            <span className={`flex-shrink-0 ${isFull ? 'badge-full' : 'badge-available'}`}>
+            <span className={`flex-shrink-0 badge ${isFull ? 'badge-full' : 'badge-available'}`}>
               {isFull ? 'Full' : `${availableSpots} left`}
             </span>
           </div>
           
           {match.description && (
-            <p className="text-stone-600 text-sm mb-5">
+            <p className="text-sm mb-5" style={{ color: 'rgb(var(--color-text-muted))' }}>
               {match.description}
             </p>
           )}
           
-          <div className="space-y-3">
-            <div className="flex items-start">
-              <Calendar className="w-4 h-4 text-stone-400 mr-3 mt-0.5" />
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div 
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+              >
+                <Calendar className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+              </div>
               <div>
-                <p className="font-medium text-stone-900 text-sm">
+                <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                   {formatMatchDate(match.date_time)}
                 </p>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                   {formatMatchDateTime(match.date_time, match.duration_minutes)}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-start">
-              <MapPin className="w-4 h-4 text-stone-400 mr-3 mt-0.5" />
-              <p className="font-medium text-stone-900 text-sm">
-                {match.location}
-              </p>
+            <div className="flex items-start gap-3">
+              <div 
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+              >
+                <MapPin className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text))' }}>
+                  {match.location}
+                </p>
+              </div>
             </div>
             
             {creator && (
-              <div className="flex items-start">
-                <User className="w-4 h-4 text-stone-400 mr-3 mt-0.5" />
-                <p className="text-sm text-stone-600">
-                  Created by {currentUserId === creator.id ? 'you' : (creator.name || creator.phone)}
-                </p>
+              <div className="flex items-start gap-3">
+                <div 
+                  className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+                >
+                  <User className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+                </div>
+                <div>
+                  <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    Created by {currentUserId === creator.id ? 'you' : (creator.name || creator.phone)}
+                  </p>
+                </div>
               </div>
             )}
             
-            <div className="flex items-start">
-              <Users className="w-4 h-4 text-stone-400 mr-3 mt-0.5" />
+            <div className="flex items-start gap-3">
+              <div 
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+              >
+                <Users className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+              </div>
               <div>
-                <p className="font-medium text-stone-900 text-sm">
+                <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                   {participants.length}/{match.max_players} players
                 </p>
-                <div className="flex mt-1.5 gap-0.5">
+                <div className="flex mt-2 gap-1">
                   {Array.from({ length: match.max_players }).map((_, i) => (
                     <div
                       key={i}
-                      className={`w-2 h-2 rounded-full ${
-                        i < participants.length ? 'bg-stone-500' : 'bg-stone-200'
-                      }`}
+                      className="w-2 h-2 rounded-full"
+                      style={{ 
+                        backgroundColor: i < participants.length 
+                          ? 'rgb(var(--color-text-muted))' 
+                          : 'rgb(var(--color-border-light))'
+                      }}
                     />
                   ))}
                 </div>
@@ -364,26 +415,35 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
         {/* Participants */}
         {participants.length > 0 && (
           <div className="card">
-            <h3 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-3">
+            <h3 className="section-header" style={{ marginBottom: 'var(--space-4)' }}>
               Players ({participants.length})
             </h3>
             
             {isLoadingParticipants ? (
               <div className="text-center py-4">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-stone-300 border-t-stone-600 mx-auto"></div>
+                <div 
+                  className="animate-spin rounded-full h-5 w-5 mx-auto"
+                  style={{ 
+                    border: '2px solid rgb(var(--color-border-light))',
+                    borderTopColor: 'rgb(var(--color-text-muted))'
+                  }}
+                />
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {participants.map((participant) => (
-                  <div key={participant.id} className="flex items-center py-1.5">
-                    <div className="w-8 h-8 bg-stone-100 rounded-full flex items-center justify-center mr-3">
-                      <User className="w-4 h-4 text-stone-500" />
+                  <div key={participant.id} className="flex items-center gap-3">
+                    <div 
+                      className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+                    >
+                      <User className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-stone-900 text-sm truncate">
+                      <p className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text))' }}>
                         {currentUserId === participant.id ? 'You' : (participant.name || 'Player')}
                       </p>
-                      <p className="text-xs text-stone-500 truncate">
+                      <p className="text-xs truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
                         {participant.phone}
                       </p>
                     </div>
@@ -398,16 +458,19 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
         <div className="card">
           {hasJoined ? (
             <div className="text-center">
-              <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Users className="w-5 h-5 text-stone-600" />
+              <div 
+                className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+              >
+                <Users className="w-6 h-6" style={{ color: 'rgb(var(--color-text-muted))' }} />
               </div>
-              <p className="font-medium text-stone-900 mb-1">You're in!</p>
-              <p className="text-sm text-stone-500 mb-4">See you at the match</p>
+              <p className="font-medium mb-1" style={{ color: 'rgb(var(--color-text))' }}>You're in!</p>
+              <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>See you at the match</p>
               
               <button
                 onClick={handleLeaveMatch}
                 disabled={isLeaving}
-                className="btn-danger w-full"
+                className="btn btn-danger w-full"
               >
                 <UserMinus className="w-4 h-4 mr-2" />
                 {isLeaving ? 'Leaving...' : 'Leave match'}
@@ -417,21 +480,24 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
             <div className="text-center">
               {isFull ? (
                 <>
-                  <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Users className="w-5 h-5 text-stone-400" />
+                  <div 
+                    className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                    style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+                  >
+                    <Users className="w-6 h-6" style={{ color: 'rgb(var(--color-text-subtle))' }} />
                   </div>
-                  <p className="font-medium text-stone-900 mb-1">Match is full</p>
-                  <p className="text-sm text-stone-500">No spots available</p>
+                  <p className="font-medium mb-1" style={{ color: 'rgb(var(--color-text))' }}>Match is full</p>
+                  <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>No spots available</p>
                 </>
               ) : (
                 <>
-                  <p className="text-sm text-stone-500 mb-3">
+                  <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>
                     {availableSpots} {availableSpots === 1 ? 'spot' : 'spots'} remaining
                   </p>
                   <button
                     onClick={handleJoinMatch}
                     disabled={isJoining}
-                    className="btn-primary w-full"
+                    className="btn btn-primary w-full"
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
                     {isJoining ? 'Joining...' : 'Join match'}
@@ -443,12 +509,15 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
         </div>
 
         {/* Share hint */}
-        <div className="card bg-stone-100 border-stone-200">
-          <div className="flex items-start">
-            <Share2 className="w-4 h-4 text-stone-500 mr-3 mt-0.5" />
+        <div 
+          className="card"
+          style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+        >
+          <div className="flex items-start gap-3">
+            <Share2 className="w-5 h-5 mt-0.5" style={{ color: 'rgb(var(--color-text-muted))' }} />
             <div>
-              <p className="font-medium text-stone-700 text-sm">Share this match</p>
-              <p className="text-xs text-stone-500">Send the link to friends</p>
+              <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>Share this match</p>
+              <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Send the link to friends</p>
             </div>
           </div>
         </div>
@@ -456,16 +525,31 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
 
       {/* Share Modal */}
       {showShareModal && (
-        <div className="fixed inset-0 bg-stone-900/50 flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-lg max-w-sm w-full p-5 animate-scale-in">
-            <h3 className="font-medium text-stone-900 mb-4">
+        <div 
+          className="fixed inset-0 flex items-center justify-center p-4 z-50 animate-fade-in"
+          style={{ backgroundColor: 'rgb(var(--color-text) / 0.5)' }}
+        >
+          <div 
+            className="rounded-xl max-w-sm w-full animate-scale-in"
+            style={{ 
+              backgroundColor: 'rgb(var(--color-surface))',
+              padding: 'var(--space-5)'
+            }}
+          >
+            <h3 className="font-semibold mb-4" style={{ color: 'rgb(var(--color-text))' }}>
               Share Match
             </h3>
             
             <div className="space-y-2">
               <button
                 onClick={handleCopyLink}
-                className="w-full flex items-center justify-center py-2.5 px-4 border border-stone-200 rounded-md hover:bg-stone-50 transition-colors text-sm"
+                className="w-full flex items-center justify-center py-3 px-4 rounded-lg transition-colors text-sm"
+                style={{ 
+                  border: '1px solid rgb(var(--color-border-light))',
+                  backgroundColor: 'transparent'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
                 <Copy className="w-4 h-4 mr-2" />
                 Copy link
@@ -473,7 +557,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
               
               <button
                 onClick={handleShareWhatsApp}
-                className="w-full flex items-center justify-center py-2.5 px-4 bg-[#25D366] text-white rounded-md hover:bg-[#20BD5A] transition-colors text-sm"
+                className="w-full flex items-center justify-center py-3 px-4 bg-[#25D366] text-white rounded-lg hover:bg-[#20BD5A] transition-colors text-sm"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 WhatsApp
@@ -482,7 +566,10 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
             
             <button
               onClick={() => setShowShareModal(false)}
-              className="w-full mt-3 py-2 text-sm text-stone-500 hover:text-stone-700 transition-colors"
+              className="w-full mt-4 py-2 text-sm transition-colors"
+              style={{ color: 'rgb(var(--color-text-muted))' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'rgb(var(--color-text))'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'rgb(var(--color-text-muted))'}
             >
               Cancel
             </button>
@@ -492,33 +579,45 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
 
       {/* Delete Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-stone-900/50 flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-lg max-w-sm w-full p-5 animate-scale-in">
-            <div className="flex items-start mb-4">
-              <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mr-3">
-                <Trash2 className="w-5 h-5 text-stone-500" />
+        <div 
+          className="fixed inset-0 flex items-center justify-center p-4 z-50 animate-fade-in"
+          style={{ backgroundColor: 'rgb(var(--color-text) / 0.5)' }}
+        >
+          <div 
+            className="rounded-xl max-w-sm w-full animate-scale-in"
+            style={{ 
+              backgroundColor: 'rgb(var(--color-surface))',
+              padding: 'var(--space-5)'
+            }}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div 
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+              >
+                <Trash2 className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
               </div>
               <div>
-                <h3 className="font-medium text-stone-900">Delete match?</h3>
-                <p className="text-sm text-stone-500">This can't be undone</p>
+                <h3 className="font-semibold" style={{ color: 'rgb(var(--color-text))' }}>Delete match?</h3>
+                <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>This can't be undone</p>
               </div>
             </div>
             
-            <p className="text-sm text-stone-600 mb-4">
+            <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
               "{match?.title}" will be permanently deleted.
             </p>
             
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 btn-secondary"
+                className="btn btn-secondary flex-1"
                 disabled={isDeleting}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="flex-1 btn-danger"
+                className="btn btn-danger flex-1"
                 disabled={isDeleting}
               >
                 {isDeleting ? 'Deleting...' : 'Delete'}

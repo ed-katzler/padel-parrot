@@ -1,5 +1,7 @@
 'use client'
 
+import { ChevronDown } from 'lucide-react'
+
 interface TimePickerProps {
   value: string
   onChange: (time: string) => void
@@ -39,20 +41,29 @@ export default function TimePicker({
   placeholder = 'Select time'
 }: TimePickerProps) {
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="input"
-    >
-      <option value="" disabled>
-        {placeholder}
-      </option>
-      {TIME_SLOTS.map((slot) => (
-        <option key={slot.value} value={slot.value}>
-          {slot.label}
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="input appearance-none"
+        style={{ 
+          paddingRight: '2.5rem',
+          color: value ? 'rgb(var(--color-text))' : 'rgb(var(--color-text-subtle))'
+        }}
+      >
+        <option value="" disabled>
+          {placeholder}
         </option>
-      ))}
-    </select>
+        {TIME_SLOTS.map((slot) => (
+          <option key={slot.value} value={slot.value}>
+            {slot.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown 
+        className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none"
+        style={{ color: 'rgb(var(--color-text-subtle))' }}
+      />
+    </div>
   )
 }
-
