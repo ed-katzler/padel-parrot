@@ -186,7 +186,7 @@ export default function CreateMatchPage() {
 
       {/* Main Content */}
       <main className="container-app py-6 pb-32">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form id="create-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           
           {/* Card 1: Match Details */}
           <div className="card">
