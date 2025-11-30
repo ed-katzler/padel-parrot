@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Calendar, MapPin, Users, Share2, UserPlus, UserMinus, Copy, ExternalLink, User, Edit3, Trash2 } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Users, Share2, UserPlus, UserMinus, Copy, ExternalLink, User, Edit3, Trash2, ChevronRight } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
 import { getMatch, joinMatch, leaveMatch, deleteMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById } from '@padel-parrot/api-client'
 import toast from 'react-hot-toast'
@@ -508,19 +508,25 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
           )}
         </div>
 
-        {/* Share hint */}
-        <div 
-          className="card"
+        {/* Share Card - Clickable */}
+        <button
+          onClick={handleShare}
+          className="card w-full text-left transition-colors"
           style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-border-light))'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
         >
-          <div className="flex items-start gap-3">
-            <Share2 className="w-5 h-5 mt-0.5" style={{ color: 'rgb(var(--color-text-muted))' }} />
-            <div>
-              <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>Share this match</p>
-              <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Send the link to friends</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Share2 className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+              <div>
+                <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>Share this match</p>
+                <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Send the link to friends</p>
+              </div>
             </div>
+            <ChevronRight className="w-4 h-4" style={{ color: 'rgb(var(--color-text-subtle))' }} />
           </div>
-        </div>
+        </button>
       </main>
 
       {/* Share Modal */}
