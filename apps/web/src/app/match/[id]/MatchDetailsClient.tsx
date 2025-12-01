@@ -176,7 +176,17 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
     if (!match) return
     
     const shareUrl = `${window.location.origin}/join/${match.id}`
-    const message = `Join my padel match: ${match.title}\n📅 ${formatMatchDate(match.date_time)} at ${formatMatchTime(match.date_time)}\n📍 ${match.location}\n\n${shareUrl}`
+    // Build message parts separately to avoid encoding issues
+    const lines = [
+      `Join my padel match!`,
+      ``,
+      `*${match.title}*`,
+      `${formatMatchDate(match.date_time)} at ${formatMatchTime(match.date_time)}`,
+      `${match.location}`,
+      ``,
+      shareUrl
+    ]
+    const message = lines.join('\n')
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`
     window.open(whatsappUrl, '_blank')
     setShowShareModal(false)
