@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   viewport: 'width=device-width, initial-scale=1',
   themeColor: '#1c1917', // stone-900
   manifest: '/manifest.json',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
   openGraph: {
     title: 'PadelParrot - Organise Padel Matches',
     description: 'Simplify how you organise and join padel matches',
