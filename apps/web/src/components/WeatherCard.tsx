@@ -84,12 +84,16 @@ export default function WeatherCard({ matchId, className = '' }: WeatherCardProp
         const data = await response.json()
         
         if (!response.ok) {
-          setError(data.message || data.error || 'Weather unavailable')
+          // Use specific message if available, otherwise fall back to generic
+          const errorMessage = data.message || data.error || 'Weather unavailable'
+          console.log('Weather API error:', response.status, data)
+          setError(errorMessage)
           return
         }
         
         setWeather(data)
       } catch (err) {
+        console.error('Weather fetch error:', err)
         setError('Failed to load weather')
       } finally {
         setIsLoading(false)

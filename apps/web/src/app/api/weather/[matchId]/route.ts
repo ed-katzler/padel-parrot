@@ -184,8 +184,10 @@ export async function GET(
       
       const response = await fetch(currentUrl)
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('OpenWeatherMap current weather error:', response.status, errorData)
         return NextResponse.json(
-          { error: 'Failed to fetch weather data' },
+          { error: 'Failed to fetch weather data', message: errorData.message || 'Weather service unavailable' },
           { status: 503 }
         )
       }
@@ -198,14 +200,16 @@ export async function GET(
         clouds: data.clouds.all,
         weather: data.weather
       }
-    } else if (hoursUntilMatch <= 48) {
-      // Within 48 hours - use hourly forecast
+    } else if (hoursUntilMatch <= 120) {
+      // Within 5 days (120 hours) - use 5-day forecast (OpenWeatherMap free tier)
       const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&units=metric&appid=${OPENWEATHERMAP_API_KEY}`
       
       const response = await fetch(forecastUrl)
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('OpenWeatherMap forecast error:', response.status, errorData)
         return NextResponse.json(
-          { error: 'Failed to fetch forecast data' },
+          { error: 'Failed to fetch forecast data', message: errorData.message || 'Forecast service unavailable' },
           { status: 503 }
         )
       }
@@ -233,7 +237,7 @@ export async function GET(
         weather: closestEntry.weather
       }
     } else {
-      // More than 48 hours - forecast not available
+      // More than 5 days - forecast not available
       return NextResponse.json(
         { error: 'Forecast not available yet', message: 'Weather forecast is only available for matches within 5 days' },
         { status: 404 }
