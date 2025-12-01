@@ -498,7 +498,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
         </div>
 
         {/* Weather Forecast */}
-        <WeatherCard matchId={match.id} />
+        <WeatherCard matchId={match.id} matchDateTime={match.date_time} />
 
         {/* Share Card - Clickable */}
         <button

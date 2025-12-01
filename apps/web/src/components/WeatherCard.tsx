@@ -16,6 +16,7 @@ interface WeatherData {
 
 interface WeatherCardProps {
   matchId: string
+  matchDateTime?: string // ISO date string - when this changes, refetch weather
   className?: string
 }
 
@@ -68,7 +69,7 @@ const getRiskInfo = (level: 'low' | 'medium' | 'high', risk: number) => {
   }
 }
 
-export default function WeatherCard({ matchId, className = '' }: WeatherCardProps) {
+export default function WeatherCard({ matchId, matchDateTime, className = '' }: WeatherCardProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -80,7 +81,9 @@ export default function WeatherCard({ matchId, className = '' }: WeatherCardProp
         setIsLoading(true)
         setError(null)
         
-        const response = await fetch(`/api/weather/${matchId}`)
+        // Add cache-busting param when date changes to ensure fresh data
+        const cacheBuster = matchDateTime ? `?t=${new Date(matchDateTime).getTime()}` : ''
+        const response = await fetch(`/api/weather/${matchId}${cacheBuster}`)
         const data = await response.json()
         
         if (!response.ok) {
@@ -101,7 +104,7 @@ export default function WeatherCard({ matchId, className = '' }: WeatherCardProp
     }
 
     fetchWeather()
-  }, [matchId])
+  }, [matchId, matchDateTime])
 
   if (isLoading) {
     return (
