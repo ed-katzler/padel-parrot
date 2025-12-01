@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, Plus, Calendar, MapPin, Users, Lock, Globe, User, ChevronDown, ChevronUp } from 'lucide-react'
+import { Phone, Plus, Calendar, MapPin, Users, Lock, Globe, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, isMatchInPast } from '@padel-parrot/shared'
 import { sendOtp, verifyOtp, getCurrentUser, getMyMatches, getPublicMatches, updateUser } from '@padel-parrot/api-client'
 import Logo from '@/components/Logo'
+import Avatar from '@/components/Avatar'
 import toast from 'react-hot-toast'
 
 interface Match {
@@ -27,6 +28,7 @@ interface User {
   id: string
   phone: string
   name: string | null
+  avatar_url?: string | null
   created_at: string
   updated_at: string
 }
@@ -477,13 +479,14 @@ export default function HomePage() {
               </button>
               <button
                 onClick={handleProfile}
-                className="p-2 rounded-lg transition-colors"
-                style={{ backgroundColor: 'transparent' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                className="rounded-full transition-transform active:scale-95"
                 title="Profile"
               >
-                <User className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+                <Avatar 
+                  src={currentUser?.avatar_url} 
+                  name={currentUser?.name}
+                  size="sm"
+                />
               </button>
             </div>
           </div>
@@ -612,11 +615,12 @@ export default function HomePage() {
             }}
           >
             <div className="text-center mb-6">
-              <div 
-                className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-              >
-                <User className="w-7 h-7" style={{ color: 'rgb(var(--color-text-muted))' }} />
+              <div className="flex justify-center mb-4">
+                <Avatar 
+                  src={currentUser?.avatar_url} 
+                  name={currentUser?.name}
+                  size="lg"
+                />
               </div>
               <h3 className="text-xl font-semibold" style={{ color: 'rgb(var(--color-text))' }}>
                 Welcome!

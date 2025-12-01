@@ -377,7 +377,7 @@ export class MockApiClient implements ApiClient {
     return { data: this.joinedMatches.has(matchId), error: null }
   }
 
-  async getMatchParticipants(matchId: string): Promise<ApiResponse<Array<{ id: string; phone: string; name: string | null }>>> {
+  async getMatchParticipants(matchId: string): Promise<ApiResponse<Array<{ id: string; phone: string; name: string | null; avatar_url: string | null }>>> {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 300))
     
@@ -392,14 +392,15 @@ export class MockApiClient implements ApiClient {
       participants.push({
         id: `mock-participant-${i}`,
         phone: `+123456789${i}`,
-        name: i === 0 ? 'You' : `Player ${i + 1}`
+        name: i === 0 ? 'You' : `Player ${i + 1}`,
+        avatar_url: null
       })
     }
 
     return { data: participants, error: null }
   }
 
-  async getUserById(userId: string): Promise<ApiResponse<{ id: string; phone: string; name: string | null }>> {
+  async getUserById(userId: string): Promise<ApiResponse<{ id: string; phone: string; name: string | null; avatar_url: string | null }>> {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 200))
     
@@ -412,7 +413,8 @@ export class MockApiClient implements ApiClient {
       data: { 
         id: userId, 
         phone: '+1234567890', 
-        name: 'Match Creator' 
+        name: 'Match Creator',
+        avatar_url: null
       }, 
       error: null 
     }

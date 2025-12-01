@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Calendar, MapPin, Users, Share2, UserPlus, UserMinus, Copy, ExternalLink, User, Edit3, Trash2, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Users, Share2, UserPlus, UserMinus, Copy, ExternalLink, Edit3, Trash2, ChevronRight } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
 import { getMatch, joinMatch, leaveMatch, deleteMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById } from '@padel-parrot/api-client'
+import Avatar from '@/components/Avatar'
 import toast from 'react-hot-toast'
 
 interface Match {
@@ -26,6 +27,7 @@ interface UserInfo {
   id: string
   phone: string
   name: string | null
+  avatar_url?: string | null
 }
 
 export default function MatchDetailsClient({ params }: { params: { id: string } }) {
@@ -369,12 +371,11 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
             
             {creator && (
               <div className="flex items-start gap-3">
-                <div 
-                  className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-                >
-                  <User className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
-                </div>
+                <Avatar 
+                  src={creator.avatar_url} 
+                  name={creator.name}
+                  size="md"
+                />
                 <div>
                   <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
                     Created by {currentUserId === creator.id ? 'you' : (creator.name || creator.phone)}
@@ -433,12 +434,11 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
               <div className="space-y-3">
                 {participants.map((participant) => (
                   <div key={participant.id} className="flex items-center gap-3">
-                    <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-                    >
-                      <User className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
-                    </div>
+                    <Avatar 
+                      src={participant.avatar_url} 
+                      name={participant.name}
+                      size="md"
+                    />
                     <div className="min-w-0">
                       <p className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text))' }}>
                         {currentUserId === participant.id ? 'You' : (participant.name || 'Player')}

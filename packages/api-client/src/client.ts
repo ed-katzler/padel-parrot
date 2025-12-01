@@ -626,7 +626,7 @@ class SupabaseApiClient implements ApiClient {
     }
   }
 
-  async getMatchParticipants(matchId: string): Promise<ApiResponse<Array<{ id: string; phone: string; name: string | null }>>> {
+  async getMatchParticipants(matchId: string): Promise<ApiResponse<Array<{ id: string; phone: string; name: string | null; avatar_url: string | null }>>> {
     try {
       const { data, error } = await this.supabase
         .from('participants')
@@ -634,7 +634,8 @@ class SupabaseApiClient implements ApiClient {
           users (
             id,
             phone,
-            name
+            name,
+            avatar_url
           )
         `)
         .eq('match_id', matchId)
@@ -653,11 +654,11 @@ class SupabaseApiClient implements ApiClient {
     }
   }
 
-  async getUserById(userId: string): Promise<ApiResponse<{ id: string; phone: string; name: string | null }>> {
+  async getUserById(userId: string): Promise<ApiResponse<{ id: string; phone: string; name: string | null; avatar_url: string | null }>> {
     try {
       const { data, error } = await this.supabase
         .from('users')
-        .select('id, phone, name')
+        .select('id, phone, name, avatar_url')
         .eq('id', userId)
         .single()
 
