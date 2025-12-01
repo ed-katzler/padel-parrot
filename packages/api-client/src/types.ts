@@ -7,6 +7,7 @@ export interface User {
   id: string
   phone: string
   name: string | null
+  avatar_url: string | null
   created_at: string
   updated_at: string
 }
@@ -49,6 +50,7 @@ export interface UpdateMatchRequest {
 
 export interface UpdateUserRequest {
   name?: string
+  avatar_url?: string
 }
 
 export interface Participant {
@@ -73,6 +75,7 @@ export interface ApiClient {
   verifyOtp(phone: string, token: string): Promise<ApiResponse<User>>
   getCurrentUser(): Promise<ApiResponse<User>>
   updateUser(userData: UpdateUserRequest): Promise<ApiResponse<User>>
+  uploadAvatar(file: File): Promise<ApiResponse<string>>
   signOut(): Promise<ApiResponse<null>>
   getMatches(): Promise<ApiResponse<Match[]>>
   getMyMatches(): Promise<ApiResponse<Match[]>>

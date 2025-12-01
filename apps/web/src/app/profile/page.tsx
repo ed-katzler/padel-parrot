@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, User, Phone, Edit3, Save, X, LogOut } from 'lucide-react'
-import { getCurrentUser, updateUser, signOut, type UpdateUserRequest } from '@padel-parrot/api-client'
+import { ArrowLeft, User, Phone, Edit3, Save, X, LogOut, Camera } from 'lucide-react'
+import { getCurrentUser, updateUser, uploadAvatar, signOut, type UpdateUserRequest } from '@padel-parrot/api-client'
+import { compressImage, validateImageFile } from '@/utils/imageUtils'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
 
@@ -12,6 +13,7 @@ interface User {
   id: string
   phone: string
   name: string | null
+  avatar_url: string | null
   created_at: string
   updated_at: string
 }
@@ -28,6 +30,9 @@ export default function ProfilePage() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
     register,
@@ -131,6 +136,55 @@ export default function ProfilePage() {
     }
   }
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      toast.error(validation.error || 'Invalid file')
+      return
+    }
+
+    setIsUploadingAvatar(true)
+    
+    try {
+      // Compress the image
+      const { file: compressedFile, preview } = await compressImage(file)
+      
+      // Show preview immediately
+      setAvatarPreview(preview)
+      
+      // Upload to Supabase
+      const { data: avatarUrl, error } = await uploadAvatar(compressedFile)
+      
+      if (error) {
+        toast.error(error)
+        setAvatarPreview(null)
+        return
+      }
+      
+      if (avatarUrl && user) {
+        setUser({ ...user, avatar_url: avatarUrl })
+        toast.success('Photo updated!')
+      }
+    } catch (error) {
+      toast.error('Failed to upload photo')
+      setAvatarPreview(null)
+    } finally {
+      setIsUploadingAvatar(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
@@ -195,12 +249,62 @@ export default function ProfilePage() {
         <div className="max-w-sm mx-auto space-y-6">
           {/* Avatar */}
           <div className="text-center">
-            <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
-              style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleAvatarChange}
+              className="hidden"
+              aria-label="Upload profile photo"
+            />
+            
+            {/* Clickable avatar */}
+            <button
+              onClick={handleAvatarClick}
+              disabled={isUploadingAvatar}
+              className="relative w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden group transition-transform active:scale-95"
+              style={{ 
+                backgroundColor: 'rgb(var(--color-interactive-muted))',
+                border: '3px solid rgb(var(--color-border-light))'
+              }}
             >
-              <User className="w-10 h-10" style={{ color: 'rgb(var(--color-text-subtle))' }} />
-            </div>
+              {/* Avatar image or placeholder */}
+              {(avatarPreview || user.avatar_url) ? (
+                <img 
+                  src={avatarPreview || user.avatar_url || ''} 
+                  alt="Profile photo"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="w-12 h-12 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ color: 'rgb(var(--color-text-subtle))' }} />
+              )}
+              
+              {/* Hover/loading overlay */}
+              <div 
+                className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+                  isUploadingAvatar ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                }`}
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+              >
+                {isUploadingAvatar ? (
+                  <div 
+                    className="w-6 h-6 rounded-full animate-spin"
+                    style={{ 
+                      border: '2px solid rgba(255, 255, 255, 0.3)',
+                      borderTopColor: 'white'
+                    }}
+                  />
+                ) : (
+                  <Camera className="w-6 h-6 text-white" />
+                )}
+              </div>
+            </button>
+            
+            <p className="text-xs mb-3" style={{ color: 'rgb(var(--color-text-subtle))' }}>
+              Tap to change photo
+            </p>
+            
             <h2 className="text-xl font-semibold" style={{ color: 'rgb(var(--color-text))' }}>
               {user.name || 'Set your name'}
             </h2>

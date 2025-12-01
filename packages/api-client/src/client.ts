@@ -117,6 +117,7 @@ class SupabaseApiClient implements ApiClient {
         id: data.user.id,
         phone: data.user.phone || phone,
         name: userData?.name || null, // Use name from database, not auth metadata
+        avatar_url: userData?.avatar_url || null,
         created_at: data.user.created_at,
         updated_at: data.user.updated_at || data.user.created_at
       }
@@ -162,11 +163,12 @@ class SupabaseApiClient implements ApiClient {
           return { data: null, error: 'Failed to create user record' }
         }
 
-        // Return user with null name
+        // Return user with null name and avatar
         const newUser: User = {
           id: user.id,
           phone: user.phone || '',
           name: null,
+          avatar_url: null,
           created_at: user.created_at,
           updated_at: user.updated_at || user.created_at
         }
@@ -178,6 +180,7 @@ class SupabaseApiClient implements ApiClient {
         id: userData.id,
         phone: userData.phone,
         name: userData.name,
+        avatar_url: userData.avatar_url,
         created_at: userData.created_at,
         updated_at: userData.updated_at
       }
@@ -223,6 +226,71 @@ class SupabaseApiClient implements ApiClient {
     } catch (error) {
       console.error('💥 Unexpected error during user update:', error)
       return { data: null, error: 'Failed to update profile' }
+    }
+  }
+
+  async uploadAvatar(file: File): Promise<ApiResponse<string>> {
+    try {
+      console.log('📷 Starting avatar upload...')
+      
+      // Get current user
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      
+      if (authError || !user) {
+        console.error('❌ Authentication check failed:', authError)
+        return { data: null, error: 'Must be authenticated to upload avatar' }
+      }
+
+      console.log('✅ User authenticated:', user.id)
+
+      // Create a unique filename: userId/timestamp.extension
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`
+
+      console.log('📤 Uploading file:', fileName)
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await this.supabase.storage
+        .from('avatars')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        })
+
+      if (uploadError) {
+        console.error('❌ Upload failed:', uploadError)
+        return { data: null, error: uploadError.message }
+      }
+
+      console.log('✅ File uploaded:', uploadData.path)
+
+      // Get the public URL
+      const { data: urlData } = this.supabase.storage
+        .from('avatars')
+        .getPublicUrl(uploadData.path)
+
+      const avatarUrl = urlData.publicUrl
+      console.log('🔗 Public URL:', avatarUrl)
+
+      // Update user's avatar_url in the database
+      const { error: updateError } = await this.supabase
+        .from('users')
+        .update({
+          avatar_url: avatarUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+
+      if (updateError) {
+        console.error('❌ Failed to update user avatar_url:', updateError)
+        return { data: null, error: 'Failed to save avatar' }
+      }
+
+      console.log('✅ Avatar uploaded and saved successfully')
+      return { data: avatarUrl, error: null }
+    } catch (error) {
+      console.error('💥 Unexpected error during avatar upload:', error)
+      return { data: null, error: 'Failed to upload avatar' }
     }
   }
 
