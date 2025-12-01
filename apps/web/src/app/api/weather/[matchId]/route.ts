@@ -1,12 +1,22 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-// Initialize Supabase client with service role for cache management
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+// Lazy initialization of Supabase client to avoid build-time errors
+let supabase: SupabaseClient | null = null
 
-const OPENWEATHERMAP_API_KEY = process.env.OPENWEATHERMAP_API_KEY
+function getSupabaseClient(): SupabaseClient {
+  if (!supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase configuration missing')
+    }
+    
+    supabase = createClient(supabaseUrl, supabaseServiceKey)
+  }
+  return supabase
+}
 
 // Cache duration: 1 hour
 const CACHE_DURATION_MS = 60 * 60 * 1000
@@ -80,8 +90,11 @@ export async function GET(
       )
     }
 
+    const db = getSupabaseClient()
+    const OPENWEATHERMAP_API_KEY = process.env.OPENWEATHERMAP_API_KEY
+
     // Get match details
-    const { data: match, error: matchError } = await supabase
+    const { data: match, error: matchError } = await db
       .from('matches')
       .select('location, date_time')
       .eq('id', matchId)
@@ -95,7 +108,7 @@ export async function GET(
     }
 
     // Get location with coordinates
-    const { data: location, error: locationError } = await supabase
+    const { data: location, error: locationError } = await db
       .from('locations')
       .select('id, name, latitude, longitude')
       .eq('name', match.location)
@@ -124,7 +137,7 @@ export async function GET(
     forecastTime.setHours(forecastHour, 0, 0, 0)
 
     // Check cache first
-    const { data: cached } = await supabase
+    const { data: cached } = await db
       .from('weather_cache')
       .select('*')
       .eq('location_id', location.id)
@@ -236,7 +249,7 @@ export async function GET(
     )
 
     // Cache the result
-    await supabase.from('weather_cache').upsert({
+    await db.from('weather_cache').upsert({
       location_id: location.id,
       forecast_time: forecastTime.toISOString(),
       temperature: weatherData.temp,
