@@ -66,8 +66,21 @@ export interface Location {
   name: string
   address?: string
   description?: string
+  latitude?: number
+  longitude?: number
   created_at: string
   updated_at: string
+}
+
+export interface WeatherData {
+  temperature: number
+  humidity: number
+  windSpeed: number
+  cloudCover: number
+  condition: string
+  icon: string
+  condensationRisk: number
+  riskLevel: 'low' | 'medium' | 'high'
 }
 
 export interface ApiClient {

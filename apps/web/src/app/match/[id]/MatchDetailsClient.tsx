@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Calendar, MapPin, Users, Share2, UserPlus, UserMinus, Copy, ExternalLink, Edit3, Trash2, ChevronRight } from 'lucide-react'
-import { formatMatchDate, formatMatchTime, formatMatchDateTime, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
+import { ArrowLeft, Calendar, MapPin, Users, Share2, UserPlus, UserMinus, Copy, ExternalLink, Edit3, Trash2, ChevronRight, CalendarPlus } from 'lucide-react'
+import { formatMatchDate, formatMatchTime, formatMatchDateTime, getAvailableSpots, isMatchFull, generateGoogleCalendarUrl, generateICalContent } from '@padel-parrot/shared'
 import { getMatch, joinMatch, leaveMatch, deleteMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById } from '@padel-parrot/api-client'
 import Avatar from '@/components/Avatar'
+import WeatherCard from '@/components/WeatherCard'
 import toast from 'react-hot-toast'
 
 interface Match {
@@ -496,6 +497,9 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
           )}
         </div>
 
+        {/* Weather Forecast */}
+        <WeatherCard matchId={match.id} />
+
         {/* Share Card - Clickable */}
         <button
           onClick={handleShare}
@@ -556,6 +560,69 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                 <ExternalLink className="w-4 h-4 mr-2" />
                 WhatsApp
               </button>
+            </div>
+            
+            <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgb(var(--color-border-light))' }}>
+              <p className="text-xs mb-2" style={{ color: 'rgb(var(--color-text-muted))' }}>Add to Calendar</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    if (!match) return
+                    const url = generateGoogleCalendarUrl({
+                      title: match.title,
+                      description: match.description,
+                      location: match.location,
+                      dateTime: match.date_time,
+                      durationMinutes: match.duration_minutes
+                    })
+                    window.open(url, '_blank')
+                    setShowShareModal(false)
+                  }}
+                  className="flex-1 flex items-center justify-center py-2 px-3 rounded-lg transition-colors text-sm"
+                  style={{ 
+                    border: '1px solid rgb(var(--color-border-light))',
+                    backgroundColor: 'transparent'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <CalendarPlus className="w-4 h-4 mr-2" />
+                  Google
+                </button>
+                <button
+                  onClick={() => {
+                    if (!match) return
+                    const icalContent = generateICalContent({
+                      title: match.title,
+                      description: match.description,
+                      location: match.location,
+                      dateTime: match.date_time,
+                      durationMinutes: match.duration_minutes
+                    })
+                    const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' })
+                    const url = URL.createObjectURL(blob)
+                    const link = document.createElement('a')
+                    link.href = url
+                    link.download = `${match.title.replace(/[^a-z0-9]/gi, '-')}.ics`
+                    document.body.appendChild(link)
+                    link.click()
+                    document.body.removeChild(link)
+                    URL.revokeObjectURL(url)
+                    toast.success('Calendar file downloaded')
+                    setShowShareModal(false)
+                  }}
+                  className="flex-1 flex items-center justify-center py-2 px-3 rounded-lg transition-colors text-sm"
+                  style={{ 
+                    border: '1px solid rgb(var(--color-border-light))',
+                    backgroundColor: 'transparent'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <CalendarPlus className="w-4 h-4 mr-2" />
+                  Apple / Other
+                </button>
+              </div>
             </div>
             
             <button

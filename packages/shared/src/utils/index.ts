@@ -95,4 +95,66 @@ export const createErrorResponse = (message: string): { error: string } => {
 
 export const createSuccessResponse = <T>(data: T, message?: string): { data: T; message?: string } => {
   return { data, ...(message && { message }) };
-}; 
+};
+
+// Calendar utilities
+interface CalendarEventData {
+  title: string
+  description?: string
+  location: string
+  dateTime: string
+  durationMinutes: number
+}
+
+/**
+ * Generate a Google Calendar URL with pre-filled event details
+ * This opens Google Calendar in a new tab with the event ready to save
+ */
+export const generateGoogleCalendarUrl = (event: CalendarEventData): string => {
+  const startDate = new Date(event.dateTime)
+  const endDate = new Date(startDate.getTime() + event.durationMinutes * 60 * 1000)
+  
+  // Format dates for Google Calendar (YYYYMMDDTHHmmssZ format)
+  const formatDate = (date: Date): string => {
+    return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  }
+  
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title,
+    dates: `${formatDate(startDate)}/${formatDate(endDate)}`,
+    location: event.location,
+    details: event.description || `Padel match at ${event.location}`
+  })
+  
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+
+/**
+ * Generate an Apple Calendar / iCal file content
+ */
+export const generateICalContent = (event: CalendarEventData): string => {
+  const startDate = new Date(event.dateTime)
+  const endDate = new Date(startDate.getTime() + event.durationMinutes * 60 * 1000)
+  
+  const formatDate = (date: Date): string => {
+    return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  }
+  
+  const uid = `padel-${Date.now()}@padelparrot.com`
+  
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//PadelParrot//Match//EN',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTART:${formatDate(startDate)}`,
+    `DTEND:${formatDate(endDate)}`,
+    `SUMMARY:${event.title}`,
+    `LOCATION:${event.location}`,
+    `DESCRIPTION:${event.description || `Padel match at ${event.location}`}`,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n')
+} 
