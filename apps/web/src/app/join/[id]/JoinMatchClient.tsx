@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Calendar, MapPin, Users, UserPlus, Phone } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
-import { getMatch, sendOtp, verifyOtp, getCurrentUser } from '@padel-parrot/api-client'
+import { getMatch, sendOtp, verifyOtp, getCurrentUser, getMatchParticipants } from '@padel-parrot/api-client'
 import Logo from '@/components/Logo'
 import toast from 'react-hot-toast'
 
@@ -31,6 +31,7 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
   const [otpCode, setOtpCode] = useState('')
   const [showOtpInput, setShowOtpInput] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [participantCount, setParticipantCount] = useState<number>(0)
 
   useEffect(() => {
     loadMatch()
@@ -58,6 +59,13 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
       }
       if (data) {
         setMatch(data)
+        // Fetch fresh participant count
+        const { data: participants } = await getMatchParticipants(data.id)
+        if (participants) {
+          setParticipantCount(participants.length)
+        } else {
+          setParticipantCount(data.current_players)
+        }
       }
     } catch (error) {
       toast.error('Failed to load match')
@@ -150,8 +158,8 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
     )
   }
 
-  const availableSpots = getAvailableSpots(match.max_players, match.current_players)
-  const isFull = isMatchFull(match.max_players, match.current_players)
+  const availableSpots = getAvailableSpots(match.max_players, participantCount)
+  const isFull = isMatchFull(match.max_players, participantCount)
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
@@ -225,7 +233,7 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
               </div>
               <div>
                 <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                  {match.current_players}/{match.max_players} players
+                  {participantCount}/{match.max_players} players
                 </p>
                 <div className="flex mt-2 gap-1">
                   {Array.from({ length: match.max_players }).map((_, i) => (
@@ -233,7 +241,7 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
                       key={i}
                       className="w-2 h-2 rounded-full"
                       style={{ 
-                        backgroundColor: i < match.current_players 
+                        backgroundColor: i < participantCount 
                           ? 'rgb(var(--color-text-muted))' 
                           : 'rgb(var(--color-border-light))'
                       }}

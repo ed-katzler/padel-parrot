@@ -42,7 +42,6 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [creator, setCreator] = useState<UserInfo | null>(null)
   const [participants, setParticipants] = useState<UserInfo[]>([])
-  const [isLoadingParticipants, setIsLoadingParticipants] = useState(false)
 
   useEffect(() => {
     loadCurrentUser()
@@ -78,38 +77,29 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       if (data) {
         setMatch(data)
         
-        const { data: creatorData, error: creatorError } = await getUserById(data.creator_id)
-        if (!creatorError && creatorData) {
-          setCreator(creatorData)
+        // Load all related data in parallel and wait for all
+        const [creatorResult, participantsResult, joinStatusResult] = await Promise.all([
+          getUserById(data.creator_id),
+          getMatchParticipants(data.id),
+          currentUserId ? hasUserJoinedMatch(data.id, currentUserId) : Promise.resolve({ data: false, error: null })
+        ])
+        
+        if (!creatorResult.error && creatorResult.data) {
+          setCreator(creatorResult.data)
         }
         
-        loadParticipants(data.id)
+        if (!participantsResult.error && participantsResult.data) {
+          setParticipants(participantsResult.data)
+        }
         
-        if (currentUserId) {
-          const { data: hasJoined, error: joinError } = await hasUserJoinedMatch(data.id, currentUserId)
-          if (!joinError && hasJoined !== null) {
-            setHasJoined(hasJoined)
-          }
+        if (!joinStatusResult.error && joinStatusResult.data !== null) {
+          setHasJoined(joinStatusResult.data)
         }
       }
     } catch (error) {
       toast.error('Failed to load match')
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const loadParticipants = async (matchId: string) => {
-    setIsLoadingParticipants(true)
-    try {
-      const { data, error } = await getMatchParticipants(matchId)
-      if (!error && data) {
-        setParticipants(data)
-      }
-    } catch (error) {
-      console.error('Failed to load participants:', error)
-    } finally {
-      setIsLoadingParticipants(false)
     }
   }
 
@@ -430,37 +420,25 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
               Players ({participants.length})
             </h3>
             
-            {isLoadingParticipants ? (
-              <div className="text-center py-4">
-                <div 
-                  className="animate-spin rounded-full h-5 w-5 mx-auto"
-                  style={{ 
-                    border: '2px solid rgb(var(--color-border-light))',
-                    borderTopColor: 'rgb(var(--color-text-muted))'
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {participants.map((participant) => (
-                  <div key={participant.id} className="flex items-center gap-3">
-                    <Avatar 
-                      src={participant.avatar_url} 
-                      name={participant.name}
-                      size="md"
-                    />
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text))' }}>
-                        {currentUserId === participant.id ? 'You' : (participant.name || 'Player')}
-                      </p>
-                      <p className="text-xs truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                        {participant.phone}
-                      </p>
-                    </div>
+            <div className="space-y-3">
+              {participants.map((participant) => (
+                <div key={participant.id} className="flex items-center gap-3">
+                  <Avatar 
+                    src={participant.avatar_url} 
+                    name={participant.name}
+                    size="md"
+                  />
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text))' }}>
+                      {currentUserId === participant.id ? 'You' : (participant.name || 'Player')}
+                    </p>
+                    <p className="text-xs truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                      {participant.phone}
+                    </p>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
