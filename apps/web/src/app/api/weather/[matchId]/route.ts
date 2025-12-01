@@ -130,46 +130,57 @@ export async function GET(
 
     const matchTime = new Date(match.date_time)
     const now = new Date()
+    const hoursUntilMatch = (matchTime.getTime() - now.getTime()) / (1000 * 60 * 60)
+    
+    console.log('Weather API debug:', {
+      matchId,
+      matchDateTime: match.date_time,
+      matchTimeParsed: matchTime.toISOString(),
+      nowTime: now.toISOString(),
+      hoursUntilMatch: hoursUntilMatch.toFixed(2),
+      location: location.name,
+      lat: location.latitude,
+      lon: location.longitude
+    })
     
     // Round forecast time to nearest 3 hours (OpenWeatherMap forecast resolution)
     const forecastHour = Math.round(matchTime.getHours() / 3) * 3
     const forecastTime = new Date(matchTime)
     forecastTime.setHours(forecastHour, 0, 0, 0)
 
-    // Check cache first
-    const { data: cached } = await db
-      .from('weather_cache')
-      .select('*')
-      .eq('location_id', location.id)
-      .eq('forecast_time', forecastTime.toISOString())
-      .gte('fetched_at', new Date(now.getTime() - CACHE_DURATION_MS).toISOString())
-      .single()
-
-    if (cached) {
-      const response: WeatherResponse = {
-        temperature: parseFloat(cached.temperature),
-        humidity: cached.humidity,
-        windSpeed: parseFloat(cached.wind_speed),
-        cloudCover: cached.cloud_cover,
-        condition: cached.weather_condition,
-        icon: cached.weather_icon,
-        condensationRisk: cached.condensation_risk,
-        riskLevel: cached.condensation_risk < 30 ? 'low' : cached.condensation_risk < 60 ? 'medium' : 'high'
-      }
-      return NextResponse.json(response)
-    }
+    // Check cache first (skip cache for now to debug)
+    // const { data: cached } = await db
+    //   .from('weather_cache')
+    //   .select('*')
+    //   .eq('location_id', location.id)
+    //   .eq('forecast_time', forecastTime.toISOString())
+    //   .gte('fetched_at', new Date(now.getTime() - CACHE_DURATION_MS).toISOString())
+    //   .single()
+    // 
+    // if (cached) {
+    //   const response: WeatherResponse = {
+    //     temperature: parseFloat(cached.temperature),
+    //     humidity: cached.humidity,
+    //     windSpeed: parseFloat(cached.wind_speed),
+    //     cloudCover: cached.cloud_cover,
+    //     condition: cached.weather_condition,
+    //     icon: cached.weather_icon,
+    //     condensationRisk: cached.condensation_risk,
+    //     riskLevel: cached.condensation_risk < 30 ? 'low' : cached.condensation_risk < 60 ? 'medium' : 'high'
+    //   }
+    //   return NextResponse.json(response)
+    // }
 
     // Check if we have an API key
     if (!OPENWEATHERMAP_API_KEY) {
+      console.error('Weather API: No API key configured')
       return NextResponse.json(
-        { error: 'Weather API not configured' },
+        { error: 'Weather API not configured', message: 'Weather service not available' },
         { status: 503 }
       )
     }
 
     // Determine if we need current weather or forecast
-    const hoursUntilMatch = (matchTime.getTime() - now.getTime()) / (1000 * 60 * 60)
-    
     let weatherData: {
       temp: number
       humidity: number
@@ -238,8 +249,9 @@ export async function GET(
       }
     } else {
       // More than 5 days - forecast not available
+      console.log('Weather API: Match too far in future', { hoursUntilMatch })
       return NextResponse.json(
-        { error: 'Forecast not available yet', message: 'Weather forecast is only available for matches within 5 days' },
+        { error: 'Forecast not available yet', message: `Match is ${Math.round(hoursUntilMatch / 24)} days away. Weather available within 5 days.` },
         { status: 404 }
       )
     }
