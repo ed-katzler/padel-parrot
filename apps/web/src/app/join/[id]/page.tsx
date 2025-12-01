@@ -23,8 +23,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const spotsLeft = match.max_players - match.current_players
     const statusEmoji = spotsLeft === 0 ? '🔴' : spotsLeft <= 2 ? '🟡' : '🟢'
     
-    const title = `${statusEmoji} ${match.title} - Join on PadelParrot`
-    const description = `🎾 ${match.title}\n📅 ${matchDate} at ${matchDateTime}\n📍 ${match.location}\n👥 ${match.current_players}/${match.max_players} players${spotsLeft > 0 ? ` - ${spotsLeft} spots left!` : ' - FULL'}`
+    const title = `${match.title} - Join on PadelParrot`
+    const description = `${matchDate} at ${match.location} • ${match.current_players}/${match.max_players} players${spotsLeft > 0 ? ` • ${spotsLeft} spots left` : ' • FULL'}`
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.padelparrot.com'
 
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       openGraph: {
-        title: `🎾 ${match.title}`,
+        title: match.title,
         description,
         type: 'website',
         url: `${appUrl}/join/${params.id}`,
@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
       twitter: {
         card: 'summary_large_image',
-        title: `🎾 ${match.title}`,
+        title: match.title,
         description,
         images: [`${appUrl}/api/og/match/${params.id}`],
       },
