@@ -38,6 +38,7 @@ export class MockApiClient implements ApiClient {
     id: 'mock-user-id',
     phone: '+1234567890',
     name: 'Test User',
+    avatar_url: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }
@@ -90,6 +91,24 @@ export class MockApiClient implements ApiClient {
     }
     
     return { data: this.mockUser, error: null }
+  }
+
+  async uploadAvatar(file: File): Promise<ApiResponse<string>> {
+    if (!this.isAuthenticated) {
+      return { data: null, error: 'Must be authenticated to upload avatar' }
+    }
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    // Create a mock URL for the avatar
+    const mockAvatarUrl = `https://example.com/avatars/${this.mockUser.id}/${Date.now()}.jpg`
+    
+    // Update the mock user's avatar
+    this.mockUser.avatar_url = mockAvatarUrl
+    this.mockUser.updated_at = new Date().toISOString()
+    
+    return { data: mockAvatarUrl, error: null }
   }
 
   async signOut(): Promise<ApiResponse<null>> {
