@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Phone, Plus, Calendar, MapPin, Users, LogOut, Lock, Globe, User, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, isMatchInPast } from '@padel-parrot/shared'
 import { sendOtp, verifyOtp, getCurrentUser, signOut, getMyMatches, getPublicMatches, updateUser } from '@padel-parrot/api-client'
+import Logo from '@/components/Logo'
 import toast from 'react-hot-toast'
 
 interface Match {
@@ -390,7 +391,7 @@ export default function HomePage() {
       >
         <div className="w-full max-w-sm animate-fade-in">
           <div className="text-center mb-8">
-            <img src="/padelparrot-light.svg" alt="PadelParrot" className="mx-auto h-10 mb-4" />
+            <Logo size="lg" className="justify-center mb-4" />
             <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
               Organise padel matches with ease
             </p>
@@ -486,7 +487,7 @@ export default function HomePage() {
         <div className="container-app py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src="/padelparrot-light.svg" alt="PadelParrot" className="h-7" />
+              <Logo size="md" />
               {currentUser?.name && (
                 <span 
                   className="text-sm hidden sm:inline"

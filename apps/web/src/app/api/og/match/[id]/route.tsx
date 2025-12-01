@@ -3,6 +3,9 @@ import { getMatch } from '@padel-parrot/api-client'
 
 export const runtime = 'edge'
 
+// PadelParrot logo path data (parrot icon)
+const PARROT_LOGO_PATH = "M11.53,6.65c-.73.09-1.4.75-1.6,1.44-.48,1.71,1.26,3.2,2.86,2.41,2.1-1.02,1.18-4.16-1.26-3.85ZM12.12,9.6c-1.34.29-1.58-1.68-.42-1.86,1.35-.21,1.58,1.61.42,1.86ZM11.63,0C2.44.11-3.06,10.53,1.83,18.26c5.26,8.32,18,7.04,21.28-2.3C25.91,8.01,20.04-.1,11.63,0ZM4.67,19.95c-.02-.73.04-1.48,0-2.21,0-.04-.09-.1.04-.09.04.21.16.42.27.6.66,1.2,1.56,2.25,2.61,3.12l1.49.99c-1.64-.4-3.18-1.27-4.41-2.41ZM17.29,21.34c-3.39,1.86-6.94,1.26-9.68-1.39-3.4-3.29-3.99-9.16-1.02-12.92,2.28-2.88,6.5-3.34,9.45-1.19.22.16.78.61.92.82.02.02.05.03.04.08-1.37.89-2.59,2.39-3.08,3.96-1.13,3.6.79,7.03,3.66,9.11.3.22.65.4.93.61.03.02.07.03.06.08-.02.07-1.12.75-1.28.84ZM16.13,11.52c-.36-.28-.74-.47-1.14-.67.43-1.07,1.15-2.03,2.01-2.8.06-.06.55-.46.61-.46.41.65.82,1.29,1.09,2.01.72,1.96.41,4.11-1.05,5.63.07-1.46-.36-2.8-1.52-3.71ZM19.4,19.73c-1.34-.78-2.58-1.81-3.47-3.08-.11-.16-.81-1.24-.73-1.35.36-.13.71-.25,1.04-.44.05-.03.33-.24.38-.24-.01.25-.01.52-.03.76-.03.35-.16.79-.17,1.1-.02.42.33.6.7.46,1.12-.4,2.33-2.11,2.71-3.19,1.34-3.76-1.61-8.69-5.27-9.91-5.62-1.86-10.49,2.32-10.91,7.86l-.05,7.21c-1.07-1.34-1.86-2.91-2.23-4.59C-.34,6.53,6.42-.38,14.27,1.34c4.06.89,7.24,4.13,8.17,8.16.86,3.68-.28,7.65-3.04,10.23Z"
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -22,11 +25,19 @@ export async function GET(
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: '#fafaf9',
-              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             }}
           >
-            <div style={{ fontSize: 48, fontWeight: 700, color: '#1c1917' }}>
-              🎾 Match Not Found
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <svg width="60" height="60" viewBox="0 0 23.81 23.8" fill="#1c1917">
+                <path d={PARROT_LOGO_PATH} />
+              </svg>
+              <span style={{ fontSize: 48, fontWeight: 700, color: '#1c1917' }}>
+                PadelParrot
+              </span>
+            </div>
+            <div style={{ fontSize: 24, color: '#78716c', marginTop: 16 }}>
+              Match Not Found
             </div>
           </div>
         ),
@@ -77,7 +88,7 @@ export async function GET(
             display: 'flex',
             flexDirection: 'column',
             backgroundColor: '#fafaf9',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             padding: 60,
           }}
         >
@@ -93,17 +104,14 @@ export async function GET(
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 12,
+                gap: 16,
               }}
             >
-              {/* Parrot Icon */}
-              <svg width="60" height="60" viewBox="0 0 140 140" fill="none">
-                <circle cx="70" cy="70" r="60" fill="#1895ef" />
-                <circle cx="70" cy="70" r="45" fill="#fbc201" />
-                <circle cx="70" cy="70" r="30" fill="#ef6b00" />
-                <circle cx="55" cy="55" r="8" fill="#1c1917" />
+              {/* Parrot Logo */}
+              <svg width="56" height="56" viewBox="0 0 23.81 23.8" fill="#1c1917">
+                <path d={PARROT_LOGO_PATH} />
               </svg>
-              <span style={{ fontSize: 32, fontWeight: 700, color: '#1c1917' }}>
+              <span style={{ fontSize: 36, fontWeight: 700, color: '#1c1917', letterSpacing: '-0.02em' }}>
                 PadelParrot
               </span>
             </div>
@@ -213,7 +221,7 @@ export async function GET(
                       width: 40,
                       height: 40,
                       borderRadius: '50%',
-                      backgroundColor: i < match.current_players ? '#1895ef' : '#e7e5e4',
+                      backgroundColor: i < match.current_players ? '#1c1917' : '#e7e5e4',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -236,12 +244,18 @@ export async function GET(
             style={{
               display: 'flex',
               justifyContent: 'center',
+              alignItems: 'center',
               marginTop: 24,
-              fontSize: 22,
-              color: '#78716c',
+              gap: 8,
             }}
           >
-            Tap to join • app.padelparrot.com
+            <span style={{ fontSize: 22, color: '#78716c' }}>
+              Tap to join
+            </span>
+            <span style={{ fontSize: 22, color: '#a8a29e' }}>•</span>
+            <span style={{ fontSize: 22, color: '#78716c' }}>
+              app.padelparrot.com
+            </span>
           </div>
         </div>
       ),
@@ -263,11 +277,16 @@ export async function GET(
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: '#fafaf9',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           }}
         >
-          <div style={{ fontSize: 48, fontWeight: 700, color: '#1c1917' }}>
-            🎾 PadelParrot
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <svg width="60" height="60" viewBox="0 0 23.81 23.8" fill="#1c1917">
+              <path d={PARROT_LOGO_PATH} />
+            </svg>
+            <span style={{ fontSize: 48, fontWeight: 700, color: '#1c1917' }}>
+              PadelParrot
+            </span>
           </div>
           <div style={{ fontSize: 24, color: '#78716c', marginTop: 16 }}>
             Join padel matches easily
@@ -281,4 +300,3 @@ export async function GET(
     )
   }
 }
-
