@@ -102,15 +102,26 @@ class SupabaseApiClient implements ApiClient {
 
       console.log('✅ User ensured in database')
 
+      // Fetch the actual user data from the database to get the stored name
+      const { data: userData, error: fetchError } = await this.supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single()
+
+      if (fetchError) {
+        console.error('❌ Failed to fetch user data:', fetchError)
+      }
+
       const user: User = {
         id: data.user.id,
         phone: data.user.phone || phone,
-        name: data.user.user_metadata?.name || null,
+        name: userData?.name || null, // Use name from database, not auth metadata
         created_at: data.user.created_at,
         updated_at: data.user.updated_at || data.user.created_at
       }
 
-      console.log('✅ Authentication complete for user:', user.id)
+      console.log('✅ Authentication complete for user:', user.id, 'name:', user.name)
       return { data: user, error: null }
     } catch (error) {
       console.error('💥 Unexpected error during OTP verification:', error)
