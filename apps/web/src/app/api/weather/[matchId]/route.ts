@@ -76,6 +76,10 @@ function calculateCondensationRisk(
   return { risk: Math.round(risk), level }
 }
 
+// Disable Next.js caching for this route
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function GET(
   request: Request,
   { params }: { params: { matchId: string } }
@@ -86,14 +90,14 @@ export async function GET(
     if (!matchId) {
       return NextResponse.json(
         { error: 'Match ID is required' },
-        { status: 400 }
+        { status: 400, headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
       )
     }
 
     const db = getSupabaseClient()
     const OPENWEATHERMAP_API_KEY = process.env.OPENWEATHERMAP_API_KEY
 
-    // Get match details
+    // Get match details - always fetch fresh from database
     const { data: match, error: matchError } = await db
       .from('matches')
       .select('location, date_time')
@@ -291,7 +295,9 @@ export async function GET(
       riskLevel: level
     }
 
-    return NextResponse.json(response)
+    return NextResponse.json(response, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+    })
   } catch (error) {
     console.error('Weather API error:', error)
     return NextResponse.json(
