@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, User, Phone, Edit3, Save, X } from 'lucide-react'
-import { getCurrentUser, updateUser, type UpdateUserRequest } from '@padel-parrot/api-client'
+import { ArrowLeft, User, Phone, Edit3, Save, X, LogOut } from 'lucide-react'
+import { getCurrentUser, updateUser, signOut, type UpdateUserRequest } from '@padel-parrot/api-client'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
 
@@ -27,6 +27,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
   const {
     register,
@@ -111,6 +112,23 @@ export default function ProfilePage() {
 
   const handleBack = () => {
     window.location.href = '/'
+  }
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true)
+    try {
+      const { error } = await signOut()
+      if (error) {
+        toast.error(error)
+      } else {
+        toast.success('Signed out')
+        window.location.href = '/'
+      }
+    } catch (error) {
+      toast.error('Failed to sign out')
+    } finally {
+      setIsSigningOut(false)
+    }
   }
 
   if (isLoading) {
@@ -307,6 +325,31 @@ export default function ProfilePage() {
               </p>
             </div>
           )}
+
+          {/* Sign Out */}
+          <button
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+            className="w-full p-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            style={{ 
+              backgroundColor: 'transparent',
+              border: '1px solid rgb(var(--color-border-light))',
+              color: 'rgb(var(--color-text-muted))'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'
+              e.currentTarget.style.color = 'rgb(var(--color-text))'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.color = 'rgb(var(--color-text-muted))'
+            }}
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="text-sm font-medium">
+              {isSigningOut ? 'Signing out...' : 'Sign out'}
+            </span>
+          </button>
         </div>
       </main>
     </div>

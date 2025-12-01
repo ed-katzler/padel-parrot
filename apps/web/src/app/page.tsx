@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, Plus, Calendar, MapPin, Users, LogOut, Lock, Globe, User, ChevronDown, ChevronUp } from 'lucide-react'
+import { Phone, Plus, Calendar, MapPin, Users, Lock, Globe, User, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, isMatchInPast } from '@padel-parrot/shared'
-import { sendOtp, verifyOtp, getCurrentUser, signOut, getMyMatches, getPublicMatches, updateUser } from '@padel-parrot/api-client'
+import { sendOtp, verifyOtp, getCurrentUser, getMyMatches, getPublicMatches, updateUser } from '@padel-parrot/api-client'
 import Logo from '@/components/Logo'
 import toast from 'react-hot-toast'
 
@@ -248,26 +248,6 @@ export default function HomePage() {
     window.location.href = '/profile'
   }
 
-  const handleSignOut = async () => {
-    try {
-      const { error } = await signOut()
-      if (error) {
-        toast.error(error)
-      } else {
-        setIsAuthenticated(false)
-        setCurrentUser(null)
-        setMyMatches([])
-        setPublicMatches([])
-        setPhoneNumber('')
-        setOtpCode('')
-        setShowOtpInput(false)
-        toast.success('Signed out')
-      }
-    } catch (error) {
-      toast.error('Failed to sign out')
-    }
-  }
-
   const handleCreateMatch = () => {
     window.location.href = '/create'
   }
@@ -486,17 +466,7 @@ export default function HomePage() {
       >
         <div className="container-app py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Logo size="md" />
-              {currentUser?.name && (
-                <span 
-                  className="text-sm hidden sm:inline"
-                  style={{ color: 'rgb(var(--color-text-muted))' }}
-                >
-                  {currentUser.name}
-                </span>
-              )}
-            </div>
+            <Logo size="md" />
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCreateMatch}
@@ -507,19 +477,13 @@ export default function HomePage() {
               </button>
               <button
                 onClick={handleProfile}
-                className="btn btn-secondary"
-                style={{ padding: 'var(--space-2)' }}
+                className="p-2 rounded-lg transition-colors"
+                style={{ backgroundColor: 'transparent' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 title="Profile"
               >
-                <User className="w-4 h-4" />
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="btn btn-secondary"
-                style={{ padding: 'var(--space-2)' }}
-                title="Sign out"
-              >
-                <LogOut className="w-4 h-4" />
+                <User className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
               </button>
             </div>
           </div>
