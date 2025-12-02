@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, MapPin, Users, UserPlus, Phone } from 'lucide-react'
+import { Calendar, MapPin, Users, UserPlus, Phone, Check } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, formatMatchTitle, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
-import { getMatch, sendOtp, verifyOtp, getCurrentUser, getMatchParticipants } from '@padel-parrot/api-client'
+import { getMatch, sendOtp, verifyOtp, getCurrentUser, getMatchParticipants, joinMatch, hasUserJoinedMatch } from '@padel-parrot/api-client'
 import Logo from '@/components/Logo'
 import toast from 'react-hot-toast'
 
@@ -33,20 +33,41 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
   const [showOtpInput, setShowOtpInput] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [participantCount, setParticipantCount] = useState<number>(0)
+  const [hasJoined, setHasJoined] = useState(false)
+  const [isJoining, setIsJoining] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
     loadMatch()
     checkAuthStatus().finally(() => setIsCheckingAuth(false))
   }, [params.id])
 
+  // Check join status when authenticated and match is loaded
+  useEffect(() => {
+    if (isAuthenticated && match && currentUserId) {
+      checkJoinStatus()
+    }
+  }, [isAuthenticated, match?.id, currentUserId])
+
   const checkAuthStatus = async () => {
     try {
       const { data: user, error } = await getCurrentUser()
       if (user && !error) {
         setIsAuthenticated(true)
+        setCurrentUserId(user.id)
       }
     } catch (error) {
       setIsAuthenticated(false)
+    }
+  }
+
+  const checkJoinStatus = async () => {
+    if (!currentUserId) return
+    try {
+      const { data: joined } = await hasUserJoinedMatch(params.id, currentUserId)
+      setHasJoined(joined || false)
+    } catch (error) {
+      // Ignore errors, assume not joined
     }
   }
 
@@ -112,6 +133,7 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
         toast.error(error)
       } else if (user) {
         setIsAuthenticated(true)
+        setCurrentUserId(user.id)
         toast.success('Signed in!')
       }
     } catch (error) {
@@ -121,7 +143,29 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
     }
   }
 
-  const handleJoinMatch = () => {
+  const handleJoinMatch = async () => {
+    if (!currentUserId) {
+      toast.error('Please sign in first')
+      return
+    }
+    
+    setIsJoining(true)
+    try {
+      const { error } = await joinMatch(params.id, currentUserId)
+      if (error) {
+        toast.error(error)
+      } else {
+        toast.success("You're in!")
+        window.location.href = `/match/${params.id}`
+      }
+    } catch (error) {
+      toast.error('Failed to join match')
+    } finally {
+      setIsJoining(false)
+    }
+  }
+
+  const handleViewMatch = () => {
     window.location.href = `/match/${params.id}`
   }
 
@@ -319,7 +363,28 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
           </div>
         ) : (
           <div className="card text-center">
-            {isFull ? (
+            {hasJoined ? (
+              // Already joined state
+              <>
+                <div 
+                  className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                  style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
+                >
+                  <Check className="w-6 h-6" style={{ color: 'rgb(34, 197, 94)' }} />
+                </div>
+                <h3 className="font-semibold mb-1" style={{ color: 'rgb(var(--color-text))' }}>You're in!</h3>
+                <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                  See you at the match
+                </p>
+                <button
+                  onClick={handleViewMatch}
+                  className="btn btn-primary"
+                >
+                  View match details
+                </button>
+              </>
+            ) : isFull ? (
+              // Match full state
               <>
                 <div 
                   className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
@@ -337,6 +402,7 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
                 </button>
               </>
             ) : (
+              // Ready to join state
               <>
                 <div 
                   className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
@@ -350,10 +416,11 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
                 </p>
                 <button
                   onClick={handleJoinMatch}
+                  disabled={isJoining}
                   className="btn btn-primary"
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
-                  Join match
+                  {isJoining ? 'Joining...' : 'Join match'}
                 </button>
               </>
             )}
