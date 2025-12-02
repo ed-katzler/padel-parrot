@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
 
 interface Match {
   id: string
-  title: string
+  title?: string
   description?: string
   date_time: string
   duration_minutes: number
@@ -26,6 +26,7 @@ interface Match {
 export default function JoinMatchClient({ params }: { params: { id: string } }) {
   const [match, setMatch] = useState<Match | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState('')
   const [otpCode, setOtpCode] = useState('')
@@ -35,7 +36,7 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
 
   useEffect(() => {
     loadMatch()
-    checkAuthStatus()
+    checkAuthStatus().finally(() => setIsCheckingAuth(false))
   }, [params.id])
 
   const checkAuthStatus = async () => {
@@ -177,84 +178,72 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
       <main className="container-app py-6 space-y-4">
         {/* Match Preview */}
         <div className="card">
+          {/* Primary: Date & Time */}
           <div className="flex items-start justify-between mb-4">
-            <h2 className="text-xl font-semibold pr-3" style={{ color: 'rgb(var(--color-text))' }}>
-              {match.title}
-            </h2>
+            <div>
+              <h2 className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
+                {formatMatchDate(match.date_time)}
+              </h2>
+              <p className="text-lg font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                {formatMatchTime(match.date_time)} · {formatMatchDateTime(match.date_time, match.duration_minutes).split('(')[1]?.replace(')', '') || ''}
+              </p>
+            </div>
             <span className={`flex-shrink-0 badge ${isFull ? 'badge-full' : 'badge-available'}`}>
               {isFull ? 'Full' : `${availableSpots} left`}
             </span>
           </div>
           
+          {/* Secondary: Location */}
+          <div className="flex items-center gap-3 mb-4 pb-4" style={{ borderBottom: '1px solid rgb(var(--color-border-light))' }}>
+            <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }} />
+            <p className="font-medium" style={{ color: 'rgb(var(--color-text))' }}>
+              {match.location}
+            </p>
+          </div>
+          
+          {/* Tertiary: Description (if provided) */}
           {match.description && (
-            <p className="text-sm mb-5" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>
               {match.description}
             </p>
           )}
           
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-              >
-                <Calendar className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
-              </div>
-              <div>
-                <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                  {formatMatchDate(match.date_time)}
-                </p>
-                <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  {formatMatchDateTime(match.date_time, match.duration_minutes)}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-              >
-                <MapPin className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text))' }}>
-                  {match.location}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-              >
-                <Users className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
-              </div>
-              <div>
-                <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                  {participantCount}/{match.max_players} players
-                </p>
-                <div className="flex mt-2 gap-1">
-                  {Array.from({ length: match.max_players }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-2 h-2 rounded-full"
-                      style={{ 
-                        backgroundColor: i < participantCount 
-                          ? 'rgb(var(--color-text-muted))' 
-                          : 'rgb(var(--color-border-light))'
-                      }}
-                    />
-                  ))}
-                </div>
+          {/* Meta: Player count */}
+          <div className="flex items-center gap-3">
+            <Users className="w-5 h-5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }} />
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
+                {participantCount}/{match.max_players} players
+              </span>
+              <div className="flex gap-1">
+                {Array.from({ length: match.max_players }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-2 h-2 rounded-full"
+                    style={{ 
+                      backgroundColor: i < participantCount 
+                        ? 'rgb(var(--color-text-muted))' 
+                        : 'rgb(var(--color-border-light))'
+                    }}
+                  />
+                ))}
               </div>
             </div>
           </div>
         </div>
 
         {/* Auth / Join */}
-        {!isAuthenticated ? (
+        {isCheckingAuth ? (
+          <div className="card flex items-center justify-center py-8">
+            <div 
+              className="animate-spin rounded-full h-6 w-6"
+              style={{ 
+                border: '2px solid rgb(var(--color-border-light))',
+                borderTopColor: 'rgb(var(--color-text-muted))'
+              }}
+            />
+          </div>
+        ) : !isAuthenticated ? (
           <div className="card">
             <div className="text-center mb-6">
               <h3 className="font-semibold mb-1" style={{ color: 'rgb(var(--color-text))' }}>

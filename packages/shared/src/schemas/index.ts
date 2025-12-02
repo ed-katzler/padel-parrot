@@ -16,7 +16,6 @@ export const userSchema = z.object({
 export const matchStatusSchema = z.enum(['upcoming', 'in_progress', 'completed', 'cancelled']);
 
 export const createMatchSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(100, 'Title too long'),
   description: z.string().max(500, 'Description too long').optional(),
   date_time: z.string()
     .min(1, 'Date and time is required')
@@ -39,7 +38,6 @@ export const createMatchSchema = z.object({
 });
 
 export const updateMatchSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(100, 'Title too long').optional(),
   description: z.string().max(500, 'Description too long').optional(),
   date_time: z.string()
     .refine((dateStr) => {
@@ -64,7 +62,7 @@ export const updateMatchSchema = z.object({
 export const matchSchema = z.object({
   id: z.string().uuid(),
   creator_id: z.string().uuid(),
-  title: z.string(),
+  title: z.string().optional(), // Deprecated - kept for backwards compatibility
   description: z.string().optional(),
   date_time: z.string(),
   duration_minutes: z.number(),

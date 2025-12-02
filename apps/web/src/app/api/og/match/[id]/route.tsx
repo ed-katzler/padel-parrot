@@ -129,25 +129,36 @@ export async function GET(
               border: '2px solid #e7e5e4',
             }}
           >
-            {/* Match Title & Status */}
+            {/* Primary: Date & Time with Status */}
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
-                marginBottom: 32,
+                marginBottom: 24,
               }}
             >
-              <div
-                style={{
-                  fontSize: 52,
-                  fontWeight: 700,
-                  color: '#1c1917',
-                  lineHeight: 1.2,
-                  maxWidth: '70%',
-                }}
-              >
-                🎾 {match.title}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div
+                  style={{
+                    fontSize: 56,
+                    fontWeight: 700,
+                    color: '#1c1917',
+                    lineHeight: 1.1,
+                  }}
+                >
+                  🎾 {formattedDate}
+                </div>
+                <div
+                  style={{
+                    fontSize: 36,
+                    fontWeight: 600,
+                    color: '#57534e',
+                    marginTop: 8,
+                  }}
+                >
+                  {formattedTime} ({durationStr})
+                </div>
               </div>
               <div
                 style={{
@@ -164,37 +175,36 @@ export async function GET(
               </div>
             </div>
 
-            {/* Match Details Grid */}
+            {/* Secondary: Location */}
             <div
               style={{
                 display: 'flex',
-                gap: 60,
-                marginBottom: 32,
+                alignItems: 'center',
+                gap: 12,
+                marginBottom: 24,
+                paddingBottom: 24,
+                borderBottom: '2px solid #e7e5e4',
               }}
             >
-              {/* Date & Time */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ fontSize: 20, color: '#78716c', fontWeight: 500 }}>
-                  📅 DATE & TIME
-                </div>
-                <div style={{ fontSize: 32, color: '#1c1917', fontWeight: 600 }}>
-                  {formattedDate}
-                </div>
-                <div style={{ fontSize: 28, color: '#57534e' }}>
-                  {formattedTime} ({durationStr})
-                </div>
-              </div>
-
-              {/* Location */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ fontSize: 20, color: '#78716c', fontWeight: 500 }}>
-                  📍 LOCATION
-                </div>
-                <div style={{ fontSize: 32, color: '#1c1917', fontWeight: 600 }}>
-                  {match.location}
-                </div>
+              <div style={{ fontSize: 28, color: '#78716c' }}>📍</div>
+              <div style={{ fontSize: 32, color: '#1c1917', fontWeight: 600 }}>
+                {match.location}
               </div>
             </div>
+
+            {/* Tertiary: Description (if provided) */}
+            {match.description && (
+              <div
+                style={{
+                  fontSize: 26,
+                  color: '#78716c',
+                  marginBottom: 24,
+                  lineHeight: 1.4,
+                }}
+              >
+                {match.description}
+              </div>
+            )}
 
             {/* Players */}
             <div

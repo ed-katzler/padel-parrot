@@ -10,7 +10,7 @@ import toast from 'react-hot-toast'
 
 interface Match {
   id: string
-  title: string
+  title?: string
   description?: string
   date_time: string
   duration_minutes: number
@@ -323,80 +323,45 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       <main className="container-app py-6 space-y-4">
         {/* Match Info */}
         <div className="card">
+          {/* Primary: Date & Time */}
           <div className="flex items-start justify-between mb-4">
-            <h2 className="text-xl font-semibold pr-3" style={{ color: 'rgb(var(--color-text))' }}>
-              {match.title}
-            </h2>
+            <div>
+              <h2 className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
+                {formatMatchDate(match.date_time)}
+              </h2>
+              <p className="text-lg font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                {formatMatchTime(match.date_time)} · {formatMatchDateTime(match.date_time, match.duration_minutes).split('(')[1]?.replace(')', '') || ''}
+              </p>
+            </div>
             <span className={`flex-shrink-0 badge ${isFull ? 'badge-full' : 'badge-available'}`}>
               {isFull ? 'Full' : `${availableSpots} left`}
             </span>
           </div>
           
+          {/* Secondary: Location */}
+          <div className="flex items-center gap-3 mb-4 pb-4" style={{ borderBottom: '1px solid rgb(var(--color-border-light))' }}>
+            <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }} />
+            <p className="font-medium" style={{ color: 'rgb(var(--color-text))' }}>
+              {match.location}
+            </p>
+          </div>
+          
+          {/* Tertiary: Description (if provided) */}
           {match.description && (
-            <p className="text-sm mb-5" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>
               {match.description}
             </p>
           )}
           
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-              >
-                <Calendar className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
-              </div>
-              <div>
-                <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                  {formatMatchDate(match.date_time)}
-                </p>
-                <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  {formatMatchDateTime(match.date_time, match.duration_minutes)}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-              >
-                <MapPin className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text))' }}>
-                  {match.location}
-                </p>
-              </div>
-            </div>
-            
-            {creator && (
-              <div className="flex items-start gap-3">
-                <Avatar 
-                  src={creator.avatar_url} 
-                  name={creator.name}
-                  size="md"
-                />
-                <div>
-                  <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                    Created by {currentUserId === creator.id ? 'you' : (creator.name || creator.phone)}
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            <div className="flex items-start gap-3">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
-              >
-                <Users className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
-              </div>
-              <div>
-                <p className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
+          {/* Meta: Players & Creator */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Users className="w-5 h-5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }} />
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
                   {participants.length}/{match.max_players} players
-                </p>
-                <div className="flex mt-2 gap-1">
+                </span>
+                <div className="flex gap-1">
                   {Array.from({ length: match.max_players }).map((_, i) => (
                     <div
                       key={i}
@@ -411,6 +376,19 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                 </div>
               </div>
             </div>
+            
+            {creator && (
+              <div className="flex items-center gap-3">
+                <Avatar 
+                  src={creator.avatar_url} 
+                  name={creator.name}
+                  size="sm"
+                />
+                <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                  Created by {currentUserId === creator.id ? 'you' : (creator.name || creator.phone)}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -569,7 +547,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                   onClick={() => {
                     if (!match) return
                     const url = generateGoogleCalendarUrl({
-                      title: match.title,
+                      title: `Padel - ${formatMatchDate(match.date_time)}`,
                       description: match.description,
                       location: match.location,
                       dateTime: match.date_time,
@@ -592,8 +570,9 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                 <button
                   onClick={() => {
                     if (!match) return
+                    const eventTitle = `Padel - ${formatMatchDate(match.date_time)}`
                     const icalContent = generateICalContent({
-                      title: match.title,
+                      title: eventTitle,
                       description: match.description,
                       location: match.location,
                       dateTime: match.date_time,
@@ -603,7 +582,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                     const url = URL.createObjectURL(blob)
                     const link = document.createElement('a')
                     link.href = url
-                    link.download = `${match.title.replace(/[^a-z0-9]/gi, '-')}.ics`
+                    link.download = `padel-${match.date_time.slice(0, 10)}.ics`
                     document.body.appendChild(link)
                     link.click()
                     document.body.removeChild(link)

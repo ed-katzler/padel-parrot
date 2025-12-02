@@ -10,7 +10,7 @@ import toast from 'react-hot-toast'
 
 interface Match {
   id: string
-  title: string
+  title?: string
   description?: string
   date_time: string
   duration_minutes: number
@@ -34,6 +34,7 @@ interface User {
 }
 
 export default function HomePage() {
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [phoneNumber, setPhoneNumber] = useState('')
@@ -51,7 +52,7 @@ export default function HomePage() {
   const [isUpdatingName, setIsUpdatingName] = useState(false)
 
   useEffect(() => {
-    checkAuthStatus()
+    checkAuthStatus().finally(() => setIsCheckingAuth(false))
   }, [])
 
   useEffect(() => {
@@ -292,73 +293,104 @@ export default function HomePage() {
         onClick={() => handleJoinMatch(match.id)}
         style={{ opacity: isPast ? 0.7 : 1 }}
       >
-        <div className="flex items-start justify-between mb-3">
+        {/* Primary: Date & Time */}
+        <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 
-                className="font-medium truncate"
-                style={{ color: isPast ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text))' }}
-              >
-                {match.title}
-              </h3>
-              {match.is_public ? (
-                <Globe className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-subtle))' }} />
-              ) : (
-                <Lock className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-subtle))' }} />
-              )}
-            </div>
+            <h3 
+              className="text-lg font-semibold"
+              style={{ color: isPast ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text))' }}
+            >
+              {formatMatchDate(match.date_time)}
+            </h3>
+            <p 
+              className="text-base font-medium"
+              style={{ color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))' }}
+            >
+              {formatMatchTime(match.date_time)} · {formatMatchDateTime(match.date_time, match.duration_minutes).split('(')[1]?.replace(')', '') || ''}
+            </p>
           </div>
-          {!isPast && (
-            <span className={`ml-3 flex-shrink-0 badge ${isFull ? 'badge-full' : 'badge-available'}`}>
-              {isFull ? 'Full' : `${availableSpots} left`}
-            </span>
-          )}
-          {isPast && (
-            <span className="ml-3 flex-shrink-0 badge badge-neutral">
-              Past
-            </span>
-          )}
+          <div className="flex items-center gap-2 ml-3">
+            {match.is_public ? (
+              <Globe className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-subtle))' }} />
+            ) : (
+              <Lock className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-subtle))' }} />
+            )}
+            {!isPast && (
+              <span className={`flex-shrink-0 badge ${isFull ? 'badge-full' : 'badge-available'}`}>
+                {isFull ? 'Full' : `${availableSpots} left`}
+              </span>
+            )}
+            {isPast && (
+              <span className="flex-shrink-0 badge badge-neutral">
+                Past
+              </span>
+            )}
+          </div>
         </div>
         
-        <div className="space-y-2">
-          <div 
-            className="flex items-center text-sm"
+        {/* Secondary: Location */}
+        <div 
+          className="flex items-center text-sm mb-2"
+          style={{ color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))' }}
+        >
+          <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+          <span className="truncate">{match.location}</span>
+        </div>
+
+        {/* Tertiary: Description (if provided) */}
+        {match.description && (
+          <p 
+            className="text-sm mb-2 line-clamp-2"
             style={{ color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))' }}
           >
-            <Calendar className="w-4 h-4 mr-2.5 flex-shrink-0" />
-            <span className="truncate">
-              {formatMatchDate(match.date_time)} · {formatMatchTime(match.date_time)}
-            </span>
+            {match.description}
+          </p>
+        )}
+        
+        {/* Meta: Player count */}
+        <div 
+          className="flex items-center text-sm pt-2"
+          style={{ 
+            color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))',
+            borderTop: '1px solid rgb(var(--color-border-light))'
+          }}
+        >
+          <Users className="w-4 h-4 mr-2 flex-shrink-0" />
+          <span>{match.current_players}/{match.max_players}</span>
+          <div className="flex ml-2 gap-1">
+            {Array.from({ length: match.max_players }).map((_, i) => (
+              <div
+                key={i}
+                className="w-2 h-2 rounded-full"
+                style={{ 
+                  backgroundColor: i < match.current_players
+                    ? 'rgb(var(--color-text-muted))'
+                    : 'rgb(var(--color-border-light))'
+                }}
+              />
+            ))}
           </div>
-          
+        </div>
+      </div>
+    )
+  }
+
+  // Loading state while checking auth
+  if (isCheckingAuth) {
+    return (
+      <div 
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: 'rgb(var(--color-bg))' }}
+      >
+        <div className="text-center">
+          <Logo size="lg" className="justify-center mb-4" />
           <div 
-            className="flex items-center text-sm"
-            style={{ color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))' }}
-          >
-            <MapPin className="w-4 h-4 mr-2.5 flex-shrink-0" />
-            <span className="truncate">{match.location}</span>
-          </div>
-          
-          <div 
-            className="flex items-center text-sm"
-            style={{ color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))' }}
-          >
-            <Users className="w-4 h-4 mr-2.5 flex-shrink-0" />
-            <span>{match.current_players}/{match.max_players}</span>
-            <div className="flex ml-2.5 gap-1">
-              {Array.from({ length: match.max_players }).map((_, i) => (
-                <div
-                  key={i}
-                  className="w-2 h-2 rounded-full"
-                  style={{ 
-                    backgroundColor: i < match.current_players
-                      ? 'rgb(var(--color-text-muted))'
-                      : 'rgb(var(--color-border-light))'
-                  }}
-                />
-              ))}
-            </div>
-          </div>
+            className="animate-spin rounded-full h-6 w-6 mx-auto"
+            style={{ 
+              border: '2px solid rgb(var(--color-border-light))',
+              borderTopColor: 'rgb(var(--color-text-muted))'
+            }}
+          />
         </div>
       </div>
     )

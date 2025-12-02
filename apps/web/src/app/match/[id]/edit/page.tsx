@@ -12,7 +12,7 @@ import toast from 'react-hot-toast'
 
 interface Match {
   id: string
-  title: string
+  title?: string
   description?: string
   date_time: string
   duration_minutes: number
@@ -114,7 +114,6 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
           return
         }
         
-        setValue('title', data.title)
         setValue('description', data.description || '')
         
         // Parse date and time separately
@@ -155,7 +154,6 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
     try {
       const updateData: UpdateMatchInput = {}
       
-      if (data.title !== match.title) updateData.title = data.title
       if (data.description !== match.description) updateData.description = data.description
       
       if (selectedDate && selectedTime) {
@@ -306,22 +304,6 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
           {/* Card 1: Match Details */}
           <div className="card">
             <h2 className="section-header">Match Details</h2>
-            
-            {/* Title */}
-            <div className="form-field">
-              <label htmlFor="title" className="form-label">
-                Title
-              </label>
-              <input
-                id="title"
-                type="text"
-                {...register('title')}
-                className="input"
-              />
-              {errors.title && (
-                <p className="form-error">{errors.title.message}</p>
-              )}
-            </div>
             
             {/* Description */}
             <div className="form-field">

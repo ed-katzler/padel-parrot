@@ -22,7 +22,6 @@ export default function CreateMatchPage() {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false)
   
   // Form state
-  const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [locationInput, setLocationInput] = useState('')
   const [isCustomLocation, setIsCustomLocation] = useState(false)
@@ -33,7 +32,7 @@ export default function CreateMatchPage() {
   const [isPublic, setIsPublic] = useState(false)
   
   // Validation errors
-  const [errors, setErrors] = useState<{ title?: string; location?: string; datetime?: string }>({})
+  const [errors, setErrors] = useState<{ location?: string; datetime?: string }>({})
 
   useEffect(() => {
     const loadLocations = async () => {
@@ -63,13 +62,7 @@ export default function CreateMatchPage() {
   }, [locationInput, locations])
 
   const validateForm = (): boolean => {
-    const newErrors: { title?: string; location?: string; datetime?: string } = {}
-    
-    if (!title.trim()) {
-      newErrors.title = 'Title is required'
-    } else if (title.length > 100) {
-      newErrors.title = 'Title is too long'
-    }
+    const newErrors: { location?: string; datetime?: string } = {}
     
     if (!locationInput.trim()) {
       newErrors.location = 'Location is required'
@@ -110,7 +103,6 @@ export default function CreateMatchPage() {
       const dateTime = new Date(`${selectedDate}T${selectedTime}`).toISOString()
       
       console.log('Creating match with:', {
-        title,
         description,
         date_time: dateTime,
         duration_minutes: selectedDuration,
@@ -120,7 +112,6 @@ export default function CreateMatchPage() {
       })
       
       const { data: match, error } = await createMatch({
-        title: title.trim(),
         description: description.trim() || undefined,
         date_time: dateTime,
         duration_minutes: selectedDuration,
@@ -212,27 +203,6 @@ export default function CreateMatchPage() {
           {/* Card 1: Match Details */}
           <div className="card">
             <h2 className="section-header">Match Details</h2>
-            
-            {/* Title */}
-            <div className="form-field">
-              <label htmlFor="title" className="form-label">
-                Title
-              </label>
-              <input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value)
-                  setErrors(prev => ({ ...prev, title: undefined }))
-                }}
-                placeholder="e.g., Evening Padel Session"
-                className="input"
-              />
-              {errors.title && (
-                <p className="form-error">{errors.title}</p>
-              )}
-            </div>
             
             {/* Description */}
             <div className="form-field">

@@ -14,7 +14,7 @@ export interface User {
 
 export interface Match {
   id: string
-  title: string
+  title?: string // Deprecated - kept for backwards compatibility
   description?: string
   date_time: string
   duration_minutes: number
@@ -29,7 +29,6 @@ export interface Match {
 }
 
 export interface CreateMatchRequest {
-  title: string
   description?: string
   date_time: string
   duration_minutes?: number
@@ -39,7 +38,6 @@ export interface CreateMatchRequest {
 }
 
 export interface UpdateMatchRequest {
-  title?: string
   description?: string
   date_time?: string
   duration_minutes?: number
