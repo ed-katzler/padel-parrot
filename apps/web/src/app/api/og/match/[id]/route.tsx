@@ -48,14 +48,43 @@ export async function GET(
       )
     }
 
-    // Format date
+    // Format date with relative dates
     const matchDate = new Date(match.date_time)
-    const formattedDate = matchDate.toLocaleDateString('en-GB', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
+    const now = new Date()
+    
+    // Helper for ordinal suffix
+    const getOrdinalSuffix = (day: number): string => {
+      if (day > 3 && day < 21) return 'th'
+      switch (day % 10) {
+        case 1: return 'st'
+        case 2: return 'nd'
+        case 3: return 'rd'
+        default: return 'th'
+      }
+    }
+    
+    // Calculate days until match
+    const isToday = matchDate.toDateString() === now.toDateString()
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const isTomorrow = matchDate.toDateString() === tomorrow.toDateString()
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const startOfMatchDay = new Date(matchDate.getFullYear(), matchDate.getMonth(), matchDate.getDate())
+    const daysUntil = Math.floor((startOfMatchDay.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24))
+    
+    let formattedDate: string
+    if (isToday) {
+      formattedDate = 'Today'
+    } else if (isTomorrow) {
+      formattedDate = 'Tomorrow'
+    } else if (daysUntil > 0 && daysUntil <= 6) {
+      formattedDate = matchDate.toLocaleDateString('en-GB', { weekday: 'long' })
+    } else {
+      const day = matchDate.getDate()
+      const monthYear = matchDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+      formattedDate = `${day}${getOrdinalSuffix(day)} ${monthYear}`
+    }
+    
     const formattedTime = matchDate.toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',

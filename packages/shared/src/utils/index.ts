@@ -1,8 +1,41 @@
-import { format, parseISO, addHours, isBefore, isAfter } from 'date-fns';
+import { format, parseISO, addHours, isBefore, isAfter, isToday, isTomorrow, differenceInCalendarDays, startOfDay } from 'date-fns';
+
+// Helper to get ordinal suffix for dates (1st, 2nd, 3rd, etc.)
+const getOrdinalSuffix = (day: number): string => {
+  if (day > 3 && day < 21) return 'th';
+  switch (day % 10) {
+    case 1: return 'st';
+    case 2: return 'nd';
+    case 3: return 'rd';
+    default: return 'th';
+  }
+};
 
 // Date utilities
 export const formatMatchDate = (dateString: string): string => {
-  return format(parseISO(dateString), 'PPP'); // Only date, no time
+  const date = parseISO(dateString);
+  const now = new Date();
+  
+  // Check if today
+  if (isToday(date)) {
+    return 'Today';
+  }
+  
+  // Check if tomorrow
+  if (isTomorrow(date)) {
+    return 'Tomorrow';
+  }
+  
+  // Check if within the next 7 days
+  const daysUntil = differenceInCalendarDays(date, startOfDay(now));
+  if (daysUntil > 0 && daysUntil <= 6) {
+    return format(date, 'EEEE'); // Full day name (Monday, Tuesday, etc.)
+  }
+  
+  // For dates more than a week away (or in the past), show "17th Dec 2025" format
+  const day = date.getDate();
+  const ordinal = getOrdinalSuffix(day);
+  return `${day}${ordinal} ${format(date, 'MMM yyyy')}`;
 };
 
 export const formatMatchTime = (dateString: string): string => {
