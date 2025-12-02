@@ -38,9 +38,9 @@ export const formatMatchDate = (dateString: string): string => {
   return `${day}${ordinal} ${format(date, 'MMM yyyy')}`;
 };
 
-// Format match title - combines description and date
+// Format match title - combines date and description
 // If no description: "Tomorrow" or "Thursday" or "17th Dec 2025"
-// If description: "Training with Lads on Thursday"
+// If description: "Thursday - Training with Lads"
 const MAX_DESCRIPTION_LENGTH = 40;
 
 export const formatMatchTitle = (dateString: string, description?: string): string => {
@@ -56,7 +56,7 @@ export const formatMatchTitle = (dateString: string, description?: string): stri
     truncatedDesc = truncatedDesc.substring(0, MAX_DESCRIPTION_LENGTH).trim() + '...';
   }
   
-  return `${truncatedDesc} on ${dateStr}`;
+  return `${dateStr} - ${truncatedDesc}`;
 };
 
 export const formatMatchTime = (dateString: string): string => {

@@ -177,7 +177,7 @@ export async function GET(
                   }}
                 >
                   🎾 {match.description 
-                    ? `${match.description.length > 35 ? match.description.slice(0, 35) + '...' : match.description} on ${formattedDate}`
+                    ? `${formattedDate} - ${match.description.length > 35 ? match.description.slice(0, 35) + '...' : match.description}`
                     : formattedDate}
                 </div>
                 <div

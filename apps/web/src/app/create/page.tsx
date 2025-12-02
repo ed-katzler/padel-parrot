@@ -219,7 +219,7 @@ export default function CreateMatchPage() {
                 className="input"
               />
               <p className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-subtle))' }}>
-                This will appear as "{description || 'Your description'} on {selectedDate ? 'the date' : 'Tomorrow'}"
+                {description ? `Will show as "${selectedDate ? 'Date' : 'Tomorrow'} - ${description}"` : 'Leave empty to just show the date'}
               </p>
             </div>
 
