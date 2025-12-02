@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Phone, Plus, Calendar, MapPin, Users, Lock, Globe, ChevronDown, ChevronUp } from 'lucide-react'
-import { formatMatchDate, formatMatchTime, formatMatchDateTime, isMatchInPast } from '@padel-parrot/shared'
+import { formatMatchDate, formatMatchTime, formatMatchDateTime, formatMatchTitle, isMatchInPast } from '@padel-parrot/shared'
 import { sendOtp, verifyOtp, getCurrentUser, getMyMatches, getPublicMatches, updateUser } from '@padel-parrot/api-client'
 import Logo from '@/components/Logo'
 import Avatar from '@/components/Avatar'
@@ -293,17 +293,17 @@ export default function HomePage() {
         onClick={() => handleJoinMatch(match.id)}
         style={{ opacity: isPast ? 0.7 : 1 }}
       >
-        {/* Primary: Date & Time */}
+        {/* Primary: Title (description + date or just date) */}
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
             <h3 
-              className="text-lg font-semibold"
+              className="text-lg font-semibold truncate"
               style={{ color: isPast ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text))' }}
             >
-              {formatMatchDate(match.date_time)}
+              {formatMatchTitle(match.date_time, match.description)}
             </h3>
             <p 
-              className="text-base font-medium"
+              className="text-sm"
               style={{ color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))' }}
             >
               {formatMatchTime(match.date_time)} · {formatMatchDateTime(match.date_time, match.duration_minutes).split('(')[1]?.replace(')', '') || ''}
@@ -330,22 +330,12 @@ export default function HomePage() {
         
         {/* Secondary: Location */}
         <div 
-          className="flex items-center text-sm mb-2"
+          className="flex items-center text-sm"
           style={{ color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))' }}
         >
           <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
           <span className="truncate">{match.location}</span>
         </div>
-
-        {/* Tertiary: Description (if provided) */}
-        {match.description && (
-          <p 
-            className="text-sm mb-2 line-clamp-2"
-            style={{ color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))' }}
-          >
-            {match.description}
-          </p>
-        )}
         
         {/* Meta: Player count */}
         <div 

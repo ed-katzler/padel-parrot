@@ -38,6 +38,27 @@ export const formatMatchDate = (dateString: string): string => {
   return `${day}${ordinal} ${format(date, 'MMM yyyy')}`;
 };
 
+// Format match title - combines description and date
+// If no description: "Tomorrow" or "Thursday" or "17th Dec 2025"
+// If description: "Training with Lads on Thursday"
+const MAX_DESCRIPTION_LENGTH = 40;
+
+export const formatMatchTitle = (dateString: string, description?: string): string => {
+  const dateStr = formatMatchDate(dateString);
+  
+  if (!description || description.trim() === '') {
+    return dateStr;
+  }
+  
+  // Truncate description if too long
+  let truncatedDesc = description.trim();
+  if (truncatedDesc.length > MAX_DESCRIPTION_LENGTH) {
+    truncatedDesc = truncatedDesc.substring(0, MAX_DESCRIPTION_LENGTH).trim() + '...';
+  }
+  
+  return `${truncatedDesc} on ${dateStr}`;
+};
+
 export const formatMatchTime = (dateString: string): string => {
   return format(parseISO(dateString), 'p');
 };

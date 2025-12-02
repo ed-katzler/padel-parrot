@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { getMatch } from '@padel-parrot/api-client'
-import { formatMatchDate, formatMatchDateTime } from '@padel-parrot/shared'
+import { formatMatchTitle } from '@padel-parrot/shared'
 import JoinMatchClient from './JoinMatchClient'
 
 interface Props {
@@ -18,13 +18,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       }
     }
 
-    const matchDate = formatMatchDate(match.date_time)
-    const matchDateTime = formatMatchDateTime(match.date_time, match.duration_minutes)
+    const matchTitle = formatMatchTitle(match.date_time, match.description)
     const spotsLeft = match.max_players - match.current_players
-    const statusEmoji = spotsLeft === 0 ? '🔴' : spotsLeft <= 2 ? '🟡' : '🟢'
     
-    const title = `${match.title} - Join on PadelParrot`
-    const description = `${matchDate} at ${match.location} • ${match.current_players}/${match.max_players} players${spotsLeft > 0 ? ` • ${spotsLeft} spots left` : ' • FULL'}`
+    const title = `${matchTitle} - PadelParrot`
+    const description = `${match.location} • ${match.current_players}/${match.max_players} players${spotsLeft > 0 ? ` • ${spotsLeft} spots left` : ' • FULL'}`
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.padelparrot.com'
 
@@ -32,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       openGraph: {
-        title: match.title,
+        title: matchTitle,
         description,
         type: 'website',
         url: `${appUrl}/join/${params.id}`,
@@ -42,13 +40,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             url: `${appUrl}/api/og/match/${params.id}`,
             width: 1200,
             height: 630,
-            alt: `${match.title} - Padel Match`,
+            alt: `${matchTitle} - Padel Match`,
           },
         ],
       },
       twitter: {
         card: 'summary_large_image',
-        title: match.title,
+        title: matchTitle,
         description,
         images: [`${appUrl}/api/og/match/${params.id}`],
       },

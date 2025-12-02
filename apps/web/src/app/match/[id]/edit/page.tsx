@@ -308,14 +308,15 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
             {/* Description */}
             <div className="form-field">
               <label htmlFor="description" className="form-label">
-                Description <span style={{ color: 'rgb(var(--color-text-subtle))', fontWeight: 400 }}>(optional)</span>
+                What's the match for? <span style={{ color: 'rgb(var(--color-text-subtle))', fontWeight: 400 }}>(optional)</span>
               </label>
-              <textarea
+              <input
+                type="text"
                 id="description"
                 {...register('description')}
-                rows={2}
+                placeholder="e.g. Training with the lads"
+                maxLength={50}
                 className="input"
-                style={{ resize: 'none' }}
               />
             </div>
 

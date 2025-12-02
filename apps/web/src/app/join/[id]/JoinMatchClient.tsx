@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Calendar, MapPin, Users, UserPlus, Phone } from 'lucide-react'
-import { formatMatchDate, formatMatchTime, formatMatchDateTime, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
+import { formatMatchDate, formatMatchTime, formatMatchDateTime, formatMatchTitle, getAvailableSpots, isMatchFull } from '@padel-parrot/shared'
 import { getMatch, sendOtp, verifyOtp, getCurrentUser, getMatchParticipants } from '@padel-parrot/api-client'
 import Logo from '@/components/Logo'
 import toast from 'react-hot-toast'
@@ -178,13 +178,13 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
       <main className="container-app py-6 space-y-4">
         {/* Match Preview */}
         <div className="card">
-          {/* Primary: Date & Time */}
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
-                {formatMatchDate(match.date_time)}
+          {/* Primary: Title (description + date or just date) */}
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1 min-w-0 pr-3">
+              <h2 className="text-xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
+                {formatMatchTitle(match.date_time, match.description)}
               </h2>
-              <p className="text-lg font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>
+              <p className="text-sm mt-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
                 {formatMatchTime(match.date_time)} · {formatMatchDateTime(match.date_time, match.duration_minutes).split('(')[1]?.replace(')', '') || ''}
               </p>
             </div>
@@ -194,19 +194,12 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
           </div>
           
           {/* Secondary: Location */}
-          <div className="flex items-center gap-3 mb-4 pb-4" style={{ borderBottom: '1px solid rgb(var(--color-border-light))' }}>
+          <div className="flex items-center gap-3 pb-4 mb-4" style={{ borderBottom: '1px solid rgb(var(--color-border-light))' }}>
             <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }} />
             <p className="font-medium" style={{ color: 'rgb(var(--color-text))' }}>
               {match.location}
             </p>
           </div>
-          
-          {/* Tertiary: Description (if provided) */}
-          {match.description && (
-            <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>
-              {match.description}
-            </p>
-          )}
           
           {/* Meta: Player count */}
           <div className="flex items-center gap-3">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { ArrowLeft, Calendar, MapPin, Users, Share2, UserPlus, UserMinus, Copy, ExternalLink, Edit3, Trash2, ChevronRight, CalendarPlus } from 'lucide-react'
-import { formatMatchDate, formatMatchTime, formatMatchDateTime, getAvailableSpots, isMatchFull, generateGoogleCalendarUrl, generateICalContent } from '@padel-parrot/shared'
+import { formatMatchDate, formatMatchTime, formatMatchDateTime, formatMatchTitle, getAvailableSpots, isMatchFull, generateGoogleCalendarUrl, generateICalContent } from '@padel-parrot/shared'
 import { getMatch, joinMatch, leaveMatch, deleteMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById } from '@padel-parrot/api-client'
 import Avatar from '@/components/Avatar'
 import WeatherCard from '@/components/WeatherCard'
@@ -168,12 +168,12 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
     
     const shareUrl = `${window.location.origin}/join/${match.id}`
     // Build message parts separately to avoid encoding issues
+    const title = formatMatchTitle(match.date_time, match.description)
     const lines = [
       `Join my padel match!`,
       ``,
-      `*${match.title}*`,
-      `${formatMatchDate(match.date_time)} at ${formatMatchTime(match.date_time)}`,
-      `${match.location}`,
+      `*${title}*`,
+      `${formatMatchTime(match.date_time)} at ${match.location}`,
       ``,
       shareUrl
     ]
@@ -323,13 +323,13 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       <main className="container-app py-6 space-y-4">
         {/* Match Info */}
         <div className="card">
-          {/* Primary: Date & Time */}
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
-                {formatMatchDate(match.date_time)}
+          {/* Primary: Title (description + date or just date) */}
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1 min-w-0 pr-3">
+              <h2 className="text-xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
+                {formatMatchTitle(match.date_time, match.description)}
               </h2>
-              <p className="text-lg font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>
+              <p className="text-sm mt-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
                 {formatMatchTime(match.date_time)} · {formatMatchDateTime(match.date_time, match.duration_minutes).split('(')[1]?.replace(')', '') || ''}
               </p>
             </div>
@@ -339,19 +339,12 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
           </div>
           
           {/* Secondary: Location */}
-          <div className="flex items-center gap-3 mb-4 pb-4" style={{ borderBottom: '1px solid rgb(var(--color-border-light))' }}>
+          <div className="flex items-center gap-3 pb-4 mb-4" style={{ borderBottom: '1px solid rgb(var(--color-border-light))' }}>
             <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }} />
             <p className="font-medium" style={{ color: 'rgb(var(--color-text))' }}>
               {match.location}
             </p>
           </div>
-          
-          {/* Tertiary: Description (if provided) */}
-          {match.description && (
-            <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>
-              {match.description}
-            </p>
-          )}
           
           {/* Meta: Players & Creator */}
           <div className="space-y-3">
@@ -546,8 +539,9 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                 <button
                   onClick={() => {
                     if (!match) return
+                    const calendarTitle = formatMatchTitle(match.date_time, match.description)
                     const url = generateGoogleCalendarUrl({
-                      title: `Padel - ${formatMatchDate(match.date_time)}`,
+                      title: `Padel: ${calendarTitle}`,
                       description: match.description,
                       location: match.location,
                       dateTime: match.date_time,
@@ -570,9 +564,9 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                 <button
                   onClick={() => {
                     if (!match) return
-                    const eventTitle = `Padel - ${formatMatchDate(match.date_time)}`
+                    const calendarTitle = formatMatchTitle(match.date_time, match.description)
                     const icalContent = generateICalContent({
-                      title: eventTitle,
+                      title: `Padel: ${calendarTitle}`,
                       description: match.description,
                       location: match.location,
                       dateTime: match.date_time,

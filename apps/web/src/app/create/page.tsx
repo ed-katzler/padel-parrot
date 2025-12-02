@@ -207,17 +207,20 @@ export default function CreateMatchPage() {
             {/* Description */}
             <div className="form-field">
               <label htmlFor="description" className="form-label">
-                Description <span style={{ color: 'rgb(var(--color-text-subtle))', fontWeight: 400 }}>(optional)</span>
+                What's the match for? <span style={{ color: 'rgb(var(--color-text-subtle))', fontWeight: 400 }}>(optional)</span>
               </label>
-              <textarea
+              <input
+                type="text"
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Any additional details..."
-                rows={2}
+                placeholder="e.g. Training with the lads"
+                maxLength={50}
                 className="input"
-                style={{ resize: 'none' }}
               />
+              <p className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-subtle))' }}>
+                This will appear as "{description || 'Your description'} on {selectedDate ? 'the date' : 'Tomorrow'}"
+              </p>
             </div>
 
             {/* Players */}

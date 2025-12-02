@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { getMatch } from '@padel-parrot/api-client'
-import { formatMatchDate, formatMatchDateTime } from '@padel-parrot/shared'
+import { formatMatchTitle, formatMatchTime, formatDuration } from '@padel-parrot/shared'
 import MatchDetailsClient from './MatchDetailsClient'
 
 interface Props {
@@ -18,34 +18,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       }
     }
 
-    const matchDate = formatMatchDate(match.date_time)
-    const matchDateTime = formatMatchDateTime(match.date_time, match.duration_minutes)
-    const title = `${match.title} - PadelParrot`
-    const description = `Join this padel match on ${matchDate} at ${matchDateTime} in ${match.location}. ${match.current_players}/${match.max_players} players joined.`
+    const matchTitle = formatMatchTitle(match.date_time, match.description)
+    const title = `${matchTitle} - PadelParrot`
+    const description = `${formatMatchTime(match.date_time)} (${formatDuration(match.duration_minutes)}) at ${match.location}. ${match.current_players}/${match.max_players} players joined.`
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.padelparrot.com'
 
     return {
       title,
       description,
       openGraph: {
-        title,
+        title: matchTitle,
         description,
         type: 'website',
-        url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.padelparrot.com'}/join/${params.id}`,
+        url: `${appUrl}/join/${params.id}`,
         siteName: 'PadelParrot',
         images: [
           {
-            url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.padelparrot.com'}/api/og/match/${params.id}`,
+            url: `${appUrl}/api/og/match/${params.id}`,
             width: 1200,
             height: 630,
-            alt: `${match.title} - Padel Match`,
+            alt: `${matchTitle} - Padel Match`,
           },
         ],
       },
       twitter: {
         card: 'summary_large_image',
-        title,
+        title: matchTitle,
         description,
-        images: [`${process.env.NEXT_PUBLIC_APP_URL || 'https://app.padelparrot.com'}/api/og/match/${params.id}`],
+        images: [`${appUrl}/api/og/match/${params.id}`],
       },
     }
   } catch (error) {

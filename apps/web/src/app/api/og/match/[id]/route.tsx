@@ -158,7 +158,7 @@ export async function GET(
               border: '2px solid #e7e5e4',
             }}
           >
-            {/* Primary: Date & Time with Status */}
+            {/* Primary: Title (description + date or just date) */}
             <div
               style={{
                 display: 'flex',
@@ -167,20 +167,22 @@ export async function GET(
                 marginBottom: 24,
               }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingRight: 24 }}>
                 <div
                   style={{
-                    fontSize: 56,
+                    fontSize: match.description ? 44 : 56,
                     fontWeight: 700,
                     color: '#1c1917',
-                    lineHeight: 1.1,
+                    lineHeight: 1.2,
                   }}
                 >
-                  🎾 {formattedDate}
+                  🎾 {match.description 
+                    ? `${match.description.length > 35 ? match.description.slice(0, 35) + '...' : match.description} on ${formattedDate}`
+                    : formattedDate}
                 </div>
                 <div
                   style={{
-                    fontSize: 36,
+                    fontSize: 32,
                     fontWeight: 600,
                     color: '#57534e',
                     marginTop: 8,
@@ -198,6 +200,7 @@ export async function GET(
                   fontWeight: 600,
                   padding: '12px 24px',
                   borderRadius: 12,
+                  flexShrink: 0,
                 }}
               >
                 {statusText}
@@ -220,20 +223,6 @@ export async function GET(
                 {match.location}
               </div>
             </div>
-
-            {/* Tertiary: Description (if provided) */}
-            {match.description && (
-              <div
-                style={{
-                  fontSize: 26,
-                  color: '#78716c',
-                  marginBottom: 24,
-                  lineHeight: 1.4,
-                }}
-              >
-                {match.description}
-              </div>
-            )}
 
             {/* Players */}
             <div
