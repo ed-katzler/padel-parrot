@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, User, Phone, Edit3, Save, X, LogOut, Camera } from 'lucide-react'
-import { getCurrentUser, updateUser, uploadAvatar, signOut, type UpdateUserRequest } from '@padel-parrot/api-client'
+import { ArrowLeft, User, Phone, Edit3, Save, X, LogOut, Camera, Crown, Bell, ExternalLink, Check } from 'lucide-react'
+import { getCurrentUser, updateUser, uploadAvatar, signOut, getSubscriptionStatus, getNotificationPreferences, updateNotificationPreferences, type UpdateUserRequest, type Subscription, type NotificationPreferences } from '@padel-parrot/api-client'
 import { compressImage, validateImageFile } from '@/utils/imageUtils'
+import { formatSubscriptionEnd, getSubscriptionStatusLabel, getSubscriptionStatusColor } from '@/utils/premium'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
 
@@ -33,6 +34,13 @@ export default function ProfilePage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Premium subscription state
+  const [subscription, setSubscription] = useState<Subscription | null>(null)
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences | null>(null)
+  const [isPremium, setIsPremium] = useState(false)
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(true)
+  const [isUpdatingPrefs, setIsUpdatingPrefs] = useState(false)
 
   const {
     register,
@@ -46,6 +54,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     loadUser()
+    loadSubscription()
   }, [])
 
   const loadUser = async () => {
@@ -67,6 +76,112 @@ export default function ProfilePage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const loadSubscription = async () => {
+    setIsLoadingSubscription(true)
+    try {
+      const [subResult, prefsResult] = await Promise.all([
+        getSubscriptionStatus(),
+        getNotificationPreferences()
+      ])
+      
+      if (subResult.data) {
+        setSubscription(subResult.data)
+        const isActive = subResult.data.status === 'active' &&
+          (!subResult.data.current_period_end || new Date(subResult.data.current_period_end) > new Date())
+        setIsPremium(isActive)
+      }
+      
+      if (prefsResult.data) {
+        setNotificationPrefs(prefsResult.data)
+      }
+    } catch (error) {
+      console.error('Failed to load subscription:', error)
+    } finally {
+      setIsLoadingSubscription(false)
+    }
+  }
+
+  const handleUpgrade = async () => {
+    try {
+      const response = await fetch('/api/subscriptions/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${await getAuthToken()}`,
+        },
+      })
+      
+      const data = await response.json()
+      
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        toast.error('Failed to start checkout')
+      }
+    } catch (error) {
+      toast.error('Failed to start checkout')
+    }
+  }
+
+  const handleManageSubscription = async () => {
+    try {
+      const response = await fetch('/api/subscriptions/portal', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${await getAuthToken()}`,
+        },
+      })
+      
+      const data = await response.json()
+      
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        toast.error('Failed to open subscription portal')
+      }
+    } catch (error) {
+      toast.error('Failed to open subscription portal')
+    }
+  }
+
+  const handleToggleNotification = async (type: 'day_before_enabled' | 'ninety_min_before_enabled') => {
+    if (!isPremium) return
+    
+    setIsUpdatingPrefs(true)
+    try {
+      const currentValue = notificationPrefs?.[type] ?? true
+      const { data, error } = await updateNotificationPreferences({
+        [type]: !currentValue,
+      })
+      
+      if (error) {
+        toast.error(error)
+        return
+      }
+      
+      if (data) {
+        setNotificationPrefs(data)
+        toast.success('Notification settings updated')
+      }
+    } catch (error) {
+      toast.error('Failed to update settings')
+    } finally {
+      setIsUpdatingPrefs(false)
+    }
+  }
+
+  // Helper to get auth token for API calls
+  const getAuthToken = async (): Promise<string> => {
+    // This would typically come from your auth context/store
+    // For now, we'll get it from supabase session
+    const { createClient } = await import('@supabase/supabase-js')
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    const { data: { session } } = await supabase.auth.getSession()
+    return session?.access_token || ''
   }
 
   const onSubmit = async (data: UpdateProfileInput) => {
@@ -429,6 +544,144 @@ export default function ProfilePage() {
               </p>
             </div>
           )}
+
+          {/* Premium Subscription Card */}
+          <div className="card">
+            <div className="flex items-center gap-2 mb-4">
+              <Crown className="w-5 h-5" style={{ color: isPremium ? 'rgb(234, 179, 8)' : 'rgb(var(--color-text-muted))' }} />
+              <h2 className="section-header" style={{ margin: 0 }}>Premium</h2>
+            </div>
+            
+            {isLoadingSubscription ? (
+              <div className="flex items-center justify-center py-4">
+                <div 
+                  className="animate-spin rounded-full h-5 w-5"
+                  style={{ 
+                    border: '2px solid rgb(var(--color-border-light))',
+                    borderTopColor: 'rgb(var(--color-text-muted))'
+                  }}
+                />
+              </div>
+            ) : isPremium ? (
+              <>
+                <div 
+                  className="flex items-center justify-between p-3 rounded-lg mb-4"
+                  style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4" style={{ color: 'rgb(34, 197, 94)' }} />
+                      <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>
+                        Premium Active
+                      </span>
+                    </div>
+                    {subscription?.current_period_end && (
+                      <p className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        Renews {formatSubscriptionEnd(subscription.current_period_end)}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleManageSubscription}
+                    className="text-sm font-medium flex items-center gap-1 transition-colors"
+                    style={{ color: 'rgb(var(--color-text-muted))' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'rgb(var(--color-text))'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgb(var(--color-text-muted))'}
+                  >
+                    Manage
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                </div>
+                
+                {/* Notification Preferences */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bell className="w-4 h-4" style={{ color: 'rgb(var(--color-text-muted))' }} />
+                    <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>
+                      Match Reminders
+                    </span>
+                  </div>
+                  
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                      Day before reminder (SMS)
+                    </span>
+                    <button
+                      onClick={() => handleToggleNotification('day_before_enabled')}
+                      disabled={isUpdatingPrefs}
+                      className="relative w-11 h-6 rounded-full transition-colors"
+                      style={{ 
+                        backgroundColor: notificationPrefs?.day_before_enabled 
+                          ? 'rgb(34, 197, 94)' 
+                          : 'rgb(var(--color-border-light))'
+                      }}
+                    >
+                      <span 
+                        className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm"
+                        style={{ 
+                          transform: notificationPrefs?.day_before_enabled 
+                            ? 'translateX(20px)' 
+                            : 'translateX(0)'
+                        }}
+                      />
+                    </button>
+                  </label>
+                  
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                      90 minutes before (SMS)
+                    </span>
+                    <button
+                      onClick={() => handleToggleNotification('ninety_min_before_enabled')}
+                      disabled={isUpdatingPrefs}
+                      className="relative w-11 h-6 rounded-full transition-colors"
+                      style={{ 
+                        backgroundColor: notificationPrefs?.ninety_min_before_enabled 
+                          ? 'rgb(34, 197, 94)' 
+                          : 'rgb(var(--color-border-light))'
+                      }}
+                    >
+                      <span 
+                        className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm"
+                        style={{ 
+                          transform: notificationPrefs?.ninety_min_before_enabled 
+                            ? 'translateX(20px)' 
+                            : 'translateX(0)'
+                        }}
+                      />
+                    </button>
+                  </label>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  Get SMS reminders before your matches and access weather forecasts to plan your games.
+                </p>
+                <ul className="space-y-2 mb-4">
+                  <li className="flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    <Check className="w-4 h-4" style={{ color: 'rgb(34, 197, 94)' }} />
+                    SMS reminder day before match
+                  </li>
+                  <li className="flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    <Check className="w-4 h-4" style={{ color: 'rgb(34, 197, 94)' }} />
+                    SMS reminder 90 min before
+                  </li>
+                  <li className="flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    <Check className="w-4 h-4" style={{ color: 'rgb(34, 197, 94)' }} />
+                    Weather forecasts for matches
+                  </li>
+                </ul>
+                <button
+                  onClick={handleUpgrade}
+                  className="btn btn-primary w-full"
+                >
+                  <Crown className="w-4 h-4 mr-2" />
+                  Upgrade to Premium
+                </button>
+              </>
+            )}
+          </div>
 
           {/* Sign Out */}
           <button

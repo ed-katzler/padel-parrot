@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Calendar, MapPin, Users, Share2, UserPlus, UserMinus, Copy, ExternalLink, Edit3, Trash2, ChevronRight, CalendarPlus } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Users, Share2, UserPlus, UserMinus, Copy, ExternalLink, Edit3, Trash2, ChevronRight, CalendarPlus, X } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, formatMatchTitle, getAvailableSpots, isMatchFull, generateGoogleCalendarUrl, generateICalContent } from '@padel-parrot/shared'
-import { getMatch, joinMatch, leaveMatch, deleteMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById } from '@padel-parrot/api-client'
+import { getMatch, joinMatch, leaveMatch, deleteMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById, removeParticipant } from '@padel-parrot/api-client'
 import Avatar from '@/components/Avatar'
 import WeatherCard from '@/components/WeatherCard'
 import toast from 'react-hot-toast'
@@ -37,9 +37,12 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
   const [isJoining, setIsJoining] = useState(false)
   const [isLeaving, setIsLeaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isRemovingParticipant, setIsRemovingParticipant] = useState(false)
   const [hasJoined, setHasJoined] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showRemoveModal, setShowRemoveModal] = useState(false)
+  const [participantToRemove, setParticipantToRemove] = useState<UserInfo | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [creator, setCreator] = useState<UserInfo | null>(null)
   const [participants, setParticipants] = useState<UserInfo[]>([])
@@ -219,6 +222,34 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
     }
   }
 
+  const handleRemoveParticipant = (participant: UserInfo) => {
+    setParticipantToRemove(participant)
+    setShowRemoveModal(true)
+  }
+
+  const handleConfirmRemove = async () => {
+    if (!match || !participantToRemove) return
+    
+    setIsRemovingParticipant(true)
+    try {
+      const { error } = await removeParticipant(match.id, participantToRemove.id)
+      if (error) {
+        toast.error(error)
+        return
+      }
+      
+      toast.success('Player removed')
+      setShowRemoveModal(false)
+      setParticipantToRemove(null)
+      localStorage.setItem('shouldRefreshMatches', 'true')
+      loadMatch()
+    } catch (error) {
+      toast.error('Failed to remove player')
+    } finally {
+      setIsRemovingParticipant(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
@@ -393,23 +424,41 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
             </h3>
             
             <div className="space-y-3">
-              {participants.map((participant) => (
-                <div key={participant.id} className="flex items-center gap-3">
-                  <Avatar 
-                    src={participant.avatar_url} 
-                    name={participant.name}
-                    size="md"
-                  />
-                  <div className="min-w-0">
-                    <p className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text))' }}>
-                      {currentUserId === participant.id ? 'You' : (participant.name || 'Player')}
-                    </p>
-                    <p className="text-xs truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                      {participant.phone}
-                    </p>
+              {participants.map((participant) => {
+                const isCreator = currentUserId === match.creator_id
+                const isParticipantSelf = currentUserId === participant.id
+                const canRemove = isCreator && !isParticipantSelf && match.status === 'upcoming'
+                
+                return (
+                  <div key={participant.id} className="flex items-center gap-3">
+                    <Avatar 
+                      src={participant.avatar_url} 
+                      name={participant.name}
+                      size="md"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text))' }}>
+                        {currentUserId === participant.id ? 'You' : (participant.name || 'Player')}
+                      </p>
+                      <p className="text-xs truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        {participant.phone}
+                      </p>
+                    </div>
+                    {canRemove && (
+                      <button
+                        onClick={() => handleRemoveParticipant(participant)}
+                        className="p-2 rounded-lg transition-colors flex-shrink-0"
+                        style={{ backgroundColor: 'transparent' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        title="Remove player"
+                      >
+                        <X className="w-4 h-4" style={{ color: 'rgb(var(--color-text-subtle))' }} />
+                      </button>
+                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
@@ -655,6 +704,71 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                 disabled={isDeleting}
               >
                 {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Player Modal */}
+      {showRemoveModal && participantToRemove && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center p-4 z-50 animate-fade-in"
+          style={{ backgroundColor: 'rgb(var(--color-text) / 0.5)' }}
+        >
+          <div 
+            className="rounded-xl max-w-sm w-full animate-scale-in"
+            style={{ 
+              backgroundColor: 'rgb(var(--color-surface))',
+              padding: 'var(--space-5)'
+            }}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div 
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+              >
+                <UserMinus className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+              </div>
+              <div>
+                <h3 className="font-semibold" style={{ color: 'rgb(var(--color-text))' }}>Remove player?</h3>
+                <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>They can rejoin if the match isn't full</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 p-3 rounded-lg mb-4" style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}>
+              <Avatar 
+                src={participantToRemove.avatar_url} 
+                name={participantToRemove.name}
+                size="md"
+              />
+              <div className="min-w-0">
+                <p className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text))' }}>
+                  {participantToRemove.name || 'Player'}
+                </p>
+                <p className="text-xs truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                  {participantToRemove.phone}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowRemoveModal(false)
+                  setParticipantToRemove(null)
+                }}
+                className="btn btn-secondary flex-1"
+                disabled={isRemovingParticipant}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRemove}
+                className="btn btn-danger flex-1"
+                disabled={isRemovingParticipant}
+              >
+                {isRemovingParticipant ? 'Removing...' : 'Remove'}
               </button>
             </div>
           </div>

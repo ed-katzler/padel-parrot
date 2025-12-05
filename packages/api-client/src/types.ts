@@ -81,6 +81,28 @@ export interface WeatherData {
   riskLevel: 'low' | 'medium' | 'high'
 }
 
+// Subscription types for premium features
+export interface Subscription {
+  id: string
+  user_id: string
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  status: 'active' | 'cancelled' | 'past_due' | 'trialing'
+  current_period_start: string | null
+  current_period_end: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface NotificationPreferences {
+  id: string
+  user_id: string
+  day_before_enabled: boolean
+  ninety_min_before_enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface ApiClient {
   sendOtp(phone: string): Promise<ApiResponse<null>>
   verifyOtp(phone: string, token: string): Promise<ApiResponse<User>>
@@ -97,8 +119,13 @@ export interface ApiClient {
   deleteMatch(matchId: string): Promise<ApiResponse<null>>
   joinMatch(matchId: string, userId: string): Promise<ApiResponse<null>>
   leaveMatch(matchId: string, userId: string): Promise<ApiResponse<null>>
+  removeParticipant(matchId: string, participantUserId: string): Promise<ApiResponse<null>>
   hasUserJoinedMatch(matchId: string, userId: string): Promise<ApiResponse<boolean>>
   getMatchParticipants(matchId: string): Promise<ApiResponse<Array<{ id: string; phone: string; name: string | null; avatar_url: string | null }>>>
   getUserById(userId: string): Promise<ApiResponse<{ id: string; phone: string; name: string | null; avatar_url: string | null }>>
   getLocations(): Promise<ApiResponse<Location[]>>
+  // Subscription methods
+  getSubscriptionStatus(): Promise<ApiResponse<Subscription | null>>
+  getNotificationPreferences(): Promise<ApiResponse<NotificationPreferences | null>>
+  updateNotificationPreferences(prefs: Partial<Pick<NotificationPreferences, 'day_before_enabled' | 'ninety_min_before_enabled'>>): Promise<ApiResponse<NotificationPreferences>>
 } 

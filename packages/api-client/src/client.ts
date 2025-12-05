@@ -26,7 +26,7 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { MockApiClient } from './mock-client'
-import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, Participant, UpdateUserRequest } from './types'
+import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, Participant, UpdateUserRequest, Subscription, NotificationPreferences } from './types'
 
 interface SupabaseConfig {
   url: string
@@ -606,6 +606,70 @@ class SupabaseApiClient implements ApiClient {
     }
   }
 
+  async removeParticipant(matchId: string, participantUserId: string): Promise<ApiResponse<null>> {
+    try {
+      console.log('🚫 Removing participant from match...')
+      
+      // Get current user to verify they are the creator
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      
+      if (authError || !user) {
+        console.error('❌ Authentication check failed:', authError)
+        return { data: null, error: 'Must be authenticated to remove participants' }
+      }
+
+      // Verify the current user is the match creator
+      const { data: match, error: matchError } = await this.supabase
+        .from('matches')
+        .select('creator_id')
+        .eq('id', matchId)
+        .single()
+
+      if (matchError) {
+        console.error('❌ Failed to get match:', matchError)
+        return { data: null, error: 'Match not found' }
+      }
+
+      if (match.creator_id !== user.id) {
+        console.error('❌ User is not the match creator')
+        return { data: null, error: 'Only the match creator can remove participants' }
+      }
+
+      // Cannot remove the creator from their own match
+      if (participantUserId === user.id) {
+        return { data: null, error: 'Cannot remove yourself from your own match' }
+      }
+
+      // Remove the participant
+      const { error: deleteError } = await this.supabase
+        .from('participants')
+        .delete()
+        .eq('match_id', matchId)
+        .eq('user_id', participantUserId)
+
+      if (deleteError) {
+        console.error('❌ Failed to remove participant:', deleteError)
+        return { data: null, error: deleteError.message }
+      }
+
+      // Manually sync the count to ensure accuracy
+      const { error: syncError } = await this.supabase.rpc('fix_match_participant_count', {
+        target_match_uuid: matchId
+      })
+
+      if (syncError) {
+        console.warn('⚠️ Failed to sync player count:', syncError)
+        // Don't fail the operation for sync errors
+      }
+
+      console.log('✅ Participant removed successfully')
+      return { data: null, error: null }
+    } catch (error) {
+      console.error('💥 Unexpected error removing participant:', error)
+      return { data: null, error: 'Failed to remove participant' }
+    }
+  }
+
   async hasUserJoinedMatch(matchId: string, userId: string): Promise<ApiResponse<boolean>> {
     try {
       const { data, error } = await this.supabase
@@ -811,6 +875,85 @@ class SupabaseApiClient implements ApiClient {
     } catch (error) {
       console.error('💥 Unexpected error during match deletion:', error)
       return { data: null, error: 'Failed to delete match' }
+    }
+  }
+
+  async getSubscriptionStatus(): Promise<ApiResponse<Subscription | null>> {
+    try {
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      
+      if (authError || !user) {
+        return { data: null, error: 'Must be authenticated' }
+      }
+
+      const { data, error } = await this.supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows found"
+        return { data: null, error: error.message }
+      }
+
+      return { data: data || null, error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to get subscription status' }
+    }
+  }
+
+  async getNotificationPreferences(): Promise<ApiResponse<NotificationPreferences | null>> {
+    try {
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      
+      if (authError || !user) {
+        return { data: null, error: 'Must be authenticated' }
+      }
+
+      const { data, error } = await this.supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows found"
+        return { data: null, error: error.message }
+      }
+
+      return { data: data || null, error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to get notification preferences' }
+    }
+  }
+
+  async updateNotificationPreferences(prefs: Partial<Pick<NotificationPreferences, 'day_before_enabled' | 'ninety_min_before_enabled'>>): Promise<ApiResponse<NotificationPreferences>> {
+    try {
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      
+      if (authError || !user) {
+        return { data: null, error: 'Must be authenticated' }
+      }
+
+      // Upsert notification preferences
+      const { data, error } = await this.supabase
+        .from('notification_preferences')
+        .upsert({
+          user_id: user.id,
+          ...prefs,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        })
+        .select()
+        .single()
+
+      if (error) {
+        return { data: null, error: error.message }
+      }
+
+      return { data, error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to update notification preferences' }
     }
   }
 }

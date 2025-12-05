@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Cloud, Droplets, Wind, Thermometer, AlertTriangle, Sun, CloudRain, CloudSnow, CloudFog } from 'lucide-react'
+import { Cloud, Droplets, Wind, Thermometer, AlertTriangle, Sun, CloudRain, CloudSnow, CloudFog, Lock, Crown } from 'lucide-react'
+import { getSubscriptionStatus } from '@padel-parrot/api-client'
 
 interface WeatherData {
   temperature: number
@@ -74,8 +75,36 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showTooltip, setShowTooltip] = useState(false)
+  const [isPremium, setIsPremium] = useState<boolean | null>(null)
+  const [isCheckingPremium, setIsCheckingPremium] = useState(true)
+
+  // Check premium status first
+  useEffect(() => {
+    const checkPremium = async () => {
+      try {
+        const { data } = await getSubscriptionStatus()
+        const isActive = data 
+          && data.status === 'active'
+          && (!data.current_period_end || new Date(data.current_period_end) > new Date())
+        setIsPremium(isActive)
+      } catch (err) {
+        console.error('Failed to check premium status:', err)
+        setIsPremium(false)
+      } finally {
+        setIsCheckingPremium(false)
+      }
+    }
+    
+    checkPremium()
+  }, [])
 
   useEffect(() => {
+    // Only fetch weather if user is premium
+    if (isCheckingPremium || !isPremium) {
+      setIsLoading(false)
+      return
+    }
+
     const fetchWeather = async () => {
       try {
         setIsLoading(true)
@@ -104,9 +133,10 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
     }
 
     fetchWeather()
-  }, [matchId, matchDateTime])
+  }, [matchId, matchDateTime, isPremium, isCheckingPremium])
 
-  if (isLoading) {
+  // Show loading while checking premium status
+  if (isCheckingPremium || isLoading) {
     return (
       <div className={`card animate-pulse ${className}`}>
         <div className="flex items-center gap-3 mb-4">
@@ -116,6 +146,51 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
         <div className="grid grid-cols-2 gap-4">
           <div className="h-16 bg-stone-100 rounded-lg" />
           <div className="h-16 bg-stone-100 rounded-lg" />
+        </div>
+      </div>
+    )
+  }
+
+  // Show premium upsell for non-premium users
+  if (!isPremium) {
+    return (
+      <div className={`card relative overflow-hidden ${className}`}>
+        {/* Blurred background preview */}
+        <div className="absolute inset-0 opacity-30 blur-sm pointer-events-none">
+          <div className="flex items-center gap-3 mb-4 p-4">
+            <Sun className="w-8 h-8 text-amber-500" />
+            <div>
+              <div className="text-2xl font-semibold text-stone-900">22°C</div>
+              <div className="text-sm text-stone-500">Clear</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Locked overlay */}
+        <div className="relative z-10 text-center py-6">
+          <div 
+            className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+            style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+          >
+            <Lock className="w-6 h-6" style={{ color: 'rgb(var(--color-text-muted))' }} />
+          </div>
+          <h3 className="font-semibold mb-1" style={{ color: 'rgb(var(--color-text))' }}>
+            Weather Forecast
+          </h3>
+          <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            See weather conditions and condensation risk for your match
+          </p>
+          <a
+            href="/profile"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{ 
+              backgroundColor: 'rgb(234, 179, 8)',
+              color: 'white'
+            }}
+          >
+            <Crown className="w-4 h-4" />
+            Unlock with Premium
+          </a>
         </div>
       </div>
     )

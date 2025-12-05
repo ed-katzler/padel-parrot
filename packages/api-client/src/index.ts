@@ -2,10 +2,10 @@
 export { apiClient } from './client'
 
 // Export types for consumers
-export type { ApiResponse, User, Match, CreateMatchRequest, UpdateUserRequest, Participant, ApiClient, Location } from './types'
+export type { ApiResponse, User, Match, CreateMatchRequest, UpdateUserRequest, Participant, ApiClient, Location, Subscription, NotificationPreferences } from './types'
 
 // Import types for the convenience functions
-import type { CreateMatchRequest, UpdateMatchRequest, UpdateUserRequest } from './types'
+import type { CreateMatchRequest, UpdateMatchRequest, UpdateUserRequest, NotificationPreferences } from './types'
 import { apiClient } from './client'
 
 // Convenience functions that use the apiClient
@@ -24,7 +24,13 @@ export const updateMatch = (matchId: string, matchData: UpdateMatchRequest) => a
 export const deleteMatch = (matchId: string) => apiClient.deleteMatch(matchId)
 export const joinMatch = (matchId: string, userId: string) => apiClient.joinMatch(matchId, userId)
 export const leaveMatch = (matchId: string, userId: string) => apiClient.leaveMatch(matchId, userId)
+export const removeParticipant = (matchId: string, participantUserId: string) => apiClient.removeParticipant(matchId, participantUserId)
 export const hasUserJoinedMatch = (matchId: string, userId: string) => apiClient.hasUserJoinedMatch(matchId, userId)
 export const getMatchParticipants = (matchId: string) => apiClient.getMatchParticipants(matchId)
 export const getUserById = (userId: string) => apiClient.getUserById(userId)
-export const getLocations = () => apiClient.getLocations() 
+export const getLocations = () => apiClient.getLocations()
+
+// Subscription and notification methods
+export const getSubscriptionStatus = () => apiClient.getSubscriptionStatus()
+export const getNotificationPreferences = () => apiClient.getNotificationPreferences()
+export const updateNotificationPreferences = (prefs: Partial<Pick<NotificationPreferences, 'day_before_enabled' | 'ninety_min_before_enabled'>>) => apiClient.updateNotificationPreferences(prefs) 
