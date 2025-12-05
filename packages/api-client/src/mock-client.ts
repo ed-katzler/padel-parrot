@@ -1,4 +1,4 @@
-import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, UpdateUserRequest } from './types'
+import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, UpdateUserRequest, Subscription, NotificationPreferences } from './types'
 
 export class MockApiClient implements ApiClient {
   private mockMatches: Match[] = [
@@ -434,5 +434,72 @@ export class MockApiClient implements ApiClient {
       }, 
       error: null 
     }
+  }
+
+  async removeParticipant(matchId: string, participantUserId: string): Promise<ApiResponse<null>> {
+    if (!this.isAuthenticated) {
+      return { data: null, error: 'Must be authenticated to remove participants' }
+    }
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
+    const match = this.mockMatches.find(m => m.id === matchId)
+    if (!match) {
+      return { data: null, error: 'Match not found' }
+    }
+    
+    // Check if user is the creator
+    if (match.creator_id !== this.mockUser.id) {
+      return { data: null, error: 'Only the match creator can remove participants' }
+    }
+    
+    // Cannot remove yourself
+    if (participantUserId === this.mockUser.id) {
+      return { data: null, error: 'Cannot remove yourself from your own match' }
+    }
+    
+    if (match.current_players > 1) {
+      match.current_players -= 1
+      match.updated_at = new Date().toISOString()
+    }
+    
+    return { data: null, error: null }
+  }
+
+  async getSubscriptionStatus(): Promise<ApiResponse<Subscription | null>> {
+    if (!this.isAuthenticated) {
+      return { data: null, error: 'Must be authenticated' }
+    }
+    
+    // Return null subscription for mock (user is not premium)
+    return { data: null, error: null }
+  }
+
+  async getNotificationPreferences(): Promise<ApiResponse<NotificationPreferences | null>> {
+    if (!this.isAuthenticated) {
+      return { data: null, error: 'Must be authenticated' }
+    }
+    
+    // Return null preferences for mock
+    return { data: null, error: null }
+  }
+
+  async updateNotificationPreferences(prefs: Partial<Pick<NotificationPreferences, 'day_before_enabled' | 'ninety_min_before_enabled'>>): Promise<ApiResponse<NotificationPreferences>> {
+    if (!this.isAuthenticated) {
+      return { data: null, error: 'Must be authenticated' }
+    }
+    
+    // Mock response
+    const mockPrefs: NotificationPreferences = {
+      id: 'mock-prefs-id',
+      user_id: this.mockUser.id,
+      day_before_enabled: prefs.day_before_enabled ?? true,
+      ninety_min_before_enabled: prefs.ninety_min_before_enabled ?? true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+    
+    return { data: mockPrefs, error: null }
   }
 } 
