@@ -45,6 +45,7 @@ export class MockApiClient implements ApiClient {
 
   private isAuthenticated = false
   private joinedMatches: Set<string> = new Set() // Track which matches the user has joined
+  private mockSubscription: Subscription | null = null // Track trial subscription
 
   async sendOtp(phone: string): Promise<ApiResponse<null>> {
     // Simulate API delay
@@ -61,6 +62,27 @@ export class MockApiClient implements ApiClient {
     if (token === '123456') {
       this.isAuthenticated = true
       this.mockUser.phone = phone
+      
+      // Create a 14-day trial for new users (if no subscription exists)
+      if (!this.mockSubscription) {
+        console.log('🎁 Creating 14-day trial for new mock user...')
+        const trialEnd = new Date()
+        trialEnd.setDate(trialEnd.getDate() + 14)
+        
+        this.mockSubscription = {
+          id: 'mock-subscription-id',
+          user_id: this.mockUser.id,
+          stripe_customer_id: null,
+          stripe_subscription_id: null,
+          status: 'trialing',
+          current_period_start: new Date().toISOString(),
+          current_period_end: trialEnd.toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        console.log('✅ Mock trial subscription created, expires:', trialEnd.toISOString())
+      }
+      
       return { data: this.mockUser, error: null }
     }
     
@@ -472,8 +494,8 @@ export class MockApiClient implements ApiClient {
       return { data: null, error: 'Must be authenticated' }
     }
     
-    // Return null subscription for mock (user is not premium)
-    return { data: null, error: null }
+    // Return the mock subscription (includes trial)
+    return { data: this.mockSubscription, error: null }
   }
 
   async getNotificationPreferences(): Promise<ApiResponse<NotificationPreferences | null>> {

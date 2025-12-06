@@ -102,6 +102,36 @@ class SupabaseApiClient implements ApiClient {
 
       console.log('✅ User ensured in database')
 
+      // Check if user already has a subscription (existing user)
+      const { data: existingSubscription } = await this.supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('user_id', data.user.id)
+        .single()
+
+      // If no subscription exists, create a 14-day trial
+      if (!existingSubscription) {
+        console.log('🎁 Creating 14-day trial for new user...')
+        const trialEnd = new Date()
+        trialEnd.setDate(trialEnd.getDate() + 14)
+        
+        const { error: trialError } = await this.supabase
+          .from('subscriptions')
+          .insert({
+            user_id: data.user.id,
+            status: 'trialing',
+            current_period_start: new Date().toISOString(),
+            current_period_end: trialEnd.toISOString()
+          })
+
+        if (trialError) {
+          console.warn('⚠️ Failed to create trial subscription:', trialError)
+          // Don't fail the login for trial creation errors
+        } else {
+          console.log('✅ Trial subscription created, expires:', trialEnd.toISOString())
+        }
+      }
+
       // Fetch the actual user data from the database to get the stored name
       const { data: userData, error: fetchError } = await this.supabase
         .from('users')
