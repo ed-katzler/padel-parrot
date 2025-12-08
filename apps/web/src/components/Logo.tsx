@@ -1,9 +1,11 @@
 'use client'
 
+import { useTheme } from './ThemeProvider'
+
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg'
   showText?: boolean
-  variant?: 'dark' | 'light'
+  variant?: 'dark' | 'light' | 'auto'
   className?: string
 }
 
@@ -16,11 +18,21 @@ const sizes = {
 export default function Logo({ 
   size = 'md', 
   showText = true, 
-  variant = 'dark',
+  variant = 'auto',
   className = '' 
 }: LogoProps) {
+  const { resolvedTheme } = useTheme()
   const { icon, text } = sizes[size]
-  const fill = variant === 'dark' ? '#1c1917' : '#ffffff'
+  
+  // Determine fill color based on variant or theme
+  // 'dark' variant = dark logo (for light backgrounds)
+  // 'light' variant = white logo (for dark backgrounds)
+  // 'auto' = automatically detect based on current theme
+  const effectiveVariant = variant === 'auto' 
+    ? (resolvedTheme === 'dark' ? 'light' : 'dark')
+    : variant
+  
+  const fill = effectiveVariant === 'dark' ? '#1c1917' : '#ffffff'
   
   return (
     <div className={`flex items-center gap-2 ${className}`}>
