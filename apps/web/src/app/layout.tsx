@@ -43,9 +43,7 @@ const themeScript = `
       var theme = localStorage.getItem('theme');
       var isDark = theme === 'dark' || 
         (theme === 'system' || !theme) && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (isDark) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
     } catch (e) {}
   })();
 `

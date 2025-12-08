@@ -48,11 +48,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   // Apply theme to document
   const applyTheme = (resolvedTheme: 'light' | 'dark') => {
     const root = document.documentElement
-    if (resolvedTheme === 'dark') {
-      root.setAttribute('data-theme', 'dark')
-    } else {
-      root.removeAttribute('data-theme')
-    }
+    // Always set the data-theme attribute explicitly to override system preference
+    root.setAttribute('data-theme', resolvedTheme)
   }
 
   // Set theme and persist to localStorage
