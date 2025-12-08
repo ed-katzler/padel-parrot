@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     results.processed = seriesMap.size
 
     // Process each series
-    for (const [seriesId, latestMatch] of seriesMap) {
+    for (const [seriesId, latestMatch] of Array.from(seriesMap.entries())) {
       try {
         // Check if recurrence should continue
         if (latestMatch.recurrence_end_date) {
