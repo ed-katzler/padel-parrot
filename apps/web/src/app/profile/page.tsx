@@ -707,14 +707,11 @@ export default function ProfilePage() {
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => setTheme('light')}
-                className={`p-3 rounded-lg flex flex-col items-center gap-2 transition-all ${
-                  theme === 'light' ? 'ring-2 ring-offset-2' : ''
-                }`}
+                className="p-3 rounded-lg flex flex-col items-center gap-2 transition-all"
                 style={{ 
                   backgroundColor: theme === 'light' ? 'rgb(var(--color-interactive-muted))' : 'transparent',
-                  border: `1px solid ${theme === 'light' ? 'rgb(var(--color-text))' : 'rgb(var(--color-border-light))'}`,
-                  ringColor: 'rgb(var(--color-text))',
-                  ringOffsetColor: 'rgb(var(--color-surface))'
+                  border: theme === 'light' ? '2px solid rgb(var(--color-text))' : '1px solid rgb(var(--color-border-light))',
+                  boxShadow: theme === 'light' ? '0 0 0 2px rgb(var(--color-surface)), 0 0 0 4px rgb(var(--color-text))' : 'none'
                 }}
               >
                 <Sun 
@@ -731,14 +728,11 @@ export default function ProfilePage() {
               
               <button
                 onClick={() => setTheme('dark')}
-                className={`p-3 rounded-lg flex flex-col items-center gap-2 transition-all ${
-                  theme === 'dark' ? 'ring-2 ring-offset-2' : ''
-                }`}
+                className="p-3 rounded-lg flex flex-col items-center gap-2 transition-all"
                 style={{ 
                   backgroundColor: theme === 'dark' ? 'rgb(var(--color-interactive-muted))' : 'transparent',
-                  border: `1px solid ${theme === 'dark' ? 'rgb(var(--color-text))' : 'rgb(var(--color-border-light))'}`,
-                  ringColor: 'rgb(var(--color-text))',
-                  ringOffsetColor: 'rgb(var(--color-surface))'
+                  border: theme === 'dark' ? '2px solid rgb(var(--color-text))' : '1px solid rgb(var(--color-border-light))',
+                  boxShadow: theme === 'dark' ? '0 0 0 2px rgb(var(--color-surface)), 0 0 0 4px rgb(var(--color-text))' : 'none'
                 }}
               >
                 <Moon 
@@ -755,14 +749,11 @@ export default function ProfilePage() {
               
               <button
                 onClick={() => setTheme('system')}
-                className={`p-3 rounded-lg flex flex-col items-center gap-2 transition-all ${
-                  theme === 'system' ? 'ring-2 ring-offset-2' : ''
-                }`}
+                className="p-3 rounded-lg flex flex-col items-center gap-2 transition-all"
                 style={{ 
                   backgroundColor: theme === 'system' ? 'rgb(var(--color-interactive-muted))' : 'transparent',
-                  border: `1px solid ${theme === 'system' ? 'rgb(var(--color-text))' : 'rgb(var(--color-border-light))'}`,
-                  ringColor: 'rgb(var(--color-text))',
-                  ringOffsetColor: 'rgb(var(--color-surface))'
+                  border: theme === 'system' ? '2px solid rgb(var(--color-text))' : '1px solid rgb(var(--color-border-light))',
+                  boxShadow: theme === 'system' ? '0 0 0 2px rgb(var(--color-surface)), 0 0 0 4px rgb(var(--color-text))' : 'none'
                 }}
               >
                 <Monitor 
