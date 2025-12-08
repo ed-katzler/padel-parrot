@@ -100,12 +100,18 @@ export default function ClubSelector({
     })
   }, [isMobile])
 
-  // Recalculate on open and scroll
+  // Recalculate on open and scroll (but not when scrolling inside dropdown)
   useEffect(() => {
     if (isOpen && !isMobile) {
       calculatePosition()
       
-      const handleScroll = () => calculatePosition()
+      const handleScroll = (e: Event) => {
+        // Don't recalculate if scrolling inside the dropdown
+        if (dropdownRef.current?.contains(e.target as Node)) {
+          return
+        }
+        calculatePosition()
+      }
       const handleResize = () => calculatePosition()
       
       window.addEventListener('scroll', handleScroll, true)
@@ -351,7 +357,11 @@ export default function ClubSelector({
       </div>
 
       {/* Content */}
-      <div className="overflow-y-auto flex-1" style={{ maxHeight: '320px' }}>
+      <div 
+        className="overflow-y-auto flex-1" 
+        style={{ maxHeight: '320px', overscrollBehavior: 'contain' }}
+        onWheel={(e) => e.stopPropagation()}
+      >
         {searchQuery ? (
           // Search results
           filteredClubs.length > 0 ? (
@@ -521,7 +531,10 @@ export default function ClubSelector({
         </div>
 
         {/* Options list */}
-        <div className="overflow-y-auto flex-1" style={{ maxHeight: 'calc(85vh - 200px)' }}>
+        <div 
+          className="overflow-y-auto flex-1" 
+          style={{ maxHeight: 'calc(85vh - 200px)', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
+        >
           {searchQuery ? (
             // Search results
             filteredClubs.length > 0 ? (
