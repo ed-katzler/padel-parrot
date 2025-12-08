@@ -83,6 +83,84 @@ export interface Location {
   updated_at: string
 }
 
+// Portuguese district/region
+export interface District {
+  id: string
+  name: string
+  display_order: number
+}
+
+// Court type for clubs
+export type CourtType = 'indoor' | 'outdoor' | 'mixed'
+
+// Amenities available at clubs
+export type ClubAmenity = 
+  | 'parking'
+  | 'pro_shop'
+  | 'cafe'
+  | 'locker_rooms'
+  | 'rental'
+  | 'swimming_pool'
+  | 'gym'
+  | 'restaurant'
+  | 'bar'
+  | 'physio'
+  | 'coaching'
+
+// Comprehensive club/venue information
+export interface Club {
+  id: string
+  name: string
+  slug: string
+  
+  // Contact & Web
+  website: string | null
+  phone: string | null
+  email: string | null
+  
+  // Address
+  address: string | null
+  city: string | null
+  district_id: string | null
+  postal_code: string | null
+  country: string
+  
+  // Geolocation
+  latitude: number | null
+  longitude: number | null
+  google_place_id: string | null
+  
+  // Facilities
+  num_courts: number | null
+  court_type: CourtType | null
+  has_lighting: boolean
+  amenities: ClubAmenity[]
+  
+  // Metadata
+  description: string | null
+  image_url: string | null
+  source: string | null
+  verified: boolean
+  active: boolean
+  
+  created_at: string
+  updated_at: string
+  
+  // Joined fields (from view)
+  district_name?: string
+}
+
+// Club with district info for display
+export interface ClubWithDistrict extends Club {
+  district_name: string
+}
+
+// Grouped clubs by district for UI
+export interface ClubsByDistrict {
+  district: District
+  clubs: Club[]
+}
+
 export interface WeatherData {
   temperature: number
   humidity: number
@@ -144,7 +222,14 @@ export interface ApiClient {
   hasUserJoinedMatch(matchId: string, userId: string): Promise<ApiResponse<boolean>>
   getMatchParticipants(matchId: string): Promise<ApiResponse<Array<{ id: string; phone: string; name: string | null; avatar_url: string | null }>>>
   getUserById(userId: string): Promise<ApiResponse<{ id: string; phone: string; name: string | null; avatar_url: string | null }>>
+  // Legacy location method (deprecated, use getClubs instead)
   getLocations(): Promise<ApiResponse<Location[]>>
+  // Club methods
+  getClubs(): Promise<ApiResponse<Club[]>>
+  getClubsByDistrict(): Promise<ApiResponse<ClubsByDistrict[]>>
+  getDistricts(): Promise<ApiResponse<District[]>>
+  getClub(id: string): Promise<ApiResponse<Club>>
+  searchClubs(query: string): Promise<ApiResponse<Club[]>>
   // Subscription methods
   getSubscriptionStatus(): Promise<ApiResponse<Subscription | null>>
   getNotificationPreferences(): Promise<ApiResponse<NotificationPreferences | null>>

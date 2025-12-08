@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, ChevronDown, MapPin, Globe, Lock, Repeat } from 'lucide-react'
-import { createMatch, getCurrentUser, getLocations, type Location, type RecurrenceType } from '@padel-parrot/api-client'
+import { ArrowLeft, MapPin, Globe, Lock, Repeat } from 'lucide-react'
+import { createMatch, getCurrentUser, getClubs, getClubsByDistrict, type Club, type ClubsByDistrict, type RecurrenceType } from '@padel-parrot/api-client'
 import DatePicker from '@/components/DatePicker'
 import TimePicker from '@/components/TimePicker'
+import ClubSelector from '@/components/ClubSelector'
 import toast from 'react-hot-toast'
 
 const DURATION_OPTIONS = [
@@ -23,14 +24,13 @@ const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string }[] = [
 
 export default function CreateMatchPage() {
   const [isLoading, setIsLoading] = useState(false)
-  const [locations, setLocations] = useState<Location[]>([])
-  const [filteredLocations, setFilteredLocations] = useState<Location[]>([])
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false)
+  const [clubs, setClubs] = useState<Club[]>([])
+  const [clubsByDistrict, setClubsByDistrict] = useState<ClubsByDistrict[]>([])
   
   // Form state
   const [description, setDescription] = useState('')
   const [locationInput, setLocationInput] = useState('')
-  const [isCustomLocation, setIsCustomLocation] = useState(false)
+  const [selectedClubId, setSelectedClubId] = useState<string | undefined>()
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [selectedDuration, setSelectedDuration] = useState(90)
@@ -43,31 +43,23 @@ export default function CreateMatchPage() {
   const [errors, setErrors] = useState<{ location?: string; datetime?: string }>({})
 
   useEffect(() => {
-    const loadLocations = async () => {
-      const { data, error } = await getLocations()
-      if (data && !error) {
-        setLocations(data)
-        setFilteredLocations(data)
+    const loadClubs = async () => {
+      // Load both flat list and grouped by district
+      const [clubsResult, groupedResult] = await Promise.all([
+        getClubs(),
+        getClubsByDistrict()
+      ])
+      
+      if (clubsResult.data && !clubsResult.error) {
+        setClubs(clubsResult.data)
+      }
+      
+      if (groupedResult.data && !groupedResult.error) {
+        setClubsByDistrict(groupedResult.data)
       }
     }
-    loadLocations()
+    loadClubs()
   }, [])
-
-  useEffect(() => {
-    if (locationInput) {
-      const filtered = locations.filter(location =>
-        location.name.toLowerCase().includes(locationInput.toLowerCase()) ||
-        (location.address && location.address.toLowerCase().includes(locationInput.toLowerCase()))
-      )
-      setFilteredLocations(filtered)
-      setShowLocationDropdown(true)
-      setIsCustomLocation(filtered.length === 0)
-    } else {
-      setFilteredLocations(locations)
-      setShowLocationDropdown(false)
-      setIsCustomLocation(false)
-    }
-  }, [locationInput, locations])
 
   const validateForm = (): boolean => {
     const newErrors: { location?: string; datetime?: string } = {}
@@ -157,15 +149,9 @@ export default function CreateMatchPage() {
     window.location.href = '/'
   }
 
-  const handleLocationSelect = (location: Location) => {
-    setLocationInput(location.name)
-    setShowLocationDropdown(false)
-    setIsCustomLocation(false)
-    setErrors(prev => ({ ...prev, location: undefined }))
-  }
-
-  const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocationInput(e.target.value)
+  const handleLocationChange = (value: string, clubId?: string) => {
+    setLocationInput(value)
+    setSelectedClubId(clubId)
     setErrors(prev => ({ ...prev, location: undefined }))
   }
 
@@ -375,75 +361,21 @@ export default function CreateMatchPage() {
 
             {/* Location */}
             <div className="form-field">
-              <label htmlFor="location" className="form-label">
+              <label className="form-label">
                 <span className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
                   Location
                 </span>
               </label>
-              <div className="relative">
-                <input
-                  id="location"
-                  type="text"
-                  value={locationInput}
-                  onChange={handleLocationInputChange}
-                  onFocus={() => setShowLocationDropdown(true)}
-                  placeholder="Search or enter location"
-                  className="input"
-                  style={{ paddingRight: '2.5rem' }}
-                  autoComplete="off"
-                />
-                <ChevronDown 
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none"
-                  style={{ color: 'rgb(var(--color-text-subtle))' }}
-                />
-                
-                {showLocationDropdown && filteredLocations.length > 0 && (
-                  <div 
-                    className="absolute z-20 w-full mt-1 rounded-lg overflow-hidden"
-                    style={{ 
-                      backgroundColor: 'rgb(var(--color-surface))',
-                      border: '1px solid rgb(var(--color-border-light))',
-                      boxShadow: 'var(--shadow-md)',
-                      maxHeight: '12rem',
-                      overflowY: 'auto'
-                    }}
-                  >
-                    {filteredLocations.map((location) => (
-                      <button
-                        key={location.id}
-                        type="button"
-                        onClick={() => handleLocationSelect(location)}
-                        className="w-full px-4 py-3 text-left transition-colors"
-                        style={{ 
-                          borderBottom: '1px solid rgb(var(--color-border-light))'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        <div className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                          {location.name}
-                        </div>
-                        {location.address && (
-                          <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                            {location.address}
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              {isCustomLocation && locationInput && (
-                <p className="form-hint">
-                  Using custom location: "{locationInput}"
-                </p>
-              )}
-              
-              {errors.location && (
-                <p className="form-error">{errors.location}</p>
-              )}
+              <ClubSelector
+                value={locationInput}
+                onChange={handleLocationChange}
+                clubs={clubs}
+                clubsByDistrict={clubsByDistrict}
+                placeholder="Search clubs or enter location"
+                error={errors.location}
+                allowCustom={true}
+              />
             </div>
           </div>
         </form>

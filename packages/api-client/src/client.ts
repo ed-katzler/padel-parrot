@@ -26,7 +26,7 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { MockApiClient } from './mock-client'
-import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, Participant, UpdateUserRequest, Subscription, NotificationPreferences, UserStats } from './types'
+import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, Participant, UpdateUserRequest, Subscription, NotificationPreferences, UserStats, Club, District, ClubsByDistrict } from './types'
 
 interface SupabaseConfig {
   url: string
@@ -788,6 +788,130 @@ class SupabaseApiClient implements ApiClient {
       return { data: data || [], error: null }
     } catch (error) {
       return { data: null, error: 'Failed to load locations' }
+    }
+  }
+
+  // Club methods
+  async getClubs(): Promise<ApiResponse<Club[]>> {
+    try {
+      const { data, error } = await this.supabase
+        .from('clubs_with_district')
+        .select('*')
+        .order('name', { ascending: true })
+
+      if (error) {
+        // Fallback to clubs table without district view
+        const { data: clubsData, error: clubsError } = await this.supabase
+          .from('clubs')
+          .select('*')
+          .eq('active', true)
+          .order('name', { ascending: true })
+        
+        if (clubsError) {
+          return { data: null, error: clubsError.message }
+        }
+        return { data: clubsData || [], error: null }
+      }
+
+      return { data: data || [], error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to load clubs' }
+    }
+  }
+
+  async getClubsByDistrict(): Promise<ApiResponse<ClubsByDistrict[]>> {
+    try {
+      // First get all districts
+      const { data: districts, error: districtError } = await this.supabase
+        .from('districts')
+        .select('*')
+        .order('display_order', { ascending: true })
+
+      if (districtError) {
+        return { data: null, error: districtError.message }
+      }
+
+      // Then get all clubs
+      const { data: clubs, error: clubsError } = await this.supabase
+        .from('clubs')
+        .select('*')
+        .eq('active', true)
+        .order('name', { ascending: true })
+
+      if (clubsError) {
+        return { data: null, error: clubsError.message }
+      }
+
+      // Group clubs by district
+      const clubsByDistrict: ClubsByDistrict[] = (districts || []).map(district => ({
+        district,
+        clubs: (clubs || []).filter(club => club.district_id === district.id)
+      })).filter(group => group.clubs.length > 0)
+
+      return { data: clubsByDistrict, error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to load clubs by district' }
+    }
+  }
+
+  async getDistricts(): Promise<ApiResponse<District[]>> {
+    try {
+      const { data, error } = await this.supabase
+        .from('districts')
+        .select('*')
+        .order('display_order', { ascending: true })
+
+      if (error) {
+        return { data: null, error: error.message }
+      }
+
+      return { data: data || [], error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to load districts' }
+    }
+  }
+
+  async getClub(id: string): Promise<ApiResponse<Club>> {
+    try {
+      const { data, error } = await this.supabase
+        .from('clubs')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+      if (error) {
+        return { data: null, error: error.message }
+      }
+
+      return { data, error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to load club' }
+    }
+  }
+
+  async searchClubs(query: string): Promise<ApiResponse<Club[]>> {
+    try {
+      if (!query || query.trim().length < 2) {
+        return { data: [], error: null }
+      }
+
+      const searchTerm = query.trim().toLowerCase()
+      
+      const { data, error } = await this.supabase
+        .from('clubs')
+        .select('*')
+        .eq('active', true)
+        .or(`name.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,address.ilike.%${searchTerm}%`)
+        .order('name', { ascending: true })
+        .limit(20)
+
+      if (error) {
+        return { data: null, error: error.message }
+      }
+
+      return { data: data || [], error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to search clubs' }
     }
   }
 

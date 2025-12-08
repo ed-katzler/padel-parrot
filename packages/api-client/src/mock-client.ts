@@ -1,4 +1,4 @@
-import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, UpdateUserRequest, Subscription, NotificationPreferences, UserStats } from './types'
+import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, UpdateUserRequest, Subscription, NotificationPreferences, UserStats, Club, District, ClubsByDistrict } from './types'
 
 export class MockApiClient implements ApiClient {
   private mockMatches: Match[] = [
@@ -421,6 +421,204 @@ export class MockApiClient implements ApiClient {
     ]
     
     return { data: mockLocations, error: null }
+  }
+
+  // Mock districts data
+  private mockDistricts: District[] = [
+    { id: 'porto', name: 'Porto', display_order: 1 },
+    { id: 'lisboa', name: 'Lisboa', display_order: 13 },
+    { id: 'faro', name: 'Faro (Algarve)', display_order: 18 }
+  ]
+
+  // Mock clubs data
+  private mockClubs: Club[] = [
+    {
+      id: 'club-1',
+      name: 'The Campus Quinta do Lago',
+      slug: 'the-campus-quinta-do-lago',
+      website: 'https://www.thecampus.pt',
+      phone: '+351 289 381 220',
+      email: 'info@thecampus.pt',
+      address: 'Estrada da Quinta do Lago',
+      city: 'Almancil',
+      district_id: 'faro',
+      postal_code: '8135-024',
+      country: 'Portugal',
+      latitude: 37.0352,
+      longitude: -8.0245,
+      google_place_id: null,
+      num_courts: 6,
+      court_type: 'outdoor',
+      has_lighting: true,
+      amenities: ['parking', 'pro_shop', 'cafe', 'locker_rooms', 'rental', 'swimming_pool', 'gym'],
+      description: 'World-class sports facility with 7 padel courts',
+      image_url: null,
+      source: 'manual',
+      verified: true,
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      district_name: 'Faro (Algarve)'
+    },
+    {
+      id: 'club-2',
+      name: 'Vilamoura Padel Club',
+      slug: 'vilamoura-padel-club',
+      website: 'https://www.vilamourapadelclub.com',
+      phone: '+351 289 310 180',
+      email: null,
+      address: 'Av. do Parque',
+      city: 'Vilamoura',
+      district_id: 'faro',
+      postal_code: '8125-404',
+      country: 'Portugal',
+      latitude: 37.0767,
+      longitude: -8.1167,
+      google_place_id: null,
+      num_courts: 8,
+      court_type: 'mixed',
+      has_lighting: true,
+      amenities: ['parking', 'pro_shop', 'cafe', 'locker_rooms', 'rental'],
+      description: 'Premier padel facility in Vilamoura',
+      image_url: null,
+      source: 'manual',
+      verified: true,
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      district_name: 'Faro (Algarve)'
+    },
+    {
+      id: 'club-3',
+      name: 'Ocean Padel Club Luz',
+      slug: 'ocean-padel-club-luz',
+      website: 'https://www.oceanpadelclub.com',
+      phone: '+351 282 799 199',
+      email: 'info@oceanpadelclub.com',
+      address: 'Rua Dr Francisco Gentil Martins Lote 57',
+      city: 'Praia da Luz',
+      district_id: 'faro',
+      postal_code: '8600-164',
+      country: 'Portugal',
+      latitude: 37.0833,
+      longitude: -8.7333,
+      google_place_id: null,
+      num_courts: 5,
+      court_type: 'outdoor',
+      has_lighting: true,
+      amenities: ['parking', 'pro_shop', 'cafe', 'locker_rooms', 'rental'],
+      description: '5 courts with Mondo WPT Championship surfaces',
+      image_url: null,
+      source: 'manual',
+      verified: true,
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      district_name: 'Faro (Algarve)'
+    },
+    {
+      id: 'club-4',
+      name: 'Padel Porto',
+      slug: 'padel-porto',
+      website: 'https://www.padelporto.pt',
+      phone: '+351 220 123 456',
+      email: 'info@padelporto.pt',
+      address: 'Rua do Padel 123',
+      city: 'Porto',
+      district_id: 'porto',
+      postal_code: '4000-001',
+      country: 'Portugal',
+      latitude: 41.1579,
+      longitude: -8.6291,
+      google_place_id: null,
+      num_courts: 4,
+      court_type: 'indoor',
+      has_lighting: true,
+      amenities: ['parking', 'cafe', 'locker_rooms', 'rental'],
+      description: 'Indoor padel facility in Porto city center',
+      image_url: null,
+      source: 'manual',
+      verified: true,
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      district_name: 'Porto'
+    },
+    {
+      id: 'club-5',
+      name: 'Lisboa Padel Center',
+      slug: 'lisboa-padel-center',
+      website: 'https://www.lisboapadel.pt',
+      phone: '+351 210 987 654',
+      email: 'reservas@lisboapadel.pt',
+      address: 'Av. da Liberdade 200',
+      city: 'Lisboa',
+      district_id: 'lisboa',
+      postal_code: '1250-096',
+      country: 'Portugal',
+      latitude: 38.7223,
+      longitude: -9.1393,
+      google_place_id: null,
+      num_courts: 10,
+      court_type: 'mixed',
+      has_lighting: true,
+      amenities: ['parking', 'pro_shop', 'cafe', 'locker_rooms', 'rental', 'gym', 'physio'],
+      description: 'Largest padel facility in Lisbon',
+      image_url: null,
+      source: 'manual',
+      verified: true,
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      district_name: 'Lisboa'
+    }
+  ]
+
+  async getClubs(): Promise<ApiResponse<Club[]>> {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    return { data: this.mockClubs, error: null }
+  }
+
+  async getClubsByDistrict(): Promise<ApiResponse<ClubsByDistrict[]>> {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    const clubsByDistrict: ClubsByDistrict[] = this.mockDistricts.map(district => ({
+      district,
+      clubs: this.mockClubs.filter(club => club.district_id === district.id)
+    })).filter(group => group.clubs.length > 0)
+    
+    return { data: clubsByDistrict, error: null }
+  }
+
+  async getDistricts(): Promise<ApiResponse<District[]>> {
+    await new Promise(resolve => setTimeout(resolve, 200))
+    return { data: this.mockDistricts, error: null }
+  }
+
+  async getClub(id: string): Promise<ApiResponse<Club>> {
+    await new Promise(resolve => setTimeout(resolve, 200))
+    const club = this.mockClubs.find(c => c.id === id)
+    if (!club) {
+      return { data: null, error: 'Club not found' }
+    }
+    return { data: club, error: null }
+  }
+
+  async searchClubs(query: string): Promise<ApiResponse<Club[]>> {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    if (!query || query.trim().length < 2) {
+      return { data: [], error: null }
+    }
+    
+    const searchTerm = query.trim().toLowerCase()
+    const results = this.mockClubs.filter(club =>
+      club.name.toLowerCase().includes(searchTerm) ||
+      club.city?.toLowerCase().includes(searchTerm) ||
+      club.address?.toLowerCase().includes(searchTerm)
+    )
+    
+    return { data: results, error: null }
   }
 
   async hasUserJoinedMatch(matchId: string): Promise<ApiResponse<boolean>> {

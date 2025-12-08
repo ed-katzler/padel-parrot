@@ -2,7 +2,7 @@
 export { apiClient } from './client'
 
 // Export types for consumers
-export type { ApiResponse, User, Match, CreateMatchRequest, UpdateUserRequest, Participant, ApiClient, Location, Subscription, NotificationPreferences, RecurrenceType, UserStats } from './types'
+export type { ApiResponse, User, Match, CreateMatchRequest, UpdateUserRequest, Participant, ApiClient, Location, Subscription, NotificationPreferences, RecurrenceType, UserStats, Club, District, ClubsByDistrict, ClubWithDistrict, CourtType, ClubAmenity } from './types'
 
 // Import types for the convenience functions
 import type { CreateMatchRequest, UpdateMatchRequest, UpdateUserRequest, NotificationPreferences } from './types'
@@ -29,6 +29,13 @@ export const hasUserJoinedMatch = (matchId: string, userId: string) => apiClient
 export const getMatchParticipants = (matchId: string) => apiClient.getMatchParticipants(matchId)
 export const getUserById = (userId: string) => apiClient.getUserById(userId)
 export const getLocations = () => apiClient.getLocations()
+
+// Club methods
+export const getClubs = () => apiClient.getClubs()
+export const getClubsByDistrict = () => apiClient.getClubsByDistrict()
+export const getDistricts = () => apiClient.getDistricts()
+export const getClub = (id: string) => apiClient.getClub(id)
+export const searchClubs = (query: string) => apiClient.searchClubs(query)
 
 // Subscription and notification methods
 export const getSubscriptionStatus = () => apiClient.getSubscriptionStatus()
