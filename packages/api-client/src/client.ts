@@ -986,6 +986,11 @@ class SupabaseApiClient implements ApiClient {
       return { data: null, error: 'Failed to update notification preferences' }
     }
   }
+
+  // Return the Supabase client for realtime subscriptions
+  getRealtimeClient() {
+    return this.supabase
+  }
 }
 
 // Export the appropriate client based on environment

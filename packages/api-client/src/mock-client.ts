@@ -524,4 +524,9 @@ export class MockApiClient implements ApiClient {
     
     return { data: mockPrefs, error: null }
   }
+
+  // Return null for mock client - realtime not supported
+  getRealtimeClient() {
+    return null
+  }
 } 

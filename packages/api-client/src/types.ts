@@ -128,4 +128,6 @@ export interface ApiClient {
   getSubscriptionStatus(): Promise<ApiResponse<Subscription | null>>
   getNotificationPreferences(): Promise<ApiResponse<NotificationPreferences | null>>
   updateNotificationPreferences(prefs: Partial<Pick<NotificationPreferences, 'day_before_enabled' | 'ninety_min_before_enabled'>>): Promise<ApiResponse<NotificationPreferences>>
+  // Realtime support - returns Supabase client for subscriptions (null for mock client)
+  getRealtimeClient(): unknown | null
 } 

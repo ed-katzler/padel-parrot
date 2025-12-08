@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Phone, Plus, Calendar, MapPin, Users, Lock, Globe, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, formatMatchTitle, isMatchInPast } from '@padel-parrot/shared'
-import { sendOtp, verifyOtp, getCurrentUser, getMyMatches, getPublicMatches, updateUser } from '@padel-parrot/api-client'
+import { sendOtp, verifyOtp, getCurrentUser, getMyMatches, getPublicMatches, updateUser, getRealtimeClient } from '@padel-parrot/api-client'
 import Logo from '@/components/Logo'
 import Avatar from '@/components/Avatar'
 import toast from 'react-hot-toast'
@@ -55,64 +55,45 @@ export default function HomePage() {
     checkAuthStatus().finally(() => setIsCheckingAuth(false))
   }, [])
 
+  // Load matches and set up realtime subscription when authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      loadMatches()
-    }
-  }, [isAuthenticated])
+    if (!isAuthenticated) return
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && isAuthenticated) {
-        const shouldRefresh = localStorage.getItem('shouldRefreshMatches')
-        if (shouldRefresh) {
-          localStorage.removeItem('shouldRefreshMatches')
-          loadMatches()
-        } else {
+    // Initial load
+    loadMatches()
+
+    // Set up Supabase Realtime subscription for live updates
+    const supabase = getRealtimeClient()
+    if (!supabase) {
+      // Mock client - no realtime support, just use initial load
+      return
+    }
+
+    // Subscribe to changes in matches and match_participants tables
+    const channel = supabase
+      .channel('home-matches-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'matches' },
+        () => {
+          // Reload matches when any match changes
           loadMatches()
         }
-      }
-    }
-
-    const handleFocus = () => {
-      if (isAuthenticated) {
-        const shouldRefresh = localStorage.getItem('shouldRefreshMatches')
-        if (shouldRefresh) {
-          localStorage.removeItem('shouldRefreshMatches')
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'match_participants' },
+        () => {
+          // Reload matches when participants change (join/leave)
+          loadMatches()
         }
-        loadMatches()
-      }
-    }
+      )
+      .subscribe()
 
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('focus', handleFocus)
-
+    // Cleanup subscription on unmount
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('focus', handleFocus)
+      supabase.removeChannel(channel)
     }
-  }, [isAuthenticated])
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      const shouldRefresh = localStorage.getItem('shouldRefreshMatches')
-      if (shouldRefresh) {
-        localStorage.removeItem('shouldRefreshMatches')
-        loadMatches()
-      }
-    }
-  }, [isAuthenticated])
-
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'shouldRefreshMatches' && e.newValue === 'true' && isAuthenticated) {
-        localStorage.removeItem('shouldRefreshMatches')
-        loadMatches()
-      }
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
   }, [isAuthenticated])
 
   const checkAuthStatus = async () => {

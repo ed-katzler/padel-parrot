@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ArrowLeft, Calendar, MapPin, Users, Share2, UserPlus, UserMinus, Copy, ExternalLink, Edit3, Trash2, ChevronRight, CalendarPlus, X } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, formatMatchTitle, getAvailableSpots, isMatchFull, generateGoogleCalendarUrl, generateICalContent } from '@padel-parrot/shared'
-import { getMatch, joinMatch, leaveMatch, deleteMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById, removeParticipant } from '@padel-parrot/api-client'
+import { getMatch, joinMatch, leaveMatch, deleteMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById, removeParticipant, getRealtimeClient } from '@padel-parrot/api-client'
 import Avatar from '@/components/Avatar'
 import WeatherCard from '@/components/WeatherCard'
 import toast from 'react-hot-toast'
@@ -58,6 +58,50 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       loadMatch()
     }
   }, [currentUserId, params.id])
+
+  // Set up Supabase Realtime subscription for live updates on this match
+  useEffect(() => {
+    const supabase = getRealtimeClient()
+    if (!supabase) {
+      // Mock client - no realtime support
+      return
+    }
+
+    // Subscribe to changes for this specific match
+    const channel = supabase
+      .channel(`match-${params.id}-changes`)
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'matches',
+          filter: `id=eq.${params.id}`
+        },
+        () => {
+          // Reload match when it changes
+          loadMatch()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'match_participants',
+          filter: `match_id=eq.${params.id}`
+        },
+        () => {
+          // Reload match when participants change
+          loadMatch()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [params.id])
 
   const loadCurrentUser = async () => {
     try {
@@ -120,8 +164,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       
       toast.success('Joined!')
       setHasJoined(true)
-      localStorage.setItem('shouldRefreshMatches', 'true')
-      loadMatch()
+      // Realtime subscription will automatically refresh the data
     } catch (error) {
       toast.error('Failed to join')
     } finally {
@@ -142,8 +185,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       
       toast.success('Left match')
       setHasJoined(false)
-      localStorage.setItem('shouldRefreshMatches', 'true')
-      loadMatch()
+      // Realtime subscription will automatically refresh the data
     } catch (error) {
       toast.error('Failed to leave')
     } finally {
@@ -211,7 +253,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       
       toast.success('Match deleted')
       setShowDeleteModal(false)
-      localStorage.setItem('shouldRefreshMatches', 'true')
+      // Redirect to home - realtime on home page will show updated list
       setTimeout(() => {
         window.location.href = '/'
       }, 500)
@@ -241,8 +283,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
       toast.success('Player removed')
       setShowRemoveModal(false)
       setParticipantToRemove(null)
-      localStorage.setItem('shouldRefreshMatches', 'true')
-      loadMatch()
+      // Realtime subscription will automatically refresh the data
     } catch (error) {
       toast.error('Failed to remove player')
     } finally {

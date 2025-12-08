@@ -33,4 +33,7 @@ export const getLocations = () => apiClient.getLocations()
 // Subscription and notification methods
 export const getSubscriptionStatus = () => apiClient.getSubscriptionStatus()
 export const getNotificationPreferences = () => apiClient.getNotificationPreferences()
-export const updateNotificationPreferences = (prefs: Partial<Pick<NotificationPreferences, 'day_before_enabled' | 'ninety_min_before_enabled'>>) => apiClient.updateNotificationPreferences(prefs) 
+export const updateNotificationPreferences = (prefs: Partial<Pick<NotificationPreferences, 'day_before_enabled' | 'ninety_min_before_enabled'>>) => apiClient.updateNotificationPreferences(prefs)
+
+// Realtime support - returns Supabase client for subscriptions (null for mock client)
+export const getRealtimeClient = () => apiClient.getRealtimeClient() 
