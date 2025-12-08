@@ -2,7 +2,7 @@
 export { apiClient } from './client'
 
 // Export types for consumers
-export type { ApiResponse, User, Match, CreateMatchRequest, UpdateUserRequest, Participant, ApiClient, Location, Subscription, NotificationPreferences } from './types'
+export type { ApiResponse, User, Match, CreateMatchRequest, UpdateUserRequest, Participant, ApiClient, Location, Subscription, NotificationPreferences, RecurrenceType, UserStats } from './types'
 
 // Import types for the convenience functions
 import type { CreateMatchRequest, UpdateMatchRequest, UpdateUserRequest, NotificationPreferences } from './types'
@@ -34,6 +34,12 @@ export const getLocations = () => apiClient.getLocations()
 export const getSubscriptionStatus = () => apiClient.getSubscriptionStatus()
 export const getNotificationPreferences = () => apiClient.getNotificationPreferences()
 export const updateNotificationPreferences = (prefs: Partial<Pick<NotificationPreferences, 'day_before_enabled' | 'ninety_min_before_enabled'>>) => apiClient.updateNotificationPreferences(prefs)
+
+// Recurring match methods
+export const stopRecurring = (matchId: string) => apiClient.stopRecurring(matchId)
+
+// User stats
+export const getUserStats = () => apiClient.getUserStats()
 
 // Realtime support - returns Supabase client for subscriptions (null for mock client)
 export const getRealtimeClient = () => apiClient.getRealtimeClient() 

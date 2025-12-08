@@ -1,4 +1,4 @@
-import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, UpdateUserRequest, Subscription, NotificationPreferences } from './types'
+import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, UpdateUserRequest, Subscription, NotificationPreferences, UserStats } from './types'
 
 export class MockApiClient implements ApiClient {
   private mockMatches: Match[] = [
@@ -14,6 +14,9 @@ export class MockApiClient implements ApiClient {
       status: 'upcoming',
       creator_id: 'mock-user-1',
       is_public: true,
+      recurrence_type: 'none',
+      recurrence_end_date: null,
+      series_id: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     },
@@ -29,6 +32,9 @@ export class MockApiClient implements ApiClient {
       status: 'upcoming',
       creator_id: 'mock-user-2',
       is_public: false,
+      recurrence_type: 'weekly',
+      recurrence_end_date: null,
+      series_id: 'mock-series-1',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
@@ -221,6 +227,9 @@ export class MockApiClient implements ApiClient {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000))
     
+    const isRecurring = matchData.recurrence_type && matchData.recurrence_type !== 'none'
+    const seriesId = isRecurring ? `mock-series-${Date.now()}` : null
+    
     const newMatch: Match = {
       id: `mock-match-${Date.now()}`,
       ...matchData,
@@ -230,6 +239,9 @@ export class MockApiClient implements ApiClient {
       status: 'upcoming',
       creator_id: this.mockUser.id,
       is_public: matchData.is_public ?? false,
+      recurrence_type: matchData.recurrence_type || 'none',
+      recurrence_end_date: matchData.recurrence_end_date || null,
+      series_id: seriesId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
@@ -523,6 +535,55 @@ export class MockApiClient implements ApiClient {
     }
     
     return { data: mockPrefs, error: null }
+  }
+
+  async stopRecurring(matchId: string): Promise<ApiResponse<null>> {
+    if (!this.isAuthenticated) {
+      return { data: null, error: 'Must be authenticated' }
+    }
+    
+    const match = this.mockMatches.find(m => m.id === matchId)
+    if (!match) {
+      return { data: null, error: 'Match not found' }
+    }
+    
+    if (match.creator_id !== this.mockUser.id) {
+      return { data: null, error: 'Only the match creator can stop recurrence' }
+    }
+    
+    // Stop recurrence for all matches in the series
+    this.mockMatches.forEach(m => {
+      if (m.series_id === match.series_id) {
+        m.recurrence_type = 'none'
+      }
+    })
+    
+    return { data: null, error: null }
+  }
+
+  async getUserStats(): Promise<ApiResponse<UserStats>> {
+    if (!this.isAuthenticated) {
+      return { data: null, error: 'Must be authenticated' }
+    }
+    
+    // Return mock stats
+    return {
+      data: {
+        totalMatches: 12,
+        matchesThisMonth: 3,
+        topLocations: [
+          { location: 'Padel Club Barcelona', count: 5 },
+          { location: 'Elite Padel Center', count: 4 },
+          { location: 'The Campus', count: 3 }
+        ],
+        frequentPartners: [
+          { id: 'partner-1', name: 'Carlos Rodriguez', avatar_url: null, matchCount: 8 },
+          { id: 'partner-2', name: 'Maria Santos', avatar_url: null, matchCount: 6 },
+          { id: 'partner-3', name: 'John Smith', avatar_url: null, matchCount: 4 }
+        ]
+      },
+      error: null
+    }
   }
 
   // Return null for mock client - realtime not supported

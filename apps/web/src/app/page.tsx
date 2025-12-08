@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, Plus, Calendar, MapPin, Users, Lock, Globe, ChevronDown, ChevronUp } from 'lucide-react'
+import { Phone, Plus, Calendar, MapPin, Users, Lock, Globe, ChevronDown, ChevronUp, Repeat } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, formatMatchTitle, isMatchInPast } from '@padel-parrot/shared'
 import { sendOtp, verifyOtp, getCurrentUser, getMyMatches, getPublicMatches, updateUser, getRealtimeClient, getMatchParticipants } from '@padel-parrot/api-client'
 import Logo from '@/components/Logo'
@@ -20,6 +20,9 @@ interface Match {
   status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled'
   creator_id: string
   is_public: boolean
+  recurrence_type?: 'none' | 'weekly' | 'biweekly'
+  recurrence_end_date?: string | null
+  series_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -322,6 +325,11 @@ export default function HomePage() {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {match.recurrence_type && match.recurrence_type !== 'none' && (
+              <span title={match.recurrence_type === 'weekly' ? 'Repeats weekly' : 'Repeats every 2 weeks'}>
+                <Repeat className="w-3.5 h-3.5" style={{ color: 'rgb(var(--color-text-subtle))' }} />
+              </span>
+            )}
             {match.is_public ? (
               <Globe className="w-3.5 h-3.5" style={{ color: 'rgb(var(--color-text-subtle))' }} />
             ) : (

@@ -12,6 +12,9 @@ export interface User {
   updated_at: string
 }
 
+// Recurrence types for recurring matches
+export type RecurrenceType = 'none' | 'weekly' | 'biweekly'
+
 export interface Match {
   id: string
   title?: string // Deprecated - kept for backwards compatibility
@@ -24,6 +27,10 @@ export interface Match {
   status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled'
   creator_id: string
   is_public: boolean
+  // Recurring match fields
+  recurrence_type: RecurrenceType
+  recurrence_end_date: string | null
+  series_id: string | null
   created_at: string
   updated_at: string
 }
@@ -35,6 +42,9 @@ export interface CreateMatchRequest {
   location: string
   max_players?: number
   is_public?: boolean
+  // Recurring match options
+  recurrence_type?: RecurrenceType
+  recurrence_end_date?: string
 }
 
 export interface UpdateMatchRequest {
@@ -44,6 +54,9 @@ export interface UpdateMatchRequest {
   location?: string
   max_players?: number
   is_public?: boolean
+  // Can update recurrence settings
+  recurrence_type?: RecurrenceType
+  recurrence_end_date?: string | null
 }
 
 export interface UpdateUserRequest {
@@ -103,6 +116,14 @@ export interface NotificationPreferences {
   updated_at: string
 }
 
+// User statistics
+export interface UserStats {
+  totalMatches: number
+  matchesThisMonth: number
+  topLocations: Array<{ location: string; count: number }>
+  frequentPartners: Array<{ id: string; name: string | null; avatar_url: string | null; matchCount: number }>
+}
+
 export interface ApiClient {
   sendOtp(phone: string): Promise<ApiResponse<null>>
   verifyOtp(phone: string, token: string): Promise<ApiResponse<User>>
@@ -128,6 +149,10 @@ export interface ApiClient {
   getSubscriptionStatus(): Promise<ApiResponse<Subscription | null>>
   getNotificationPreferences(): Promise<ApiResponse<NotificationPreferences | null>>
   updateNotificationPreferences(prefs: Partial<Pick<NotificationPreferences, 'day_before_enabled' | 'ninety_min_before_enabled'>>): Promise<ApiResponse<NotificationPreferences>>
+  // Recurring match methods
+  stopRecurring(matchId: string): Promise<ApiResponse<null>>
+  // User stats
+  getUserStats(): Promise<ApiResponse<UserStats>>
   // Realtime support - returns Supabase client for subscriptions (null for mock client)
   getRealtimeClient(): unknown | null
 } 

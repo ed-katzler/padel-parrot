@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, User, Phone, Edit3, Save, X, LogOut, Camera, Crown, Bell, ExternalLink, Check } from 'lucide-react'
-import { getCurrentUser, updateUser, uploadAvatar, signOut, getSubscriptionStatus, getNotificationPreferences, updateNotificationPreferences, type UpdateUserRequest, type Subscription, type NotificationPreferences } from '@padel-parrot/api-client'
+import { ArrowLeft, User, Phone, Edit3, Save, X, LogOut, Camera, Crown, Bell, ExternalLink, Check, MapPin, Users, TrendingUp } from 'lucide-react'
+import { getCurrentUser, updateUser, uploadAvatar, signOut, getSubscriptionStatus, getNotificationPreferences, updateNotificationPreferences, getUserStats, type UpdateUserRequest, type Subscription, type NotificationPreferences, type UserStats } from '@padel-parrot/api-client'
+import Avatar from '@/components/Avatar'
 import { compressImage, validateImageFile } from '@/utils/imageUtils'
 import { formatSubscriptionEnd, getSubscriptionStatusLabel, getSubscriptionStatusColor } from '@/utils/premium'
 import { z } from 'zod'
@@ -41,6 +42,10 @@ export default function ProfilePage() {
   const [isPremium, setIsPremium] = useState(false)
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true)
   const [isUpdatingPrefs, setIsUpdatingPrefs] = useState(false)
+  
+  // Stats state
+  const [stats, setStats] = useState<UserStats | null>(null)
+  const [isLoadingStats, setIsLoadingStats] = useState(true)
 
   const {
     register,
@@ -55,6 +60,7 @@ export default function ProfilePage() {
   useEffect(() => {
     loadUser()
     loadSubscription()
+    loadStats()
   }, [])
 
   const loadUser = async () => {
@@ -100,6 +106,20 @@ export default function ProfilePage() {
       console.error('Failed to load subscription:', error)
     } finally {
       setIsLoadingSubscription(false)
+    }
+  }
+
+  const loadStats = async () => {
+    setIsLoadingStats(true)
+    try {
+      const { data, error } = await getUserStats()
+      if (data && !error) {
+        setStats(data)
+      }
+    } catch (error) {
+      console.error('Failed to load stats:', error)
+    } finally {
+      setIsLoadingStats(false)
     }
   }
 
@@ -528,6 +548,136 @@ export default function ProfilePage() {
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Stats Card */}
+          <div className="card">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+              <h2 className="section-header" style={{ margin: 0 }}>Your Stats</h2>
+            </div>
+            
+            {isLoadingStats ? (
+              <div className="flex items-center justify-center py-4">
+                <div 
+                  className="animate-spin rounded-full h-5 w-5"
+                  style={{ 
+                    border: '2px solid rgb(var(--color-border-light))',
+                    borderTopColor: 'rgb(var(--color-text-muted))'
+                  }}
+                />
+              </div>
+            ) : stats ? (
+              <div className="space-y-4">
+                {/* Match Counts */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div 
+                    className="p-3 rounded-lg text-center"
+                    style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+                  >
+                    <p className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
+                      {stats.totalMatches}
+                    </p>
+                    <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                      Total Matches
+                    </p>
+                  </div>
+                  <div 
+                    className="p-3 rounded-lg text-center"
+                    style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+                  >
+                    <p className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text))' }}>
+                      {stats.matchesThisMonth}
+                    </p>
+                    <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                      This Month
+                    </p>
+                  </div>
+                </div>
+
+                {/* Top Locations */}
+                {stats.topLocations.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="w-4 h-4" style={{ color: 'rgb(var(--color-text-muted))' }} />
+                      <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>
+                        Favorite Locations
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {stats.topLocations.map((loc, index) => (
+                        <div 
+                          key={loc.location} 
+                          className="flex items-center justify-between text-sm"
+                        >
+                          <span 
+                            className="truncate flex-1"
+                            style={{ color: 'rgb(var(--color-text-secondary))' }}
+                          >
+                            {loc.location}
+                          </span>
+                          <span 
+                            className="ml-2 flex-shrink-0"
+                            style={{ color: 'rgb(var(--color-text-muted))' }}
+                          >
+                            {loc.count} {loc.count === 1 ? 'match' : 'matches'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Frequent Partners */}
+                {stats.frequentPartners.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="w-4 h-4" style={{ color: 'rgb(var(--color-text-muted))' }} />
+                      <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>
+                        Frequent Partners
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {stats.frequentPartners.map((partner) => (
+                        <div 
+                          key={partner.id} 
+                          className="flex items-center gap-3"
+                        >
+                          <Avatar 
+                            src={partner.avatar_url} 
+                            name={partner.name}
+                            size="sm"
+                          />
+                          <span 
+                            className="flex-1 truncate text-sm"
+                            style={{ color: 'rgb(var(--color-text-secondary))' }}
+                          >
+                            {partner.name || 'Anonymous'}
+                          </span>
+                          <span 
+                            className="text-sm flex-shrink-0"
+                            style={{ color: 'rgb(var(--color-text-muted))' }}
+                          >
+                            {partner.matchCount} {partner.matchCount === 1 ? 'match' : 'matches'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* No data message */}
+                {stats.totalMatches === 0 && (
+                  <p className="text-sm text-center py-2" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    Play some matches to see your stats!
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-center py-2" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                Could not load stats
+              </p>
+            )}
           </div>
 
           {/* Help Hint */}

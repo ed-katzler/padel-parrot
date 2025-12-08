@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Calendar, MapPin, Users, Share2, UserPlus, UserMinus, Copy, ExternalLink, Edit3, Trash2, ChevronRight, CalendarPlus, X } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Users, Share2, UserPlus, UserMinus, Copy, ExternalLink, Edit3, Trash2, ChevronRight, CalendarPlus, X, Repeat } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, formatMatchTitle, getAvailableSpots, isMatchFull, generateGoogleCalendarUrl, generateICalContent } from '@padel-parrot/shared'
-import { getMatch, joinMatch, leaveMatch, deleteMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById, removeParticipant, getRealtimeClient } from '@padel-parrot/api-client'
+import { getMatch, joinMatch, leaveMatch, deleteMatch, getCurrentUser, hasUserJoinedMatch, getMatchParticipants, getUserById, removeParticipant, getRealtimeClient, stopRecurring } from '@padel-parrot/api-client'
 import Avatar from '@/components/Avatar'
 import WeatherCard from '@/components/WeatherCard'
 import toast from 'react-hot-toast'
@@ -20,6 +20,9 @@ interface Match {
   status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled'
   creator_id: string
   is_public: boolean
+  recurrence_type?: 'none' | 'weekly' | 'biweekly'
+  recurrence_end_date?: string | null
+  series_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -46,6 +49,7 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [creator, setCreator] = useState<UserInfo | null>(null)
   const [participants, setParticipants] = useState<UserInfo[]>([])
+  const [isStoppingRecurrence, setIsStoppingRecurrence] = useState(false)
 
   useEffect(() => {
     loadCurrentUser()
@@ -291,6 +295,27 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
     }
   }
 
+  const handleStopRecurrence = async () => {
+    if (!match) return
+    
+    setIsStoppingRecurrence(true)
+    try {
+      const { error } = await stopRecurring(match.id)
+      if (error) {
+        toast.error(error)
+        return
+      }
+      
+      toast.success('Recurring matches stopped')
+      // Reload match to show updated recurrence status
+      loadMatch()
+    } catch (error) {
+      toast.error('Failed to stop recurring matches')
+    } finally {
+      setIsStoppingRecurrence(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
@@ -452,6 +477,32 @@ export default function MatchDetailsClient({ params }: { params: { id: string } 
                 <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
                   Created by {currentUserId === creator.id ? 'you' : (creator.name || creator.phone)}
                 </p>
+              </div>
+            )}
+            
+            {/* Recurrence Info */}
+            {match.recurrence_type && match.recurrence_type !== 'none' && (
+              <div className="flex items-center justify-between gap-3 pt-3 mt-3" style={{ borderTop: '1px solid rgb(var(--color-border-light))' }}>
+                <div className="flex items-center gap-3">
+                  <Repeat className="w-5 h-5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }} />
+                  <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    Repeats {match.recurrence_type === 'weekly' ? 'every week' : 'every 2 weeks'}
+                    {match.recurrence_end_date && ` until ${new Date(match.recurrence_end_date).toLocaleDateString()}`}
+                  </p>
+                </div>
+                {currentUserId === match.creator_id && match.status === 'upcoming' && (
+                  <button
+                    onClick={handleStopRecurrence}
+                    disabled={isStoppingRecurrence}
+                    className="text-sm px-3 py-1.5 rounded-lg transition-colors"
+                    style={{ 
+                      backgroundColor: 'rgb(var(--color-interactive-muted))',
+                      color: 'rgb(var(--color-text-muted))'
+                    }}
+                  >
+                    {isStoppingRecurrence ? 'Stopping...' : 'Stop'}
+                  </button>
+                )}
               </div>
             )}
           </div>

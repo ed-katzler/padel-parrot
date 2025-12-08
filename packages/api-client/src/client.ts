@@ -26,7 +26,7 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { MockApiClient } from './mock-client'
-import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, Participant, UpdateUserRequest, Subscription, NotificationPreferences } from './types'
+import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, Participant, UpdateUserRequest, Subscription, NotificationPreferences, UserStats } from './types'
 
 interface SupabaseConfig {
   url: string
@@ -506,6 +506,11 @@ class SupabaseApiClient implements ApiClient {
       // Create match with current_players = 1 (creator automatically joins)
       // IMPORTANT: duration_minutes must be provided to avoid "(NaNh NaNm)" display issue
       // The migration 001_add_duration_field.sql must be applied to the database for this to work
+      
+      // Generate a series_id for recurring matches
+      const isRecurring = matchData.recurrence_type && matchData.recurrence_type !== 'none'
+      const seriesId = isRecurring ? crypto.randomUUID() : null
+      
       const { data, error } = await this.supabase
         .from('matches')
         .insert({
@@ -513,7 +518,10 @@ class SupabaseApiClient implements ApiClient {
           creator_id: user.id,
           current_players: 1, // Creator automatically joins
           duration_minutes: matchData.duration_minutes || 90, // Default to 90 minutes
-          is_public: matchData.is_public ?? false // Default to private
+          is_public: matchData.is_public ?? false, // Default to private
+          recurrence_type: matchData.recurrence_type || 'none',
+          recurrence_end_date: matchData.recurrence_end_date || null,
+          series_id: seriesId
         })
         .select()
         .single()
@@ -984,6 +992,150 @@ class SupabaseApiClient implements ApiClient {
       return { data, error: null }
     } catch (error) {
       return { data: null, error: 'Failed to update notification preferences' }
+    }
+  }
+
+  async stopRecurring(matchId: string): Promise<ApiResponse<null>> {
+    try {
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      
+      if (authError || !user) {
+        return { data: null, error: 'Must be authenticated' }
+      }
+
+      // First get the match to check ownership and get series_id
+      const { data: match, error: matchError } = await this.supabase
+        .from('matches')
+        .select('creator_id, series_id')
+        .eq('id', matchId)
+        .single()
+
+      if (matchError || !match) {
+        return { data: null, error: 'Match not found' }
+      }
+
+      if (match.creator_id !== user.id) {
+        return { data: null, error: 'Only the match creator can stop recurrence' }
+      }
+
+      // Update all matches in the series to stop recurring
+      const { error } = await this.supabase
+        .from('matches')
+        .update({ recurrence_type: 'none' })
+        .eq('series_id', match.series_id)
+
+      if (error) {
+        return { data: null, error: error.message }
+      }
+
+      return { data: null, error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to stop recurring match' }
+    }
+  }
+
+  async getUserStats(): Promise<ApiResponse<UserStats>> {
+    try {
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser()
+      
+      if (authError || !user) {
+        return { data: null, error: 'Must be authenticated' }
+      }
+
+      // Get all matches the user has participated in
+      const { data: participations, error: partError } = await this.supabase
+        .from('participants')
+        .select(`
+          match_id,
+          matches!inner (
+            id,
+            date_time,
+            location,
+            creator_id
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'joined')
+
+      if (partError) {
+        return { data: null, error: partError.message }
+      }
+
+      const matches = participations?.map(p => (p as any).matches) || []
+      const now = new Date()
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+      // Calculate total matches (past matches only)
+      const pastMatches = matches.filter(m => new Date(m.date_time) < now)
+      const totalMatches = pastMatches.length
+
+      // Calculate matches this month
+      const matchesThisMonth = pastMatches.filter(m => new Date(m.date_time) >= startOfMonth).length
+
+      // Calculate top locations
+      const locationCounts: Record<string, number> = {}
+      pastMatches.forEach(m => {
+        locationCounts[m.location] = (locationCounts[m.location] || 0) + 1
+      })
+      const topLocations = Object.entries(locationCounts)
+        .map(([location, count]) => ({ location, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3)
+
+      // Get all match IDs to find partners
+      const matchIds = pastMatches.map(m => m.id)
+      
+      // Get all participants for these matches
+      const { data: allParticipants } = await this.supabase
+        .from('participants')
+        .select('match_id, user_id')
+        .in('match_id', matchIds)
+        .eq('status', 'joined')
+        .neq('user_id', user.id)
+
+      // Count partner occurrences
+      const partnerCounts: Record<string, number> = {}
+      allParticipants?.forEach(p => {
+        partnerCounts[p.user_id] = (partnerCounts[p.user_id] || 0) + 1
+      })
+
+      // Get top partner IDs
+      const topPartnerIds = Object.entries(partnerCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([id, count]) => ({ id, count }))
+
+      // Fetch partner details
+      const frequentPartners: Array<{ id: string; name: string | null; avatar_url: string | null; matchCount: number }> = []
+      
+      for (const partner of topPartnerIds) {
+        const { data: userData } = await this.supabase
+          .from('users')
+          .select('id, name, avatar_url')
+          .eq('id', partner.id)
+          .single()
+        
+        if (userData) {
+          frequentPartners.push({
+            id: userData.id,
+            name: userData.name,
+            avatar_url: userData.avatar_url,
+            matchCount: partner.count
+          })
+        }
+      }
+
+      return {
+        data: {
+          totalMatches,
+          matchesThisMonth,
+          topLocations,
+          frequentPartners
+        },
+        error: null
+      }
+    } catch (error) {
+      return { data: null, error: 'Failed to get user stats' }
     }
   }
 

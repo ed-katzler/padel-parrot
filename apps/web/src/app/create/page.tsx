@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, ChevronDown, MapPin, Globe, Lock } from 'lucide-react'
-import { createMatch, getCurrentUser, getLocations, type Location } from '@padel-parrot/api-client'
+import { ArrowLeft, ChevronDown, MapPin, Globe, Lock, Repeat } from 'lucide-react'
+import { createMatch, getCurrentUser, getLocations, type Location, type RecurrenceType } from '@padel-parrot/api-client'
 import DatePicker from '@/components/DatePicker'
 import TimePicker from '@/components/TimePicker'
 import toast from 'react-hot-toast'
@@ -14,6 +14,12 @@ const DURATION_OPTIONS = [
 ]
 
 const PLAYER_OPTIONS = [2, 4, 6, 8]
+
+const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string }[] = [
+  { value: 'none', label: 'One-time' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'biweekly', label: 'Every 2 weeks' },
+]
 
 export default function CreateMatchPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -30,6 +36,8 @@ export default function CreateMatchPage() {
   const [selectedDuration, setSelectedDuration] = useState(90)
   const [selectedPlayers, setSelectedPlayers] = useState(4)
   const [isPublic, setIsPublic] = useState(false)
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>('none')
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState('')
   
   // Validation errors
   const [errors, setErrors] = useState<{ location?: string; datetime?: string }>({})
@@ -109,6 +117,8 @@ export default function CreateMatchPage() {
         location: locationInput,
         max_players: selectedPlayers,
         is_public: isPublic,
+        recurrence_type: recurrenceType,
+        recurrence_end_date: recurrenceEndDate || undefined,
       })
       
       const { data: match, error } = await createMatch({
@@ -118,6 +128,8 @@ export default function CreateMatchPage() {
         location: locationInput.trim(),
         max_players: selectedPlayers,
         is_public: isPublic,
+        recurrence_type: recurrenceType,
+        recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
       })
       
       if (error) {
@@ -265,6 +277,45 @@ export default function CreateMatchPage() {
                   aria-pressed={isPublic}
                 />
               </div>
+            </div>
+
+            {/* Recurrence */}
+            <div className="form-field">
+              <label className="form-label">
+                <span className="flex items-center gap-2">
+                  <Repeat className="w-4 h-4" />
+                  Repeat
+                </span>
+              </label>
+              <div className="segmented-control">
+                {RECURRENCE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setRecurrenceType(option.value)}
+                    className={recurrenceType === option.value ? 'active' : ''}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              {recurrenceType !== 'none' && (
+                <div className="mt-3">
+                  <label className="form-label text-xs">
+                    End repeat <span style={{ color: 'rgb(var(--color-text-subtle))', fontWeight: 400 }}>(optional)</span>
+                  </label>
+                  <DatePicker
+                    value={recurrenceEndDate}
+                    onChange={setRecurrenceEndDate}
+                    minDate={selectedDate || getMinDate()}
+                    maxDate={getMaxDate()}
+                    placeholder="Repeats indefinitely"
+                  />
+                  <p className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-subtle))' }}>
+                    {recurrenceType === 'weekly' ? 'A new match will be created every week' : 'A new match will be created every 2 weeks'}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
