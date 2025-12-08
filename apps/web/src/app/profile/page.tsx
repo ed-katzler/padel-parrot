@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, User, Phone, Edit3, Save, X, LogOut, Camera, Crown, Bell, ExternalLink, Check, MapPin, Users, TrendingUp } from 'lucide-react'
+import { ArrowLeft, User, Phone, Edit3, Save, X, LogOut, Camera, Crown, Bell, ExternalLink, Check, MapPin, Users, TrendingUp, Sun, Moon, Monitor } from 'lucide-react'
 import { getCurrentUser, updateUser, uploadAvatar, signOut, getSubscriptionStatus, getNotificationPreferences, updateNotificationPreferences, getUserStats, type UpdateUserRequest, type Subscription, type NotificationPreferences, type UserStats } from '@padel-parrot/api-client'
 import Avatar from '@/components/Avatar'
+import { useTheme } from '@/components/ThemeProvider'
 import { compressImage, validateImageFile } from '@/utils/imageUtils'
 import { formatSubscriptionEnd, getSubscriptionStatusLabel, getSubscriptionStatusColor } from '@/utils/premium'
 import { z } from 'zod'
@@ -27,6 +28,7 @@ const updateProfileSchema = z.object({
 type UpdateProfileInput = z.infer<typeof updateProfileSchema>
 
 export default function ProfilePage() {
+  const { theme, setTheme } = useTheme()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
@@ -694,6 +696,92 @@ export default function ProfilePage() {
               </p>
             </div>
           )}
+
+          {/* Appearance Settings */}
+          <div className="card">
+            <div className="flex items-center gap-2 mb-4">
+              <Sun className="w-5 h-5" style={{ color: 'rgb(var(--color-text-muted))' }} />
+              <h2 className="section-header" style={{ margin: 0 }}>Appearance</h2>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setTheme('light')}
+                className={`p-3 rounded-lg flex flex-col items-center gap-2 transition-all ${
+                  theme === 'light' ? 'ring-2 ring-offset-2' : ''
+                }`}
+                style={{ 
+                  backgroundColor: theme === 'light' ? 'rgb(var(--color-interactive-muted))' : 'transparent',
+                  border: `1px solid ${theme === 'light' ? 'rgb(var(--color-text))' : 'rgb(var(--color-border-light))'}`,
+                  ringColor: 'rgb(var(--color-text))',
+                  ringOffsetColor: 'rgb(var(--color-surface))'
+                }}
+              >
+                <Sun 
+                  className="w-5 h-5" 
+                  style={{ color: theme === 'light' ? 'rgb(var(--color-text))' : 'rgb(var(--color-text-muted))' }} 
+                />
+                <span 
+                  className="text-xs font-medium"
+                  style={{ color: theme === 'light' ? 'rgb(var(--color-text))' : 'rgb(var(--color-text-muted))' }}
+                >
+                  Light
+                </span>
+              </button>
+              
+              <button
+                onClick={() => setTheme('dark')}
+                className={`p-3 rounded-lg flex flex-col items-center gap-2 transition-all ${
+                  theme === 'dark' ? 'ring-2 ring-offset-2' : ''
+                }`}
+                style={{ 
+                  backgroundColor: theme === 'dark' ? 'rgb(var(--color-interactive-muted))' : 'transparent',
+                  border: `1px solid ${theme === 'dark' ? 'rgb(var(--color-text))' : 'rgb(var(--color-border-light))'}`,
+                  ringColor: 'rgb(var(--color-text))',
+                  ringOffsetColor: 'rgb(var(--color-surface))'
+                }}
+              >
+                <Moon 
+                  className="w-5 h-5" 
+                  style={{ color: theme === 'dark' ? 'rgb(var(--color-text))' : 'rgb(var(--color-text-muted))' }} 
+                />
+                <span 
+                  className="text-xs font-medium"
+                  style={{ color: theme === 'dark' ? 'rgb(var(--color-text))' : 'rgb(var(--color-text-muted))' }}
+                >
+                  Dark
+                </span>
+              </button>
+              
+              <button
+                onClick={() => setTheme('system')}
+                className={`p-3 rounded-lg flex flex-col items-center gap-2 transition-all ${
+                  theme === 'system' ? 'ring-2 ring-offset-2' : ''
+                }`}
+                style={{ 
+                  backgroundColor: theme === 'system' ? 'rgb(var(--color-interactive-muted))' : 'transparent',
+                  border: `1px solid ${theme === 'system' ? 'rgb(var(--color-text))' : 'rgb(var(--color-border-light))'}`,
+                  ringColor: 'rgb(var(--color-text))',
+                  ringOffsetColor: 'rgb(var(--color-surface))'
+                }}
+              >
+                <Monitor 
+                  className="w-5 h-5" 
+                  style={{ color: theme === 'system' ? 'rgb(var(--color-text))' : 'rgb(var(--color-text-muted))' }} 
+                />
+                <span 
+                  className="text-xs font-medium"
+                  style={{ color: theme === 'system' ? 'rgb(var(--color-text))' : 'rgb(var(--color-text-muted))' }}
+                >
+                  System
+                </span>
+              </button>
+            </div>
+            
+            <p className="text-xs mt-3 text-center" style={{ color: 'rgb(var(--color-text-subtle))' }}>
+              {theme === 'system' ? 'Follows your device settings' : `${theme.charAt(0).toUpperCase() + theme.slice(1)} mode enabled`}
+            </p>
+          </div>
 
           {/* Premium Subscription Card */}
           <div className="card">

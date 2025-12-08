@@ -1,5 +1,6 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Toaster } from 'react-hot-toast'
+import { ThemeProvider } from '@/components/ThemeProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -7,8 +8,6 @@ export const metadata: Metadata = {
   description: 'Simplify how you organise and join padel matches. Fast, intuitive, mobile-first.',
   keywords: ['padel', 'matches', 'sports', 'organization', 'booking'],
   authors: [{ name: 'PadelParrot Team' }],
-  viewport: 'width=device-width, initial-scale=1',
-  themeColor: '#1c1917', // stone-900
   manifest: '/manifest.json',
   icons: {
     icon: '/icon.svg',
@@ -28,42 +27,70 @@ export const metadata: Metadata = {
   },
 }
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fafaf9' },
+    { media: '(prefers-color-scheme: dark)', color: '#171717' },
+  ],
+}
+
+// Script to prevent flash of incorrect theme
+const themeScript = `
+  (function() {
+    try {
+      var theme = localStorage.getItem('theme');
+      var isDark = theme === 'dark' || 
+        (theme === 'system' || !theme) && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (isDark) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (e) {}
+  })();
+`
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>
-        <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
-          {children}
-        </div>
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              background: 'rgb(28 25 23)', // --color-text
-              color: 'rgb(250 250 249)',   // --color-bg
-              fontSize: '14px',
-              borderRadius: 'var(--radius-md)',
-              padding: 'var(--space-3) var(--space-4)',
-            },
-            success: {
-              iconTheme: {
-                primary: 'rgb(46 125 50)',  // --color-success-text
-                secondary: 'rgb(250 250 249)',
+        <ThemeProvider>
+          <div className="min-h-screen" style={{ backgroundColor: 'rgb(var(--color-bg))' }}>
+            {children}
+          </div>
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: 'rgb(var(--color-text))',
+                color: 'rgb(var(--color-bg))',
+                fontSize: '14px',
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-3) var(--space-4)',
               },
-            },
-            error: {
-              iconTheme: {
-                primary: 'rgb(198 40 40)',  // --color-error-text
-                secondary: 'rgb(250 250 249)',
+              success: {
+                iconTheme: {
+                  primary: 'rgb(var(--color-success-text))',
+                  secondary: 'rgb(var(--color-bg))',
+                },
               },
-            },
-          }}
-        />
+              error: {
+                iconTheme: {
+                  primary: 'rgb(var(--color-error-text))',
+                  secondary: 'rgb(var(--color-bg))',
+                },
+              },
+            }}
+          />
+        </ThemeProvider>
       </body>
     </html>
   )
