@@ -176,12 +176,13 @@
   }
   
   .btn-danger {
-    background-color: rgb(var(--color-error-text));
-    color: rgb(var(--color-surface));
+    background-color: rgb(var(--color-error-bg));
+    color: rgb(var(--color-error-text));
+    border: 1px solid rgb(var(--color-error-text) / 0.3);
   }
   
   .btn-danger:hover {
-    opacity: 0.9;
+    background-color: rgb(var(--color-error-text) / 0.2);
   }
   
   /* Inputs */

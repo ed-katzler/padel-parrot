@@ -43,27 +43,33 @@ const getWeatherIcon = (condition: string) => {
   }
 }
 
-// Get risk color and label
+// Get risk color and label - using CSS custom properties for dark mode support
 const getRiskInfo = (level: 'low' | 'medium' | 'high', risk: number) => {
   switch (level) {
     case 'low':
       return {
-        color: 'bg-green-50 text-green-700 border-green-200',
-        barColor: 'bg-green-500',
+        bgColor: 'rgb(var(--color-success-bg))',
+        textColor: 'rgb(var(--color-success-text))',
+        borderColor: 'rgb(var(--color-success-text) / 0.3)',
+        barColor: 'rgb(var(--color-success-text))',
         label: 'Low Risk',
         description: 'Court conditions should be good'
       }
     case 'medium':
       return {
-        color: 'bg-amber-50 text-amber-700 border-amber-200',
-        barColor: 'bg-amber-500',
+        bgColor: 'rgba(245, 158, 11, 0.15)',
+        textColor: 'rgb(245, 158, 11)',
+        borderColor: 'rgba(245, 158, 11, 0.3)',
+        barColor: 'rgb(245, 158, 11)',
         label: 'Medium Risk',
         description: 'Some moisture possible on glass'
       }
     case 'high':
       return {
-        color: 'bg-red-50 text-red-700 border-red-200',
-        barColor: 'bg-red-500',
+        bgColor: 'rgb(var(--color-error-bg))',
+        textColor: 'rgb(var(--color-error-text))',
+        borderColor: 'rgb(var(--color-error-text) / 0.3)',
+        barColor: 'rgb(var(--color-error-text))',
         label: 'High Risk',
         description: 'Slippery glass walls likely'
       }
@@ -140,12 +146,12 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
     return (
       <div className={`card animate-pulse ${className}`}>
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 rounded-full bg-stone-200" />
-          <div className="h-5 w-32 bg-stone-200 rounded" />
+          <div className="w-8 h-8 rounded-full" style={{ backgroundColor: 'rgb(var(--color-border-light))' }} />
+          <div className="h-5 w-32 rounded" style={{ backgroundColor: 'rgb(var(--color-border-light))' }} />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div className="h-16 bg-stone-100 rounded-lg" />
-          <div className="h-16 bg-stone-100 rounded-lg" />
+          <div className="h-16 rounded-lg" style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }} />
+          <div className="h-16 rounded-lg" style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }} />
         </div>
       </div>
     )
@@ -160,8 +166,8 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
           <div className="flex items-center gap-3 mb-4 p-4">
             <Sun className="w-8 h-8 text-amber-500" />
             <div>
-              <div className="text-2xl font-semibold text-stone-900">22°C</div>
-              <div className="text-sm text-stone-500">Clear</div>
+              <div className="text-2xl font-semibold" style={{ color: 'rgb(var(--color-text))' }}>22°C</div>
+              <div className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Clear</div>
             </div>
           </div>
         </div>
@@ -198,8 +204,11 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
 
   if (error) {
     return (
-      <div className={`card bg-stone-50 border-dashed ${className}`}>
-        <div className="flex items-center gap-3 text-stone-500">
+      <div 
+        className={`card border-dashed ${className}`}
+        style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+      >
+        <div className="flex items-center gap-3" style={{ color: 'rgb(var(--color-text-muted))' }}>
           <Cloud className="w-6 h-6" />
           <span className="text-sm">{error}</span>
         </div>
@@ -218,10 +227,10 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
         <div className="flex items-center gap-3">
           {getWeatherIcon(weather.condition)}
           <div>
-            <div className="text-2xl font-semibold text-stone-900">
+            <div className="text-2xl font-semibold" style={{ color: 'rgb(var(--color-text))' }}>
               {weather.temperature}°C
             </div>
-            <div className="text-sm text-stone-500 capitalize">
+            <div className="text-sm capitalize" style={{ color: 'rgb(var(--color-text-muted))' }}>
               {weather.condition}
             </div>
           </div>
@@ -230,32 +239,46 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
 
       {/* Weather Stats */}
       <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg">
+        <div 
+          className="flex items-center gap-2 p-2 rounded-lg"
+          style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+        >
           <Droplets className="w-4 h-4 text-blue-500" />
           <div>
-            <div className="text-xs text-stone-500">Humidity</div>
-            <div className="text-sm font-medium">{weather.humidity}%</div>
+            <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Humidity</div>
+            <div className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>{weather.humidity}%</div>
           </div>
         </div>
-        <div className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg">
-          <Wind className="w-4 h-4 text-stone-500" />
+        <div 
+          className="flex items-center gap-2 p-2 rounded-lg"
+          style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+        >
+          <Wind className="w-4 h-4" style={{ color: 'rgb(var(--color-text-muted))' }} />
           <div>
-            <div className="text-xs text-stone-500">Wind</div>
-            <div className="text-sm font-medium">{weather.windSpeed} m/s</div>
+            <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Wind</div>
+            <div className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>{weather.windSpeed} m/s</div>
           </div>
         </div>
-        <div className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg">
-          <Cloud className="w-4 h-4 text-stone-400" />
+        <div 
+          className="flex items-center gap-2 p-2 rounded-lg"
+          style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
+        >
+          <Cloud className="w-4 h-4" style={{ color: 'rgb(var(--color-text-subtle))' }} />
           <div>
-            <div className="text-xs text-stone-500">Clouds</div>
-            <div className="text-sm font-medium">{weather.cloudCover}%</div>
+            <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Clouds</div>
+            <div className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>{weather.cloudCover}%</div>
           </div>
         </div>
       </div>
 
       {/* Condensation Risk */}
       <div 
-        className={`p-3 rounded-lg border ${riskInfo.color} relative`}
+        className="p-3 rounded-lg relative"
+        style={{ 
+          backgroundColor: riskInfo.bgColor,
+          color: riskInfo.textColor,
+          border: `1px solid ${riskInfo.borderColor}`
+        }}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
@@ -268,10 +291,13 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
         </div>
         
         {/* Risk Bar */}
-        <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
+        <div 
+          className="h-2 rounded-full overflow-hidden"
+          style={{ backgroundColor: 'rgb(var(--color-border-light))' }}
+        >
           <div 
-            className={`h-full ${riskInfo.barColor} transition-all duration-500`}
-            style={{ width: `${weather.condensationRisk}%` }}
+            className="h-full transition-all duration-500"
+            style={{ width: `${weather.condensationRisk}%`, backgroundColor: riskInfo.barColor }}
           />
         </div>
         
@@ -281,13 +307,19 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
 
         {/* Tooltip */}
         {showTooltip && (
-          <div className="absolute bottom-full left-0 right-0 mb-2 p-3 bg-stone-900 text-white text-xs rounded-lg shadow-lg z-10">
+          <div 
+            className="absolute bottom-full left-0 right-0 mb-2 p-3 text-xs rounded-lg shadow-lg z-10"
+            style={{ backgroundColor: 'rgb(var(--color-text))', color: 'rgb(var(--color-bg))' }}
+          >
             <div className="font-medium mb-1">What is Condensation Risk?</div>
             <p>
               When glass court walls get colder than the dew point, moisture condenses on them, 
               making the walls slippery. Clear, calm nights increase this risk.
             </p>
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-stone-900" />
+            <div 
+              className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2"
+              style={{ backgroundColor: 'rgb(var(--color-text))' }}
+            />
           </div>
         )}
       </div>
