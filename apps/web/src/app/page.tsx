@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Phone, Plus, Calendar, MapPin, Users, Lock, Globe, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, formatMatchTitle, isMatchInPast } from '@padel-parrot/shared'
-import { sendOtp, verifyOtp, getCurrentUser, getMyMatches, getPublicMatches, updateUser, getRealtimeClient } from '@padel-parrot/api-client'
+import { sendOtp, verifyOtp, getCurrentUser, getMyMatches, getPublicMatches, updateUser, getRealtimeClient, getMatchParticipants } from '@padel-parrot/api-client'
 import Logo from '@/components/Logo'
 import Avatar from '@/components/Avatar'
 import toast from 'react-hot-toast'
@@ -33,6 +33,13 @@ interface User {
   updated_at: string
 }
 
+interface Participant {
+  id: string
+  phone: string
+  name: string | null
+  avatar_url: string | null
+}
+
 export default function HomePage() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -50,6 +57,7 @@ export default function HomePage() {
   const [showNameModal, setShowNameModal] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [isUpdatingName, setIsUpdatingName] = useState(false)
+  const [matchParticipants, setMatchParticipants] = useState<Record<string, Participant[]>>({})
 
   useEffect(() => {
     checkAuthStatus().finally(() => setIsCheckingAuth(false))
@@ -134,6 +142,27 @@ export default function HomePage() {
         setPublicMatches([])
       } else {
         setPublicMatches(publicMatchesResult.data || [])
+      }
+
+      // Load participants for all matches
+      const allMatches = [
+        ...(myMatchesResult.data || []),
+        ...(publicMatchesResult.data || [])
+      ]
+      
+      if (allMatches.length > 0) {
+        const participantsResults = await Promise.all(
+          allMatches.map(match => getMatchParticipants(match.id))
+        )
+        
+        const participantsMap: Record<string, Participant[]> = {}
+        allMatches.forEach((match, index) => {
+          const result = participantsResults[index]
+          if (!result.error && result.data) {
+            participantsMap[match.id] = result.data
+          }
+        })
+        setMatchParticipants(participantsMap)
       }
     } catch (error) {
       toast.error('Failed to load matches')
@@ -266,6 +295,8 @@ export default function HomePage() {
   const renderMatchCard = (match: Match, isPast: boolean = false) => {
     const availableSpots = match.max_players - match.current_players
     const isFull = availableSpots === 0
+    const participants = matchParticipants[match.id] || []
+    const emptySlots = match.max_players - participants.length
     
     return (
       <div
@@ -274,8 +305,8 @@ export default function HomePage() {
         onClick={() => handleJoinMatch(match.id)}
         style={{ opacity: isPast ? 0.7 : 1 }}
       >
-        {/* Primary: Title (description + date or just date) */}
-        <div className="flex items-start justify-between mb-2">
+        {/* Header: Title + Status Badge */}
+        <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1 min-w-0">
             <h3 
               className="text-lg font-semibold truncate"
@@ -284,62 +315,107 @@ export default function HomePage() {
               {formatMatchTitle(match.date_time, match.description)}
             </h3>
             <p 
-              className="text-sm"
+              className="text-sm mt-0.5"
               style={{ color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))' }}
             >
               {formatMatchTime(match.date_time)} · {formatMatchDateTime(match.date_time, match.duration_minutes).split('(')[1]?.replace(')', '') || ''}
             </p>
           </div>
-          <div className="flex items-center gap-2 ml-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {match.is_public ? (
-              <Globe className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-subtle))' }} />
+              <Globe className="w-3.5 h-3.5" style={{ color: 'rgb(var(--color-text-subtle))' }} />
             ) : (
-              <Lock className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgb(var(--color-text-subtle))' }} />
+              <Lock className="w-3.5 h-3.5" style={{ color: 'rgb(var(--color-text-subtle))' }} />
             )}
             {!isPast && (
-              <span className={`flex-shrink-0 badge ${isFull ? 'badge-full' : 'badge-available'}`}>
+              <span className={`badge ${isFull ? 'badge-full' : 'badge-available'}`}>
                 {isFull ? 'Full' : `${availableSpots} left`}
               </span>
             )}
             {isPast && (
-              <span className="flex-shrink-0 badge badge-neutral">
+              <span className="badge badge-neutral">
                 Past
               </span>
             )}
           </div>
         </div>
         
-        {/* Secondary: Location */}
+        {/* Location */}
         <div 
-          className="flex items-center text-sm"
+          className="flex items-center text-sm mb-3"
           style={{ color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))' }}
         >
           <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
           <span className="truncate">{match.location}</span>
         </div>
         
-        {/* Meta: Player count */}
+        {/* Divider */}
         <div 
-          className="flex items-center text-sm pt-2"
-          style={{ 
-            color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))',
-            borderTop: '1px solid rgb(var(--color-border-light))'
-          }}
-        >
-          <Users className="w-4 h-4 mr-2 flex-shrink-0" />
-          <span>{match.current_players}/{match.max_players}</span>
-          <div className="flex ml-2 gap-1">
-            {Array.from({ length: match.max_players }).map((_, i) => (
-              <div
-                key={i}
-                className="w-2 h-2 rounded-full"
-                style={{ 
-                  backgroundColor: i < match.current_players
-                    ? 'rgb(var(--color-text-muted))'
-                    : 'rgb(var(--color-border-light))'
-                }}
-              />
-            ))}
+          className="my-3"
+          style={{ borderTop: '1px solid rgb(var(--color-border-light))' }}
+        />
+        
+        {/* Players Section */}
+        <div className="flex items-center justify-between">
+          {/* Avatar Stack + Names */}
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {/* Stacked Avatars */}
+            <div className="flex -space-x-2 flex-shrink-0">
+              {participants.slice(0, 4).map((participant, index) => (
+                <div 
+                  key={participant.id}
+                  className="relative"
+                  style={{ zIndex: 4 - index }}
+                >
+                  <Avatar 
+                    src={participant.avatar_url} 
+                    name={participant.name}
+                    size="xs"
+                    className="ring-2 ring-white"
+                  />
+                </div>
+              ))}
+              {/* Empty slots shown as dashed circles */}
+              {emptySlots > 0 && Array.from({ length: Math.min(emptySlots, 4 - participants.length) }).map((_, i) => (
+                <div 
+                  key={`empty-${i}`}
+                  className="w-6 h-6 rounded-full flex items-center justify-center relative"
+                  style={{ 
+                    zIndex: 4 - participants.length - i,
+                    border: '2px dashed rgb(var(--color-border))',
+                    backgroundColor: 'rgb(var(--color-surface))'
+                  }}
+                />
+              ))}
+            </div>
+            
+            {/* Player Names */}
+            <div className="flex-1 min-w-0">
+              {participants.length > 0 ? (
+                <p 
+                  className="text-sm truncate"
+                  style={{ color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))' }}
+                >
+                  {participants.map(p => p.name || 'Anonymous').join(', ')}
+                </p>
+              ) : (
+                <p 
+                  className="text-sm"
+                  style={{ color: 'rgb(var(--color-text-subtle))' }}
+                >
+                  No players yet
+                </p>
+              )}
+            </div>
+          </div>
+          
+          {/* Player Count */}
+          <div 
+            className="flex items-center gap-1.5 flex-shrink-0 ml-3"
+            style={{ color: isPast ? 'rgb(var(--color-text-subtle))' : 'rgb(var(--color-text-muted))' }}
+          >
+            <Users className="w-4 h-4" />
+            <span className="text-sm font-medium">{match.current_players}/{match.max_players}</span>
           </div>
         </div>
       </div>
