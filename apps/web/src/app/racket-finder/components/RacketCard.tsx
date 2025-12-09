@@ -1,11 +1,27 @@
 'use client'
 
-import { ExternalLink, Zap, Feather, Heart, Target, Award, DollarSign } from 'lucide-react'
+import { useState } from 'react'
+import Image from 'next/image'
+import { ExternalLink, Zap, Feather, Heart } from 'lucide-react'
 import type { Racket, AxisValue } from '@padel-parrot/api-client'
 
 interface RacketCardProps {
   racket: Racket
   compact?: boolean
+}
+
+// Brand colors for placeholder backgrounds
+const BRAND_COLORS: Record<string, string> = {
+  'Adidas': '#000000',
+  'Babolat': '#FFD700',
+  'Bullpadel': '#E31837',
+  'Head': '#000000',
+  'Nox': '#FF6B00',
+}
+
+// Get brand initials for placeholder
+const getBrandInitials = (brand: string): string => {
+  return brand.substring(0, 2).toUpperCase()
 }
 
 // Skill level colors and labels
@@ -33,8 +49,38 @@ const getAxisLabel = (axis: 'power' | 'weight' | 'feel', value: AxisValue): stri
 }
 
 export default function RacketCard({ racket, compact = false }: RacketCardProps) {
+  const [imageError, setImageError] = useState(false)
   const skillLevel = racket.skill_level ? SKILL_LEVELS[racket.skill_level] : null
   const priceTier = racket.price_tier ? PRICE_TIERS[racket.price_tier] : null
+  const brandColor = BRAND_COLORS[racket.brand] || '#6B7280'
+  const showPlaceholder = !racket.image_url || imageError
+
+  // Placeholder component
+  const ImagePlaceholder = ({ size = 'normal' }: { size?: 'small' | 'normal' }) => (
+    <div 
+      className={`flex items-center justify-center ${size === 'small' ? 'w-full h-full' : 'w-full h-full'}`}
+      style={{ 
+        background: `linear-gradient(135deg, ${brandColor}15 0%, ${brandColor}30 100%)`,
+      }}
+    >
+      <div className="text-center">
+        <div 
+          className={`font-bold ${size === 'small' ? 'text-sm' : 'text-2xl'} mb-1`}
+          style={{ color: brandColor }}
+        >
+          {getBrandInitials(racket.brand)}
+        </div>
+        {size === 'normal' && (
+          <div 
+            className="text-xs font-medium opacity-60"
+            style={{ color: brandColor }}
+          >
+            {racket.brand}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 
   if (compact) {
     return (
@@ -47,17 +93,20 @@ export default function RacketCard({ racket, compact = false }: RacketCardProps)
       >
         {/* Image placeholder */}
         <div
-          className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
+          className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
           style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
         >
-          {racket.image_url ? (
-            <img 
-              src={racket.image_url} 
-              alt={`${racket.brand} ${racket.model}`}
-              className="w-full h-full object-cover rounded-lg"
-            />
+          {showPlaceholder ? (
+            <ImagePlaceholder size="small" />
           ) : (
-            <Target className="w-6 h-6" style={{ color: 'rgb(var(--color-interactive))' }} />
+            <Image 
+              src={racket.image_url!} 
+              alt={`${racket.brand} ${racket.model}`}
+              width={48}
+              height={48}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
           )}
         </div>
 
@@ -106,17 +155,19 @@ export default function RacketCard({ racket, compact = false }: RacketCardProps)
     >
       {/* Image area */}
       <div
-        className="aspect-[4/3] flex items-center justify-center relative"
+        className="aspect-[4/3] flex items-center justify-center relative overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
       >
-        {racket.image_url ? (
-          <img 
-            src={racket.image_url} 
-            alt={`${racket.brand} ${racket.model}`}
-            className="w-full h-full object-cover"
-          />
+        {showPlaceholder ? (
+          <ImagePlaceholder />
         ) : (
-          <Target className="w-16 h-16" style={{ color: 'rgb(var(--color-interactive))' }} />
+          <Image 
+            src={racket.image_url!} 
+            alt={`${racket.brand} ${racket.model}`}
+            fill
+            className="object-contain p-4"
+            onError={() => setImageError(true)}
+          />
         )}
 
         {/* Badges */}
