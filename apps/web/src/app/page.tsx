@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Phone, Plus, Calendar, MapPin, Users, Lock, Globe, ChevronDown, ChevronUp, Repeat } from 'lucide-react'
+import { Phone, Plus, Calendar, MapPin, Users, Lock, Globe, ChevronDown, ChevronUp, Repeat, Disc } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, formatMatchTitle, isMatchInPast } from '@padel-parrot/shared'
 import { sendOtp, verifyOtp, getCurrentUser, getMyMatches, getPublicMatches, updateUser, getRealtimeClient, getMatchParticipants } from '@padel-parrot/api-client'
 import Logo from '@/components/Logo'
@@ -266,6 +266,10 @@ export default function HomePage() {
 
   const handleCreateMatch = () => {
     window.location.href = '/create'
+  }
+
+  const handleRacketFinder = () => {
+    window.location.href = '/racket-finder'
   }
 
   const handleJoinMatch = (matchId: string) => {
@@ -557,6 +561,14 @@ export default function HomePage() {
           <div className="flex items-center justify-between">
             <Logo size="md" />
             <div className="flex items-center gap-2">
+              <button
+                onClick={handleRacketFinder}
+                className="btn btn-secondary"
+                title="Find your perfect racket"
+              >
+                <Disc className="w-4 h-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Racket Finder</span>
+              </button>
               <button
                 onClick={handleCreateMatch}
                 className="btn btn-primary"
