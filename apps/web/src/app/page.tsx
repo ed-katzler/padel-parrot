@@ -557,28 +557,41 @@ export default function HomePage() {
           borderBottom: '1px solid rgb(var(--color-border-light))'
         }}
       >
-        <div className="container-app py-4">
-          <div className="flex items-center justify-between">
+        <div className="container-app py-3">
+          <div className="flex items-center justify-between gap-3">
             <Logo size="md" />
             <div className="flex items-center gap-2">
+              {/* Racket Finder - icon only on mobile, with text on larger screens */}
               <button
                 onClick={handleRacketFinder}
-                className="btn btn-secondary"
+                className="btn btn-icon btn-secondary hidden sm:flex sm:btn sm:px-3"
                 title="Find your perfect racket"
               >
-                <Disc className="w-4 h-4 sm:mr-1.5" />
+                <Disc className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Racket Finder</span>
               </button>
+              {/* Mobile: icon-only button */}
+              <button
+                onClick={handleRacketFinder}
+                className="btn btn-icon btn-secondary sm:hidden"
+                title="Find your perfect racket"
+              >
+                <Disc className="w-5 h-5" />
+              </button>
+              
+              {/* New Match */}
               <button
                 onClick={handleCreateMatch}
-                className="btn btn-primary"
+                className="btn btn-primary px-3"
               >
-                <Plus className="w-4 h-4 sm:mr-1.5" />
+                <Plus className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">New match</span>
               </button>
+              
+              {/* Profile Avatar */}
               <button
                 onClick={handleProfile}
-                className="rounded-full transition-transform active:scale-95"
+                className="rounded-full transition-transform active:scale-95 ml-1"
                 title="Profile"
               >
                 <Avatar 
