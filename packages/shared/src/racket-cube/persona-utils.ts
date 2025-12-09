@@ -56,8 +56,6 @@ const PERSONA_NAMES: Record<string, string> = {
   '1-3-2': 'Defensive Anchor',
   '3-1-2': 'Fast Power',
   '3-3-2': 'Heavy Hitter',
-  '2-2-1': 'Smooth Operator',
-  '2-2-3': 'Crisp Allrounder',
   
   // Face center personas (one extreme, two middles)
   '1-2-2': 'Control Specialist',
