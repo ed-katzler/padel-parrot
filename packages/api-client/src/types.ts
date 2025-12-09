@@ -202,6 +202,67 @@ export interface UserStats {
   frequentPartners: Array<{ id: string; name: string | null; avatar_url: string | null; matchCount: number }>
 }
 
+// ============================================
+// Racket Cube Types
+// ============================================
+
+// Axis value (1-3 scale for each dimension)
+export type AxisValue = 1 | 2 | 3
+
+// Racket shape types
+export type RacketShape = 'round' | 'teardrop' | 'diamond'
+
+// Skill level classification
+export type SkillLevel = 'beginner' | 'intermediate' | 'advanced'
+
+// Price tier classification
+export type PriceTier = 'budget' | 'mid' | 'premium'
+
+// Main Racket interface
+export interface Racket {
+  id: string
+  brand: string
+  model: string
+  image_url: string | null
+  
+  // The 3 axes (1-3 scale)
+  power_bias: AxisValue      // X: 1=Control, 2=Balanced, 3=Power
+  maneuverability: AxisValue // Y: 1=Light, 2=Medium, 3=Heavy
+  feel: AxisValue            // Z: 1=Soft, 2=Medium, 3=Firm
+  
+  // Raw technical data (optional)
+  weight_grams: number | null
+  shape: RacketShape | null
+  balance_mm: number | null
+  
+  // Marketing/UX fields
+  headline: string | null
+  description: string | null
+  skill_level: SkillLevel | null
+  price_tier: PriceTier | null
+  buy_url: string | null
+  
+  // Metadata
+  active: boolean
+  created_at: string
+  updated_at: string
+}
+
+// Cell coordinates for the Racket Cube (3D position)
+export interface CellCoordinates {
+  power: AxisValue       // X-axis
+  weight: AxisValue      // Y-axis (renamed from maneuverability for clarity)
+  feel: AxisValue        // Z-axis
+}
+
+// Count of rackets per cell (for displaying in the cube)
+export interface CellCount {
+  power_bias: AxisValue
+  maneuverability: AxisValue
+  feel: AxisValue
+  count: number
+}
+
 export interface ApiClient {
   sendOtp(phone: string): Promise<ApiResponse<null>>
   verifyOtp(phone: string, token: string): Promise<ApiResponse<User>>
@@ -240,4 +301,8 @@ export interface ApiClient {
   getUserStats(): Promise<ApiResponse<UserStats>>
   // Realtime support - returns Supabase client for subscriptions (null for mock client)
   getRealtimeClient(): unknown | null
+  // Racket Cube methods
+  getRackets(): Promise<ApiResponse<Racket[]>>
+  getRacketsByCell(powerBias: AxisValue, maneuverability: AxisValue, feel: AxisValue): Promise<ApiResponse<Racket[]>>
+  getRacketCellCounts(): Promise<ApiResponse<CellCount[]>>
 } 

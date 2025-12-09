@@ -2,10 +2,10 @@
 export { apiClient } from './client'
 
 // Export types for consumers
-export type { ApiResponse, User, Match, CreateMatchRequest, UpdateUserRequest, Participant, ApiClient, Location, Subscription, NotificationPreferences, RecurrenceType, UserStats, Club, District, ClubsByDistrict, ClubWithDistrict, CourtType, ClubAmenity } from './types'
+export type { ApiResponse, User, Match, CreateMatchRequest, UpdateUserRequest, Participant, ApiClient, Location, Subscription, NotificationPreferences, RecurrenceType, UserStats, Club, District, ClubsByDistrict, ClubWithDistrict, CourtType, ClubAmenity, Racket, AxisValue, RacketShape, SkillLevel, PriceTier, CellCoordinates, CellCount } from './types'
 
 // Import types for the convenience functions
-import type { CreateMatchRequest, UpdateMatchRequest, UpdateUserRequest, NotificationPreferences } from './types'
+import type { CreateMatchRequest, UpdateMatchRequest, UpdateUserRequest, NotificationPreferences, AxisValue } from './types'
 import { apiClient } from './client'
 
 // Convenience functions that use the apiClient
@@ -49,4 +49,10 @@ export const stopRecurring = (matchId: string) => apiClient.stopRecurring(matchI
 export const getUserStats = () => apiClient.getUserStats()
 
 // Realtime support - returns Supabase client for subscriptions (null for mock client)
-export const getRealtimeClient = () => apiClient.getRealtimeClient() 
+export const getRealtimeClient = () => apiClient.getRealtimeClient()
+
+// Racket Cube methods
+export const getRackets = () => apiClient.getRackets()
+export const getRacketsByCell = (powerBias: AxisValue, maneuverability: AxisValue, feel: AxisValue) => 
+  apiClient.getRacketsByCell(powerBias, maneuverability, feel)
+export const getRacketCellCounts = () => apiClient.getRacketCellCounts() 

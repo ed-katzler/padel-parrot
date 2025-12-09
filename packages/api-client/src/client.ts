@@ -26,7 +26,7 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { MockApiClient } from './mock-client'
-import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, Participant, UpdateUserRequest, Subscription, NotificationPreferences, UserStats, Club, District, ClubsByDistrict } from './types'
+import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, Participant, UpdateUserRequest, Subscription, NotificationPreferences, UserStats, Club, District, ClubsByDistrict, Racket, AxisValue, CellCount } from './types'
 
 interface SupabaseConfig {
   url: string
@@ -1266,6 +1266,84 @@ class SupabaseApiClient implements ApiClient {
   // Return the Supabase client for realtime subscriptions
   getRealtimeClient() {
     return this.supabase
+  }
+
+  // Racket Cube methods
+  async getRackets(): Promise<ApiResponse<Racket[]>> {
+    try {
+      const { data, error } = await this.supabase
+        .from('rackets')
+        .select('*')
+        .eq('active', true)
+        .order('brand', { ascending: true })
+        .order('model', { ascending: true })
+
+      if (error) {
+        return { data: null, error: error.message }
+      }
+
+      return { data: data || [], error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to load rackets' }
+    }
+  }
+
+  async getRacketsByCell(powerBias: AxisValue, maneuverability: AxisValue, feel: AxisValue): Promise<ApiResponse<Racket[]>> {
+    try {
+      const { data, error } = await this.supabase
+        .from('rackets')
+        .select('*')
+        .eq('active', true)
+        .eq('power_bias', powerBias)
+        .eq('maneuverability', maneuverability)
+        .eq('feel', feel)
+        .order('brand', { ascending: true })
+        .order('model', { ascending: true })
+
+      if (error) {
+        return { data: null, error: error.message }
+      }
+
+      return { data: data || [], error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to load rackets for cell' }
+    }
+  }
+
+  async getRacketCellCounts(): Promise<ApiResponse<CellCount[]>> {
+    try {
+      // Get all active rackets and count by cell
+      const { data, error } = await this.supabase
+        .from('rackets')
+        .select('power_bias, maneuverability, feel')
+        .eq('active', true)
+
+      if (error) {
+        return { data: null, error: error.message }
+      }
+
+      // Count rackets per cell
+      const counts = new Map<string, { power_bias: AxisValue; maneuverability: AxisValue; feel: AxisValue; count: number }>()
+      
+      for (const racket of data || []) {
+        const key = `${racket.power_bias}-${racket.maneuverability}-${racket.feel}`
+        const existing = counts.get(key)
+        if (existing) {
+          existing.count++
+        } else {
+          counts.set(key, {
+            power_bias: racket.power_bias as AxisValue,
+            maneuverability: racket.maneuverability as AxisValue,
+            feel: racket.feel as AxisValue,
+            count: 1
+          })
+        }
+      }
+
+      return { data: Array.from(counts.values()), error: null }
+    } catch (error) {
+      return { data: null, error: 'Failed to get racket counts' }
+    }
   }
 }
 

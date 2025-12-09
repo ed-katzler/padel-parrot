@@ -177,7 +177,7 @@ export default function LocationSelector({
   }
 
   // Desktop dropdown content
-  const DropdownContent = () => (
+  const dropdownContent = (
     <div
       ref={dropdownRef}
       className="rounded-xl overflow-hidden"
@@ -246,7 +246,7 @@ export default function LocationSelector({
   )
 
   // Mobile bottom sheet content
-  const MobileSheet = () => (
+  const mobileSheetContent = (
     <div
       className="fixed inset-0 z-50 animate-fade-in-overlay"
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
@@ -406,7 +406,7 @@ export default function LocationSelector({
       {isOpen &&
         typeof document !== 'undefined' &&
         createPortal(
-          isMobile ? <MobileSheet /> : <DropdownContent />,
+          isMobile ? mobileSheetContent : dropdownContent,
           document.body
         )}
     </div>

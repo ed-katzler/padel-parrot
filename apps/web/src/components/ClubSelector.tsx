@@ -296,7 +296,7 @@ export default function ClubSelector({
   )
 
   // Desktop dropdown content
-  const DropdownContent = () => (
+  const dropdownContent = (
     <div
       ref={dropdownRef}
       className="rounded-xl overflow-hidden flex flex-col"
@@ -441,7 +441,7 @@ export default function ClubSelector({
   )
 
   // Mobile bottom sheet content
-  const MobileSheet = () => (
+  const mobileSheetContent = (
     <div
       className="fixed inset-0 z-50 animate-fade-in-overlay"
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
@@ -654,7 +654,7 @@ export default function ClubSelector({
       {isOpen &&
         typeof document !== 'undefined' &&
         createPortal(
-          isMobile ? <MobileSheet /> : <DropdownContent />,
+          isMobile ? mobileSheetContent : dropdownContent,
           document.body
         )}
     </div>

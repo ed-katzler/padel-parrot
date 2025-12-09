@@ -1,4 +1,4 @@
-import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, UpdateUserRequest, Subscription, NotificationPreferences, UserStats, Club, District, ClubsByDistrict } from './types'
+import { ApiResponse, Match, CreateMatchRequest, User, ApiClient, Location, UpdateMatchRequest, UpdateUserRequest, Subscription, NotificationPreferences, UserStats, Club, District, ClubsByDistrict, Racket, AxisValue, CellCount } from './types'
 
 export class MockApiClient implements ApiClient {
   private mockMatches: Match[] = [
@@ -787,5 +787,148 @@ export class MockApiClient implements ApiClient {
   // Return null for mock client - realtime not supported
   getRealtimeClient() {
     return null
+  }
+
+  // Mock rackets data
+  private mockRackets: Racket[] = [
+    {
+      id: 'racket-1',
+      brand: 'Bullpadel',
+      model: 'Vertex 03',
+      image_url: null,
+      power_bias: 3,
+      maneuverability: 2,
+      feel: 3,
+      weight_grams: 365,
+      shape: 'diamond',
+      balance_mm: 270,
+      headline: 'Elite Power Machine',
+      description: 'The choice of World Padel Tour professionals. Maximum power for aggressive players.',
+      skill_level: 'advanced',
+      price_tier: 'premium',
+      buy_url: 'https://example.com/vertex-03',
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'racket-2',
+      brand: 'Head',
+      model: 'Alpha Motion',
+      image_url: null,
+      power_bias: 2,
+      maneuverability: 2,
+      feel: 2,
+      weight_grams: 360,
+      shape: 'teardrop',
+      balance_mm: 260,
+      headline: 'Balanced All-Rounder',
+      description: 'Perfect balance of power and control. Great for intermediate players.',
+      skill_level: 'intermediate',
+      price_tier: 'mid',
+      buy_url: 'https://example.com/alpha-motion',
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'racket-3',
+      brand: 'Nox',
+      model: 'ML10 Pro Cup',
+      image_url: null,
+      power_bias: 1,
+      maneuverability: 1,
+      feel: 1,
+      weight_grams: 350,
+      shape: 'round',
+      balance_mm: 250,
+      headline: 'Control Master',
+      description: 'Maximum control and comfort. Ideal for beginners and defensive players.',
+      skill_level: 'beginner',
+      price_tier: 'budget',
+      buy_url: 'https://example.com/ml10-pro',
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'racket-4',
+      brand: 'Adidas',
+      model: 'Metalbone',
+      image_url: null,
+      power_bias: 3,
+      maneuverability: 3,
+      feel: 3,
+      weight_grams: 375,
+      shape: 'diamond',
+      balance_mm: 275,
+      headline: 'Power Cannon',
+      description: 'Maximum power and stability for strong, experienced players.',
+      skill_level: 'advanced',
+      price_tier: 'premium',
+      buy_url: 'https://example.com/metalbone',
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'racket-5',
+      brand: 'Babolat',
+      model: 'Air Viper',
+      image_url: null,
+      power_bias: 2,
+      maneuverability: 1,
+      feel: 2,
+      weight_grams: 355,
+      shape: 'teardrop',
+      balance_mm: 255,
+      headline: 'Light & Versatile',
+      description: 'Easy handling with good versatility. Great for all-court play.',
+      skill_level: 'intermediate',
+      price_tier: 'mid',
+      buy_url: 'https://example.com/air-viper',
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  ]
+
+  async getRackets(): Promise<ApiResponse<Racket[]>> {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    return { data: this.mockRackets.filter(r => r.active), error: null }
+  }
+
+  async getRacketsByCell(powerBias: AxisValue, maneuverability: AxisValue, feel: AxisValue): Promise<ApiResponse<Racket[]>> {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const filtered = this.mockRackets.filter(r => 
+      r.active &&
+      r.power_bias === powerBias &&
+      r.maneuverability === maneuverability &&
+      r.feel === feel
+    )
+    return { data: filtered, error: null }
+  }
+
+  async getRacketCellCounts(): Promise<ApiResponse<CellCount[]>> {
+    await new Promise(resolve => setTimeout(resolve, 200))
+    
+    const counts = new Map<string, { power_bias: AxisValue; maneuverability: AxisValue; feel: AxisValue; count: number }>()
+    
+    for (const racket of this.mockRackets.filter(r => r.active)) {
+      const key = `${racket.power_bias}-${racket.maneuverability}-${racket.feel}`
+      const existing = counts.get(key)
+      if (existing) {
+        existing.count++
+      } else {
+        counts.set(key, {
+          power_bias: racket.power_bias,
+          maneuverability: racket.maneuverability,
+          feel: racket.feel,
+          count: 1
+        })
+      }
+    }
+    
+    return { data: Array.from(counts.values()), error: null }
   }
 } 
