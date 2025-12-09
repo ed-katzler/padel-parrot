@@ -204,8 +204,8 @@ export default function RacketQuiz({ onComplete, initialValues }: RacketQuizProp
                   border: `1px solid ${isSelected 
                     ? 'rgb(var(--color-interactive))' 
                     : 'rgb(var(--color-border-light))'}`,
-                  ringColor: 'rgb(var(--color-interactive))'
-                }}
+                  '--tw-ring-color': 'rgb(var(--color-interactive))'
+                } as React.CSSProperties}
               >
                 <div 
                   className="p-3 rounded-lg flex-shrink-0"
