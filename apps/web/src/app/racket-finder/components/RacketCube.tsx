@@ -146,9 +146,9 @@ export default function RacketCube({
   }
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-lg mx-auto px-4">
       {/* Feel Tabs (Z-axis) */}
-      <div className="mb-4">
+      <div className="mb-6">
         <div 
           className="text-xs font-medium mb-2 text-center"
           style={{ color: 'rgb(var(--color-text-muted))' }}
@@ -164,9 +164,7 @@ export default function RacketCube({
               key={tab.value}
               type="button"
               onClick={() => handleTabChange(tab.value)}
-              className={`
-                flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all
-              `}
+              className="flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all"
               style={{
                 backgroundColor: activeFeelTab === tab.value 
                   ? 'rgb(var(--color-surface))'
@@ -185,68 +183,72 @@ export default function RacketCube({
         </div>
       </div>
 
-      {/* Grid Container */}
-      <div className="relative">
-        {/* Y-axis label (Weight) - Left side */}
-        <div 
-          className="absolute -left-6 top-1/2 -translate-y-1/2 -rotate-90 whitespace-nowrap text-xs font-medium"
-          style={{ color: 'rgb(var(--color-text-muted))' }}
-        >
-          {AXIS_LABELS.weight.topLabel} ← → {AXIS_LABELS.weight.bottomLabel}
+      {/* X-axis label (Power) - Top */}
+      <div 
+        className="text-center mb-3 text-xs font-medium"
+        style={{ color: 'rgb(var(--color-text-muted))' }}
+      >
+        {AXIS_LABELS.power.leftLabel} ← <span className="font-semibold">{AXIS_LABELS.power.name}</span> → {AXIS_LABELS.power.rightLabel}
+      </div>
+
+      {/* Main Grid Layout with Row Labels */}
+      <div className="flex gap-3">
+        {/* Y-axis label - Left side (vertical) */}
+        <div className="flex flex-col justify-center items-center w-6 shrink-0">
+          <div 
+            className="-rotate-90 whitespace-nowrap text-xs font-medium"
+            style={{ color: 'rgb(var(--color-text-muted))' }}
+          >
+            {AXIS_LABELS.weight.topLabel} ← <span className="font-semibold">Weight</span> → {AXIS_LABELS.weight.bottomLabel}
+          </div>
         </div>
 
-        {/* X-axis label (Power) - Top */}
-        <div 
-          className="text-center mb-2 text-xs font-medium"
-          style={{ color: 'rgb(var(--color-text-muted))' }}
-        >
-          {AXIS_LABELS.power.leftLabel} ← {AXIS_LABELS.power.name} → {AXIS_LABELS.power.rightLabel}
-        </div>
+        {/* Grid with column/row labels */}
+        <div className="flex-1">
+          {/* 3x3 Grid with integrated row labels */}
+          <div 
+            className="rounded-xl overflow-hidden"
+            style={{ backgroundColor: 'rgb(var(--color-bg))' }}
+          >
+            {/* Grid rows */}
+            {[1, 2, 3].map((row) => (
+              <div key={row} className="flex items-center">
+                {/* Grid cells for this row */}
+                <div className="flex-1 grid grid-cols-3 gap-2 p-2">
+                  {[1, 2, 3].map((col) => renderCell(col as AxisValue, row as AxisValue))}
+                </div>
+                {/* Row label on the right */}
+                <div 
+                  className="w-16 text-right pr-2 text-xs font-medium shrink-0"
+                  style={{ color: 'rgb(var(--color-text-subtle))' }}
+                >
+                  {row === 1 ? 'Light' : row === 2 ? 'Medium' : 'Heavy'}
+                </div>
+              </div>
+            ))}
+          </div>
 
-        {/* 3x3 Grid */}
-        <div 
-          className="grid grid-cols-3 gap-2 p-4 rounded-xl"
-          style={{ backgroundColor: 'rgb(var(--color-bg))' }}
-        >
-          {/* Row labels on the left - we'll use the grid structure */}
-          {/* Y=1 (Light) row */}
-          {[1, 2, 3].map((x) => renderCell(x as AxisValue, 1))}
-          
-          {/* Y=2 (Medium) row */}
-          {[1, 2, 3].map((x) => renderCell(x as AxisValue, 2))}
-          
-          {/* Y=3 (Heavy) row */}
-          {[1, 2, 3].map((x) => renderCell(x as AxisValue, 3))}
-        </div>
-
-        {/* Column labels at bottom */}
-        <div className="flex justify-around mt-2 text-xs" style={{ color: 'rgb(var(--color-text-subtle))' }}>
-          <span>Control</span>
-          <span>Balanced</span>
-          <span>Power</span>
-        </div>
-
-        {/* Row labels on the right */}
-        <div 
-          className="absolute -right-2 top-1/2 -translate-y-1/2 flex flex-col justify-around h-[calc(100%-3rem)] text-xs"
-          style={{ color: 'rgb(var(--color-text-subtle))' }}
-        >
-          <span>Light</span>
-          <span>Medium</span>
-          <span>Heavy</span>
+          {/* Column labels at bottom */}
+          <div className="flex mt-2 pr-16">
+            <div className="flex-1 grid grid-cols-3 gap-2 px-2">
+              <div className="text-center text-xs font-medium" style={{ color: 'rgb(var(--color-text-subtle))' }}>Control</div>
+              <div className="text-center text-xs font-medium" style={{ color: 'rgb(var(--color-text-subtle))' }}>Balanced</div>
+              <div className="text-center text-xs font-medium" style={{ color: 'rgb(var(--color-text-subtle))' }}>Power</div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Legend */}
-      <div className="mt-4 flex justify-center gap-4 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-        <div className="flex items-center gap-1">
+      <div className="mt-6 flex justify-center gap-6 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+        <div className="flex items-center gap-2">
           <div 
             className="w-3 h-3 rounded"
             style={{ backgroundColor: 'rgb(var(--color-interactive))' }}
           />
           <span>Selected</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <div 
             className="w-3 h-3 rounded"
             style={{ 
