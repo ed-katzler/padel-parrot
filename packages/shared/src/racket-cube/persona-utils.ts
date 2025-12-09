@@ -227,7 +227,7 @@ function generateIdealFor(
   }
   
   // Deduplicate and limit
-  return [...new Set(idealFor)].slice(0, 4)
+  return Array.from(new Set(idealFor)).slice(0, 4)
 }
 
 /**
