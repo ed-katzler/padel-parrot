@@ -95,9 +95,10 @@ export default function RacketCube({
           border: `1px solid ${selected || adjacent
             ? 'rgb(var(--color-interactive))'
             : 'rgb(var(--color-border-light))'}`,
-          ringColor: 'rgb(var(--color-interactive))',
+          // Use CSS variable for Tailwind ring color
+          '--tw-ring-color': 'rgb(var(--color-interactive))',
           color: selected ? 'white' : 'rgb(var(--color-text))'
-        }}
+        } as React.CSSProperties}
       >
         {/* Persona name */}
         <span 
