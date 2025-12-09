@@ -1,22 +1,16 @@
 /**
  * Script to scrape and upload racket images to Supabase storage
  * 
- * This script:
- * 1. Fetches all rackets from the database
- * 2. Searches for product images from various sources
- * 3. Downloads and uploads images to Supabase storage
- * 4. Updates the database with image URLs
+ * This script uses DuckDuckGo image search to find product images
  * 
- * Usage: npx tsx scripts/scrape-racket-images.ts
+ * Usage: SUPABASE_SERVICE_KEY="your-key" npx tsx scripts/scrape-racket-images.ts
  */
 
 import { createClient } from '@supabase/supabase-js'
-import * as fs from 'fs'
-import * as path from 'path'
 import * as https from 'https'
 import * as http from 'http'
 
-// Supabase configuration - use environment variables or hardcode for local dev
+// Supabase configuration
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rrplznheygdwxkpysevj.supabase.co'
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || ''
 
@@ -35,104 +29,133 @@ interface Racket {
   image_url: string | null
 }
 
-// Image source configurations
-const IMAGE_SOURCES = {
-  // Padel Nuestro - largest Spanish retailer
-  padelNuestro: (brand: string, model: string) => {
-    const slug = `${brand}-${model}`.toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[()]/g, '')
-      .replace(/[áàä]/g, 'a')
-      .replace(/[éèë]/g, 'e')
-      .replace(/[íìï]/g, 'i')
-      .replace(/[óòö]/g, 'o')
-      .replace(/[úùü]/g, 'u')
-      .replace(/ñ/g, 'n')
-      .replace(/[^a-z0-9-]/g, '')
-      .replace(/-+/g, '-')
-    return `https://www.padelnuestro.com/media/catalog/product/cache/1/image/9df78eab33525d08d6e5fb8d27136e95/p/a/pala-${slug}.jpg`
-  },
-  
-  // Padelmania - another major retailer
-  padelmania: (brand: string, model: string) => {
-    const slug = `${brand}-${model}`.toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[()]/g, '')
-      .replace(/[^a-z0-9-]/g, '')
-      .replace(/-+/g, '-')
-    return `https://www.padelmania.com/images/products/${slug}.jpg`
-  },
-
-  // Brand official sites patterns
-  adidas: (model: string) => {
-    const slug = model.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-    return `https://assets.adidas.com/images/w_600,f_auto,q_auto/padel/${slug}/main.jpg`
-  },
-  
-  bullpadel: (model: string) => {
-    const slug = model.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-    return `https://www.bullpadel.com/media/catalog/product/${slug}.jpg`
-  },
-}
-
-// Delay between requests to avoid rate limiting
+// Delay between requests
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-// Download image from URL
-async function downloadImage(url: string): Promise<Buffer | null> {
+// Download image from URL with better error handling
+async function downloadImage(url: string, attempt = 1): Promise<Buffer | null> {
+  const maxAttempts = 3
+  
   return new Promise((resolve) => {
-    const protocol = url.startsWith('https') ? https : http
-    
-    const request = protocol.get(url, { 
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-        'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
-      },
-      timeout: 10000
-    }, (response) => {
-      // Follow redirects
-      if (response.statusCode === 301 || response.statusCode === 302) {
-        const redirectUrl = response.headers.location
-        if (redirectUrl) {
-          downloadImage(redirectUrl).then(resolve)
+    try {
+      const protocol = url.startsWith('https') ? https : http
+      
+      const request = protocol.get(url, { 
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Referer': 'https://www.google.com/',
+        },
+        timeout: 15000
+      }, (response) => {
+        // Follow redirects
+        if (response.statusCode === 301 || response.statusCode === 302 || response.statusCode === 307) {
+          const redirectUrl = response.headers.location
+          if (redirectUrl) {
+            downloadImage(redirectUrl, attempt).then(resolve)
+            return
+          }
+        }
+        
+        if (response.statusCode !== 200) {
+          resolve(null)
           return
         }
-      }
+        
+        const contentType = response.headers['content-type'] || ''
+        if (!contentType.includes('image')) {
+          resolve(null)
+          return
+        }
+        
+        const chunks: Buffer[] = []
+        response.on('data', (chunk: Buffer) => chunks.push(chunk))
+        response.on('end', () => {
+          const buffer = Buffer.concat(chunks)
+          // Minimum 10KB for a valid product image
+          if (buffer.length > 10000) {
+            resolve(buffer)
+          } else {
+            resolve(null)
+          }
+        })
+        response.on('error', () => resolve(null))
+      })
       
-      if (response.statusCode !== 200) {
+      request.on('error', () => {
+        if (attempt < maxAttempts) {
+          setTimeout(() => {
+            downloadImage(url, attempt + 1).then(resolve)
+          }, 1000)
+        } else {
+          resolve(null)
+        }
+      })
+      request.on('timeout', () => {
+        request.destroy()
         resolve(null)
-        return
-      }
-      
-      const contentType = response.headers['content-type'] || ''
-      if (!contentType.includes('image')) {
-        resolve(null)
-        return
-      }
-      
-      const chunks: Buffer[] = []
-      response.on('data', (chunk: Buffer) => chunks.push(chunk))
-      response.on('end', () => resolve(Buffer.concat(chunks)))
-      response.on('error', () => resolve(null))
-    })
-    
-    request.on('error', () => resolve(null))
-    request.on('timeout', () => {
-      request.destroy()
+      })
+    } catch {
       resolve(null)
-    })
+    }
   })
 }
 
-// Try to find image from Google Images search
-async function searchGoogleImages(brand: string, model: string): Promise<string | null> {
-  const searchQuery = encodeURIComponent(`${brand} ${model} padel racket product image white background`)
-  
-  // Using Google's image search URL directly
-  // Note: This is for educational purposes; production use should use official API
-  const searchUrl = `https://www.google.com/search?q=${searchQuery}&tbm=isch&tbs=ic:specific,isc:white`
+// Search for product image using Bing Image Search
+async function searchBingImages(brand: string, model: string): Promise<string[]> {
+  // Very specific search for padel rackets
+  const searchQuery = encodeURIComponent(`"${brand}" "${model}" padel racket -shovel -garden`)
+  const searchUrl = `https://www.bing.com/images/search?q=${searchQuery}&first=1&tsc=ImageBasicHover`
   
   try {
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      }
+    })
+    
+    const html = await response.text()
+    
+    // Extract image URLs from murl parameter in Bing results
+    const murlRegex = /murl&quot;:&quot;(https?:\/\/[^&]+?)&quot;/gi
+    const matches = [...html.matchAll(murlRegex)]
+    
+    const imageUrls: string[] = []
+    for (const match of matches.slice(0, 10)) {
+      let imageUrl = match[1]
+      // Decode HTML entities
+      imageUrl = imageUrl.replace(/&amp;/g, '&')
+      
+      // Skip known bad sources
+      if (imageUrl.includes('aliexpress') || 
+          imageUrl.includes('alibaba') ||
+          imageUrl.includes('temu') ||
+          imageUrl.includes('wish.com') ||
+          imageUrl.includes('facebook') ||
+          imageUrl.includes('instagram')) {
+        continue
+      }
+      
+      imageUrls.push(imageUrl)
+    }
+    
+    return imageUrls
+  } catch (error) {
+    console.log(`    Could not search Bing: ${error}`)
+    return []
+  }
+}
+
+// Search using DuckDuckGo (alternative)
+async function searchDuckDuckGo(brand: string, model: string): Promise<string[]> {
+  const searchQuery = encodeURIComponent(`"${brand}" "${model}" padel racket`)
+  const searchUrl = `https://duckduckgo.com/?q=${searchQuery}&iax=images&ia=images`
+  
+  try {
+    // First get the vqd token
     const response = await fetch(searchUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
@@ -141,25 +164,35 @@ async function searchGoogleImages(brand: string, model: string): Promise<string 
     
     const html = await response.text()
     
-    // Extract image URLs from the HTML (basic parsing)
-    const imgRegex = /\["(https:\/\/[^"]+\.(?:jpg|jpeg|png|webp))"/gi
-    const matches = [...html.matchAll(imgRegex)]
+    // Extract vqd token
+    const vqdMatch = html.match(/vqd=['"]([^'"]+)['"]/)
+    if (!vqdMatch) return []
     
-    // Filter for likely product images (reasonable size, not tiny icons)
-    for (const match of matches.slice(0, 5)) {
-      const imageUrl = match[1]
-      // Skip Google's own images and thumbnails
-      if (!imageUrl.includes('google.com') && 
-          !imageUrl.includes('gstatic.com') &&
-          !imageUrl.includes('encrypted-tbn')) {
-        return imageUrl
+    const vqd = vqdMatch[1]
+    
+    // Now fetch images
+    const imageApiUrl = `https://duckduckgo.com/i.js?l=us-en&o=json&q=${searchQuery}&vqd=${vqd}&f=,,,,,&p=1`
+    
+    const imageResponse = await fetch(imageApiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Accept': 'application/json',
       }
+    })
+    
+    const data = await imageResponse.json()
+    
+    if (data.results) {
+      return data.results
+        .slice(0, 10)
+        .map((r: { image: string }) => r.image)
+        .filter((url: string) => !url.includes('aliexpress') && !url.includes('alibaba'))
     }
+    
+    return []
   } catch (error) {
-    console.log(`  Could not search Google for ${brand} ${model}`)
+    return []
   }
-  
-  return null
 }
 
 // Upload image to Supabase storage
@@ -180,11 +213,10 @@ async function uploadToSupabase(imageBuffer: Buffer, brand: string, model: strin
     })
   
   if (error) {
-    console.error(`  ❌ Upload failed: ${error.message}`)
+    console.error(`    ❌ Upload failed: ${error.message}`)
     return null
   }
   
-  // Get public URL
   const { data: { publicUrl } } = supabase.storage
     .from('racket-images')
     .getPublicUrl(filePath)
@@ -200,7 +232,7 @@ async function updateRacketImageUrl(id: string, imageUrl: string): Promise<boole
     .eq('id', id)
   
   if (error) {
-    console.error(`  ❌ Database update failed: ${error.message}`)
+    console.error(`    ❌ Database update failed: ${error.message}`)
     return false
   }
   
@@ -212,82 +244,65 @@ async function processRacket(racket: Racket): Promise<boolean> {
   console.log(`\n🎾 Processing: ${racket.brand} ${racket.model}`)
   
   if (racket.image_url) {
-    console.log(`  ⏭️  Already has image, skipping`)
+    console.log(`    ⏭️  Already has image, skipping`)
     return true
   }
   
-  let imageBuffer: Buffer | null = null
-  let sourceUsed = ''
+  // Try Bing first, then DuckDuckGo
+  console.log(`    🔍 Searching Bing Images...`)
+  let imageUrls = await searchBingImages(racket.brand, racket.model)
   
-  // Try various sources
-  const sources = [
-    { name: 'Padel Nuestro', url: IMAGE_SOURCES.padelNuestro(racket.brand, racket.model) },
-    { name: 'Padelmania', url: IMAGE_SOURCES.padelmania(racket.brand, racket.model) },
-  ]
-  
-  // Add brand-specific sources
-  if (racket.brand.toLowerCase() === 'adidas') {
-    sources.push({ name: 'Adidas', url: IMAGE_SOURCES.adidas(racket.model) })
-  }
-  if (racket.brand.toLowerCase() === 'bullpadel') {
-    sources.push({ name: 'Bullpadel', url: IMAGE_SOURCES.bullpadel(racket.model) })
+  if (imageUrls.length === 0) {
+    console.log(`    🔍 Trying DuckDuckGo...`)
+    imageUrls = await searchDuckDuckGo(racket.brand, racket.model)
   }
   
-  // Try each source
-  for (const source of sources) {
-    console.log(`  Trying ${source.name}...`)
-    imageBuffer = await downloadImage(source.url)
-    if (imageBuffer && imageBuffer.length > 5000) { // Minimum 5KB for valid image
-      sourceUsed = source.name
-      break
-    }
-    await delay(500) // Be nice to servers
+  if (imageUrls.length === 0) {
+    console.log(`    ❌ No images found`)
+    return false
   }
   
-  // If no direct source worked, try Google Image search
-  if (!imageBuffer) {
-    console.log(`  Trying Google Images search...`)
-    const googleImageUrl = await searchGoogleImages(racket.brand, racket.model)
-    if (googleImageUrl) {
-      imageBuffer = await downloadImage(googleImageUrl)
-      if (imageBuffer && imageBuffer.length > 5000) {
-        sourceUsed = 'Google Images'
+  console.log(`    📷 Found ${imageUrls.length} potential images`)
+  
+  // Try each URL until we get a valid image
+  for (const imageUrl of imageUrls) {
+    console.log(`    ⬇️  Trying: ${imageUrl.substring(0, 60)}...`)
+    
+    const imageBuffer = await downloadImage(imageUrl)
+    
+    if (imageBuffer) {
+      console.log(`    ✅ Downloaded (${Math.round(imageBuffer.length / 1024)}KB)`)
+      
+      // Upload to Supabase
+      console.log(`    📤 Uploading to Supabase...`)
+      const publicUrl = await uploadToSupabase(imageBuffer, racket.brand, racket.model)
+      
+      if (!publicUrl) {
+        continue
+      }
+      
+      console.log(`    ✅ Uploaded: ${publicUrl}`)
+      
+      // Update database
+      console.log(`    💾 Updating database...`)
+      const updated = await updateRacketImageUrl(racket.id, publicUrl)
+      
+      if (updated) {
+        console.log(`    ✅ Success!`)
+        return true
       }
     }
+    
+    await delay(500)
   }
   
-  if (!imageBuffer) {
-    console.log(`  ❌ No image found`)
-    return false
-  }
-  
-  console.log(`  ✅ Found image from ${sourceUsed} (${Math.round(imageBuffer.length / 1024)}KB)`)
-  
-  // Upload to Supabase
-  console.log(`  📤 Uploading to Supabase...`)
-  const publicUrl = await uploadToSupabase(imageBuffer, racket.brand, racket.model)
-  
-  if (!publicUrl) {
-    return false
-  }
-  
-  console.log(`  ✅ Uploaded: ${publicUrl}`)
-  
-  // Update database
-  console.log(`  💾 Updating database...`)
-  const updated = await updateRacketImageUrl(racket.id, publicUrl)
-  
-  if (updated) {
-    console.log(`  ✅ Database updated`)
-    return true
-  }
-  
+  console.log(`    ❌ Could not find a valid image`)
   return false
 }
 
 // Main function
 async function main() {
-  console.log('🚀 Starting racket image scraper...\n')
+  console.log('🚀 Starting racket image scraper (Bing/DDG version)...\n')
   
   // Fetch all rackets
   const { data: rackets, error } = await supabase
@@ -301,10 +316,15 @@ async function main() {
     process.exit(1)
   }
   
-  console.log(`📋 Found ${rackets.length} rackets to process`)
+  console.log(`📋 Found ${rackets.length} rackets total`)
   
   const racketsWithoutImages = rackets.filter(r => !r.image_url)
   console.log(`📷 ${racketsWithoutImages.length} rackets need images\n`)
+  
+  if (racketsWithoutImages.length === 0) {
+    console.log('✅ All rackets already have images!')
+    return
+  }
   
   let successCount = 0
   let failCount = 0
@@ -317,8 +337,8 @@ async function main() {
       failCount++
     }
     
-    // Rate limiting - wait between rackets
-    await delay(1000)
+    // Rate limiting - longer delay to avoid being blocked
+    await delay(2000)
   }
   
   console.log('\n' + '='.repeat(50))
