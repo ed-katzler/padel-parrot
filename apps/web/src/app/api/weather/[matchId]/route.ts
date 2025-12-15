@@ -30,38 +30,110 @@ interface WeatherResponse {
   icon: string
   condensationRisk: number
   riskLevel: 'low' | 'medium' | 'high'
+  dewPoint: number
+  riskDescription: string
+}
+
+interface CondensationResult {
+  risk: number
+  level: 'low' | 'medium' | 'high'
+  dewPoint: number
+  glassTemp: number
+  description: string
 }
 
 /**
- * Calculate condensation risk based on weather data
- * Condensation forms when the glass surface temperature ≤ dew point
+ * Calculate condensation risk using physics-based model
  * 
- * T = air temperature (°C)
- * RH = relative humidity (%)
- * W = wind speed (m/s)
- * C = cloud cover (%)
- * CF = cooling factor = 0.5 + (0.5 * (1 - C/100))  # clear sky → more cooling
- * DP = T - ((100 - RH)/5)  # Dew point
- * TG = T - CF  # Estimated glass surface temp
- * Risk = clamp((DP - TG + 1) * 20 - (W * 5), 0, 100)
+ * Condensation occurs when: Glass Surface Temperature <= Dew Point
+ * 
+ * The algorithm accounts for:
+ * 1. Dew point (Magnus formula) - temperature at which moisture condenses
+ * 2. Radiative cooling - glass can cool 8-12°C below air temp on clear nights
+ * 3. Cloud cover - clouds block infrared radiation, reducing cooling
+ * 4. Wind speed - wind provides convective heating, reducing cooling
+ * 5. Time of day - radiative cooling only happens at night/early morning
  */
 function calculateCondensationRisk(
   temperature: number,
   humidity: number,
   windSpeed: number,
-  cloudCover: number
-): { risk: number; level: 'low' | 'medium' | 'high' } {
-  // Cooling factor: clear sky = more cooling
-  const CF = 0.5 + (0.5 * (1 - cloudCover / 100))
+  cloudCover: number,
+  matchHour: number
+): CondensationResult {
+  // Step 1: Calculate dew point using Magnus formula
+  // This is the temperature at which air becomes saturated
+  const b = 17.625
+  const c = 243.04
+  const alpha = Math.log(humidity / 100) + (b * temperature) / (c + temperature)
+  const dewPoint = (c * alpha) / (b - alpha)
   
-  // Dew point approximation
-  const DP = temperature - ((100 - humidity) / 5)
+  // Step 2: Estimate radiative cooling potential
+  // Glass can cool 8-12°C below air temp on clear, calm nights
+  const maxCooling = 10 // °C - typical maximum for glass surfaces
   
-  // Estimated glass surface temperature
-  const TG = temperature - CF
+  // Cloud factor: clouds block infrared radiation to space
+  // 0% clouds = full cooling, 100% clouds = minimal cooling
+  // Non-linear: even partial clouds significantly reduce cooling
+  const cloudFactor = Math.pow(1 - cloudCover / 100, 1.5)
   
-  // Condensation risk score (0-100)
-  const risk = Math.max(0, Math.min(100, (DP - TG + 1) * 20 - (windSpeed * 5)))
+  // Wind factor: wind mixes air and provides convective heating
+  // 0 m/s = full cooling potential, 5+ m/s = minimal cooling
+  const windFactor = Math.max(0, 1 - windSpeed / 5)
+  
+  // Time factor: radiative cooling is a night/early morning phenomenon
+  // Peak cooling occurs in pre-dawn hours when surfaces have cooled all night
+  let timeFactor: number
+  let timeContext: string
+  
+  if (matchHour >= 4 && matchHour <= 7) {
+    timeFactor = 1.0  // Peak risk - pre-dawn, coldest surfaces
+    timeContext = 'early morning'
+  } else if (matchHour >= 20 || matchHour <= 3) {
+    timeFactor = 0.85 // High risk - night, active cooling
+    timeContext = 'night'
+  } else if (matchHour >= 18 && matchHour <= 19) {
+    timeFactor = 0.6  // Medium risk - evening, cooling starting
+    timeContext = 'evening'
+  } else if (matchHour >= 8 && matchHour <= 10) {
+    timeFactor = 0.5  // Medium risk - morning, residual dew possible
+    timeContext = 'morning'
+  } else if (matchHour >= 16 && matchHour <= 17) {
+    timeFactor = 0.3  // Low-medium - late afternoon
+    timeContext = 'late afternoon'
+  } else {
+    timeFactor = 0.0  // Low risk - daytime, glass warmed by sun
+    timeContext = 'daytime'
+  }
+  
+  // Step 3: Calculate estimated glass surface temperature
+  const coolingAmount = maxCooling * cloudFactor * windFactor * timeFactor
+  const glassTemp = temperature - coolingAmount
+  
+  // Step 4: Calculate dew point margin
+  // Negative = condensation certain, positive = safety buffer
+  const margin = glassTemp - dewPoint
+  
+  // Step 5: Convert margin to risk score using exponential decay
+  // margin <= 0: 100% (condensation certain)
+  // margin = 2°C: ~37% 
+  // margin = 5°C: ~8%
+  // margin >= 8°C: ~0%
+  let risk: number
+  if (margin <= 0) {
+    risk = 100
+  } else if (margin >= 8) {
+    risk = 0
+  } else {
+    risk = 100 * Math.exp(-margin / 2)
+  }
+  
+  // Step 6: Apply humidity amplifier for very high humidity
+  if (humidity > 90) {
+    risk = Math.min(100, risk * 1.15)
+  }
+  
+  risk = Math.round(Math.max(0, Math.min(100, risk)))
   
   // Determine risk level
   let level: 'low' | 'medium' | 'high'
@@ -73,7 +145,47 @@ function calculateCondensationRisk(
     level = 'high'
   }
   
-  return { risk: Math.round(risk), level }
+  // Generate contextual description
+  let description: string
+  if (risk >= 80) {
+    if (cloudCover < 20 && windSpeed < 2) {
+      description = 'Clear, calm conditions - glass walls likely wet'
+    } else {
+      description = 'High moisture risk - slippery walls expected'
+    }
+  } else if (risk >= 60) {
+    description = `${timeContext.charAt(0).toUpperCase() + timeContext.slice(1)} condensation likely`
+  } else if (risk >= 30) {
+    if (windSpeed >= 3) {
+      description = 'Some moisture possible, wind helping'
+    } else {
+      description = 'Moderate risk - check glass before play'
+    }
+  } else {
+    if (timeFactor === 0) {
+      description = 'Daytime conditions - glass should be dry'
+    } else if (windSpeed >= 4) {
+      description = 'Windy conditions keeping glass dry'
+    } else if (cloudCover > 70) {
+      description = 'Cloud cover reducing condensation risk'
+    } else {
+      description = 'Good conditions expected'
+    }
+  }
+  
+  console.log('Condensation calculation:', {
+    inputs: { temperature, humidity, windSpeed, cloudCover, matchHour },
+    factors: { cloudFactor: cloudFactor.toFixed(2), windFactor: windFactor.toFixed(2), timeFactor, timeContext },
+    results: { dewPoint: dewPoint.toFixed(1), coolingAmount: coolingAmount.toFixed(1), glassTemp: glassTemp.toFixed(1), margin: margin.toFixed(1), risk }
+  })
+  
+  return {
+    risk,
+    level,
+    dewPoint: Math.round(dewPoint * 10) / 10,
+    glassTemp: Math.round(glassTemp * 10) / 10,
+    description
+  }
 }
 
 // Disable Next.js caching for this route
@@ -295,12 +407,14 @@ export async function GET(
       )
     }
 
-    // Calculate condensation risk
-    const { risk, level } = calculateCondensationRisk(
+    // Calculate condensation risk with time-of-day awareness
+    const matchHour = matchTime.getHours()
+    const { risk, level, dewPoint, description } = calculateCondensationRisk(
       weatherData.temp,
       weatherData.humidity,
       weatherData.wind_speed,
-      weatherData.clouds
+      weatherData.clouds,
+      matchHour
     )
 
     // Cache the result (only works for legacy locations due to FK constraint)
@@ -333,7 +447,9 @@ export async function GET(
       condition: weatherData.weather[0]?.main || 'Unknown',
       icon: weatherData.weather[0]?.icon || '01d',
       condensationRisk: risk,
-      riskLevel: level
+      riskLevel: level,
+      dewPoint,
+      riskDescription: description
     }
 
     return NextResponse.json(response, {

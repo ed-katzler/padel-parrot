@@ -13,6 +13,8 @@ interface WeatherData {
   icon: string
   condensationRisk: number
   riskLevel: 'low' | 'medium' | 'high'
+  dewPoint: number
+  riskDescription: string
 }
 
 interface WeatherCardProps {
@@ -263,10 +265,10 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
           className="flex items-center gap-2 p-2 rounded-lg"
           style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
         >
-          <Cloud className="w-4 h-4" style={{ color: 'rgb(var(--color-text-subtle))' }} />
+          <Thermometer className="w-4 h-4 text-cyan-500" />
           <div>
-            <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Clouds</div>
-            <div className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>{weather.cloudCover}%</div>
+            <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Dew Point</div>
+            <div className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>{weather.dewPoint}°C</div>
           </div>
         </div>
       </div>
@@ -287,7 +289,7 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
             <AlertTriangle className="w-4 h-4" />
             <span className="text-sm font-medium">Condensation Risk</span>
           </div>
-          <span className="text-sm font-semibold">{riskInfo.label}</span>
+          <span className="text-sm font-semibold">{riskInfo.label} ({weather.condensationRisk}%)</span>
         </div>
         
         {/* Risk Bar */}
@@ -302,7 +304,7 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
         </div>
         
         <div className="text-xs mt-2 opacity-80">
-          {riskInfo.description}
+          {weather.riskDescription || riskInfo.description}
         </div>
 
         {/* Tooltip */}
@@ -312,9 +314,13 @@ export default function WeatherCard({ matchId, matchDateTime, className = '' }: 
             style={{ backgroundColor: 'rgb(var(--color-text))', color: 'rgb(var(--color-bg))' }}
           >
             <div className="font-medium mb-1">What is Condensation Risk?</div>
-            <p>
-              When glass court walls get colder than the dew point, moisture condenses on them, 
-              making the walls slippery. Clear, calm nights increase this risk.
+            <p className="mb-2">
+              When glass walls cool below the dew point ({weather.dewPoint}°C), moisture 
+              condenses making walls slippery. Risk is highest on clear, calm nights 
+              and early mornings.
+            </p>
+            <p className="opacity-70">
+              Factors: humidity, cloud cover, wind speed, and time of day
             </p>
             <div 
               className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2"
