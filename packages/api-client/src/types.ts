@@ -40,6 +40,7 @@ export interface CreateMatchRequest {
   date_time: string
   duration_minutes?: number
   location: string
+  club_id?: string  // Reference to clubs table for geolocation/weather
   max_players?: number
   is_public?: boolean
   // Recurring match options

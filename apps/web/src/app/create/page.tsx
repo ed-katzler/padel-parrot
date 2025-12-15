@@ -107,6 +107,7 @@ export default function CreateMatchPage() {
         date_time: dateTime,
         duration_minutes: selectedDuration,
         location: locationInput,
+        club_id: selectedClubId,
         max_players: selectedPlayers,
         is_public: isPublic,
         recurrence_type: recurrenceType,
@@ -118,6 +119,7 @@ export default function CreateMatchPage() {
         date_time: dateTime,
         duration_minutes: selectedDuration,
         location: locationInput.trim(),
+        club_id: selectedClubId,  // Link to club for geolocation/weather
         max_players: selectedPlayers,
         is_public: isPublic,
         recurrence_type: recurrenceType,

@@ -100,7 +100,7 @@ export async function GET(
     // Get match details - always fetch fresh from database
     const { data: match, error: matchError } = await db
       .from('matches')
-      .select('location, date_time')
+      .select('location, date_time, club_id')
       .eq('id', matchId)
       .single()
 
@@ -111,14 +111,49 @@ export async function GET(
       )
     }
 
-    // Get location with coordinates
-    const { data: location, error: locationError } = await db
-      .from('locations')
-      .select('id, name, latitude, longitude')
-      .eq('name', match.location)
-      .single()
+    // Get location coordinates - try clubs table first (new system), then locations table (legacy)
+    let location: { id: string; name: string; latitude: number | null; longitude: number | null } | null = null
 
-    if (locationError || !location) {
+    // If match has a club_id, get coordinates from clubs table
+    if (match.club_id) {
+      const { data: club } = await db
+        .from('clubs')
+        .select('id, name, latitude, longitude')
+        .eq('id', match.club_id)
+        .single()
+      
+      if (club) {
+        location = club
+      }
+    }
+
+    // If no club found, try to match by location name in clubs table
+    if (!location) {
+      const { data: clubByName } = await db
+        .from('clubs')
+        .select('id, name, latitude, longitude')
+        .eq('name', match.location)
+        .single()
+      
+      if (clubByName) {
+        location = clubByName
+      }
+    }
+
+    // Fall back to legacy locations table
+    if (!location) {
+      const { data: legacyLocation } = await db
+        .from('locations')
+        .select('id, name, latitude, longitude')
+        .eq('name', match.location)
+        .single()
+      
+      if (legacyLocation) {
+        location = legacyLocation
+      }
+    }
+
+    if (!location) {
       return NextResponse.json(
         { error: 'Location not found', message: 'Weather data unavailable for this location' },
         { status: 404 }
@@ -268,21 +303,27 @@ export async function GET(
       weatherData.clouds
     )
 
-    // Cache the result
-    await db.from('weather_cache').upsert({
-      location_id: location.id,
-      forecast_time: forecastTime.toISOString(),
-      temperature: weatherData.temp,
-      humidity: weatherData.humidity,
-      wind_speed: weatherData.wind_speed,
-      cloud_cover: weatherData.clouds,
-      weather_condition: weatherData.weather[0]?.main || 'Unknown',
-      weather_icon: weatherData.weather[0]?.icon || '01d',
-      condensation_risk: risk,
-      fetched_at: new Date().toISOString()
-    }, {
-      onConflict: 'location_id,forecast_time'
-    })
+    // Cache the result (only works for legacy locations due to FK constraint)
+    // TODO: Update weather_cache schema to support clubs table
+    try {
+      await db.from('weather_cache').upsert({
+        location_id: location.id,
+        forecast_time: forecastTime.toISOString(),
+        temperature: weatherData.temp,
+        humidity: weatherData.humidity,
+        wind_speed: weatherData.wind_speed,
+        cloud_cover: weatherData.clouds,
+        weather_condition: weatherData.weather[0]?.main || 'Unknown',
+        weather_icon: weatherData.weather[0]?.icon || '01d',
+        condensation_risk: risk,
+        fetched_at: new Date().toISOString()
+      }, {
+        onConflict: 'location_id,forecast_time'
+      })
+    } catch (cacheError) {
+      // Caching failed (likely due to FK constraint with clubs), continue without caching
+      console.log('Weather cache upsert skipped:', cacheError)
+    }
 
     const response: WeatherResponse = {
       temperature: Math.round(weatherData.temp),
