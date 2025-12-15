@@ -211,7 +211,7 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
       {/* Header */}
       <header style={{ backgroundColor: 'rgb(var(--color-surface))', borderBottom: '1px solid rgb(var(--color-border-light))' }}>
         <div className="container-app py-5 text-center">
-          <Logo size="md" className="justify-center mb-2" />
+          <Logo size="md" href="/" className="justify-center mb-2" />
           <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
             You've been invited to join a match
           </p>
@@ -432,7 +432,7 @@ export default function JoinMatchClient({ params }: { params: { id: string } }) 
           className="card text-center"
           style={{ backgroundColor: 'rgb(var(--color-interactive-muted))' }}
         >
-          <Logo size="sm" className="justify-center mb-1" />
+          <Logo size="sm" href="/" className="justify-center mb-1" />
           <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
             The easiest way to organize padel matches
           </p>

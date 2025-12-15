@@ -559,7 +559,7 @@ export default function HomePage() {
       >
         <div className="container-app py-3">
           <div className="flex items-center justify-between gap-3">
-            <Logo size="md" />
+            <Logo size="md" href="/" />
             <div className="flex items-center gap-2">
               {/* Racket Finder - icon only on mobile, with text on larger screens */}
               <button

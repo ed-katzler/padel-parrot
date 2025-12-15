@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useTheme } from './ThemeProvider'
 
 interface LogoProps {
@@ -7,6 +8,7 @@ interface LogoProps {
   showText?: boolean
   variant?: 'dark' | 'light' | 'auto'
   className?: string
+  href?: string  // Optional link - when provided, logo becomes clickable
 }
 
 const sizes = {
@@ -28,7 +30,8 @@ export default function Logo({
   size = 'md', 
   showText = true, 
   variant = 'auto',
-  className = '' 
+  className = '',
+  href
 }: LogoProps) {
   const { resolvedTheme } = useTheme()
   const { icon, text } = sizes[size]
@@ -43,8 +46,8 @@ export default function Logo({
   
   const fill = effectiveVariant === 'dark' ? '#1c1917' : '#ffffff'
   
-  return (
-    <div className={`flex items-center gap-2 ${className}`}>
+  const content = (
+    <>
       <svg 
         width={icon} 
         height={icon} 
@@ -70,6 +73,24 @@ export default function Logo({
           PadelParrot
         </span>
       )}
+    </>
+  )
+  
+  // If href is provided, wrap in a Link
+  if (href) {
+    return (
+      <Link 
+        href={href} 
+        className={`flex items-center gap-2 transition-opacity hover:opacity-80 ${className}`}
+      >
+        {content}
+      </Link>
+    )
+  }
+  
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      {content}
     </div>
   )
 }
