@@ -55,6 +55,7 @@ export const updateMatchSchema = z.object({
     .optional(),
   duration_minutes: z.number().refine((val) => [30, 60, 90, 120].includes(val), 'Duration must be 30, 60, 90, or 120 minutes').optional(),
   location: z.string().min(1, 'Location is required').max(200, 'Location too long').optional(),
+  club_id: z.string().uuid().nullable().optional(),  // Reference to clubs table
   max_players: z.number().min(2).max(20).optional(),
   is_public: z.boolean().optional(),
 });
