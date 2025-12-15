@@ -373,56 +373,6 @@ export class MockApiClient implements ApiClient {
     return { data: null, error: null }
   }
 
-  async getLocations(): Promise<ApiResponse<Location[]>> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    const mockLocations: Location[] = [
-      {
-        id: 'location-1',
-        name: 'The Campus Quinta do Lago',
-        address: 'Avenida Ayrton Senna da Silva 20, 8135-162 Quinta do Lago',
-        description: 'World-class sports facility with 7 padel courts (4 covered, 3 outdoor)',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'location-2',
-        name: 'Ocean Padel Club Luz',
-        address: 'Rua Dr Francisco Gentil Martins Lote 57, Praia da Luz, 8600-164 Lagos',
-        description: '5 courts with Mondo WPT Championship surfaces',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'location-3',
-        name: 'Vilamoura Tennis & Padel Academy',
-        address: 'Vilamoura, 8125 Quarteira',
-        description: '9 padel courts (7 covered, 2 uncovered)',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'location-4',
-        name: 'Lagoa Station',
-        address: 'Rua de Alagoas Brancas, 8400-424 Lagoa',
-        description: '8 courts including 4 covered panoramic premium courts',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'location-5',
-        name: 'Padel Blu',
-        address: 'Rua de Brejos 2, 8200-047 Albufeira',
-        description: '6 padel courts (covered and lit) with restaurant and bar',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ]
-    
-    return { data: mockLocations, error: null }
-  }
-
   // Mock districts data
   private mockDistricts: District[] = [
     { id: 'porto', name: 'Porto', display_order: 1 },

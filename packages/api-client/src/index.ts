@@ -28,7 +28,6 @@ export const removeParticipant = (matchId: string, participantUserId: string) =>
 export const hasUserJoinedMatch = (matchId: string, userId: string) => apiClient.hasUserJoinedMatch(matchId, userId)
 export const getMatchParticipants = (matchId: string) => apiClient.getMatchParticipants(matchId)
 export const getUserById = (userId: string) => apiClient.getUserById(userId)
-export const getLocations = () => apiClient.getLocations()
 
 // Club methods
 export const getClubs = () => apiClient.getClubs()

@@ -774,23 +774,6 @@ class SupabaseApiClient implements ApiClient {
     }
   }
 
-  async getLocations(): Promise<ApiResponse<Location[]>> {
-    try {
-      const { data, error } = await this.supabase
-        .from('locations')
-        .select('*')
-        .order('name', { ascending: true })
-
-      if (error) {
-        return { data: null, error: error.message }
-      }
-
-      return { data: data || [], error: null }
-    } catch (error) {
-      return { data: null, error: 'Failed to load locations' }
-    }
-  }
-
   // Club methods
   async getClubs(): Promise<ApiResponse<Club[]>> {
     try {

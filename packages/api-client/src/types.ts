@@ -53,6 +53,7 @@ export interface UpdateMatchRequest {
   date_time?: string
   duration_minutes?: number
   location?: string
+  club_id?: string | null  // Reference to clubs table for geolocation/weather
   max_players?: number
   is_public?: boolean
   // Can update recurrence settings
@@ -73,6 +74,9 @@ export interface Participant {
   joined_at: string
 }
 
+/**
+ * @deprecated Use Club instead - the locations table has been replaced by clubs
+ */
 export interface Location {
   id: string
   name: string
@@ -284,8 +288,6 @@ export interface ApiClient {
   hasUserJoinedMatch(matchId: string, userId: string): Promise<ApiResponse<boolean>>
   getMatchParticipants(matchId: string): Promise<ApiResponse<Array<{ id: string; phone: string; name: string | null; avatar_url: string | null }>>>
   getUserById(userId: string): Promise<ApiResponse<{ id: string; phone: string; name: string | null; avatar_url: string | null }>>
-  // Legacy location method (deprecated, use getClubs instead)
-  getLocations(): Promise<ApiResponse<Location[]>>
   // Club methods
   getClubs(): Promise<ApiResponse<Club[]>>
   getClubsByDistrict(): Promise<ApiResponse<ClubsByDistrict[]>>

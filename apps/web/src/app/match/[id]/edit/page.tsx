@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, ChevronDown, MapPin, Globe, Lock } from 'lucide-react'
+import { ArrowLeft, MapPin, Globe, Lock } from 'lucide-react'
 import { updateMatchSchema, type UpdateMatchInput } from '@padel-parrot/shared'
-import { getMatch, updateMatch, getCurrentUser, getLocations } from '@padel-parrot/api-client'
+import { getMatch, updateMatch, getCurrentUser, getClubs, type Club } from '@padel-parrot/api-client'
 import DatePicker from '@/components/DatePicker'
 import TimePicker from '@/components/TimePicker'
+import ClubSelector from '@/components/ClubSelector'
 import toast from 'react-hot-toast'
 
 interface Match {
@@ -17,20 +18,12 @@ interface Match {
   date_time: string
   duration_minutes: number
   location: string
+  club_id?: string | null
   max_players: number
   current_players: number
   status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled'
   creator_id: string
   is_public: boolean
-  created_at: string
-  updated_at: string
-}
-
-interface Location {
-  id: string
-  name: string
-  address?: string
-  description?: string
   created_at: string
   updated_at: string
 }
@@ -46,9 +39,9 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [locations, setLocations] = useState<Location[]>([])
+  const [clubs, setClubs] = useState<Club[]>([])
   const [locationInput, setLocationInput] = useState('')
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false)
+  const [selectedClubId, setSelectedClubId] = useState<string | undefined>(undefined)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [selectedDuration, setSelectedDuration] = useState(90)
@@ -66,7 +59,7 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     loadCurrentUser()
-    loadLocations()
+    loadClubs()
   }, [])
 
   useEffect(() => {
@@ -123,6 +116,7 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
         setSelectedTime(localDate.toISOString().slice(11, 16))
         
         setLocationInput(data.location)
+        setSelectedClubId(data.club_id || undefined)
         setSelectedDuration(data.duration_minutes)
         setSelectedPlayers(data.max_players)
         setIsPublic(data.is_public)
@@ -135,14 +129,14 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
     }
   }
 
-  const loadLocations = async () => {
+  const loadClubs = async () => {
     try {
-      const { data, error } = await getLocations()
+      const { data, error } = await getClubs()
       if (!error && data) {
-        setLocations(data)
+        setClubs(data)
       }
     } catch (error) {
-      console.error('Failed to load locations:', error)
+      console.error('Failed to load clubs:', error)
     }
   }
 
@@ -162,6 +156,10 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
       }
       
       if (locationInput !== match.location) updateData.location = locationInput
+      // Update club_id if it changed (could be a new club, different club, or null)
+      if (selectedClubId !== (match.club_id || undefined)) {
+        updateData.club_id = selectedClubId || null
+      }
       if (selectedPlayers !== match.max_players) updateData.max_players = selectedPlayers
       if (selectedDuration !== match.duration_minutes) updateData.duration_minutes = selectedDuration
       if (isPublic !== match.is_public) updateData.is_public = isPublic
@@ -197,20 +195,9 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
     window.location.href = `/match/${params.id}`
   }
 
-  const handleLocationSelect = (location: Location) => {
-    setLocationInput(location.name)
-    setShowLocationDropdown(false)
-  }
-
-  const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
+  const handleClubChange = (value: string, clubId?: string) => {
     setLocationInput(value)
-    
-    if (value && locations.some(loc => loc.name.toLowerCase().includes(value.toLowerCase()))) {
-      setShowLocationDropdown(true)
-    } else {
-      setShowLocationDropdown(false)
-    }
+    setSelectedClubId(clubId)
   }
 
   const getMinDate = () => {
@@ -228,10 +215,6 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
     if (!date || !time) return ''
     return `${date}T${time}`
   }
-
-  const filteredLocations = locations.filter(location =>
-    location.name.toLowerCase().includes(locationInput.toLowerCase())
-  )
 
   // Get valid player options (can't go below current players)
   const getPlayerOptions = () => {
@@ -419,67 +402,20 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
 
             {/* Location */}
             <div className="form-field">
-              <label htmlFor="location" className="form-label">
+              <label className="form-label">
                 <span className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
                   Location
                 </span>
               </label>
-              <div className="relative">
-                <input
-                  id="location"
-                  type="text"
-                  value={locationInput}
-                  onChange={handleLocationInputChange}
-                  onFocus={() => filteredLocations.length > 0 && setShowLocationDropdown(true)}
-                  className="input"
-                  style={{ paddingRight: '2.5rem' }}
-                  autoComplete="off"
-                />
-                <ChevronDown 
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none"
-                  style={{ color: 'rgb(var(--color-text-subtle))' }}
-                />
-                
-                {showLocationDropdown && filteredLocations.length > 0 && (
-                  <div 
-                    className="absolute z-20 w-full mt-1 rounded-lg overflow-hidden"
-                    style={{ 
-                      backgroundColor: 'rgb(var(--color-surface))',
-                      border: '1px solid rgb(var(--color-border-light))',
-                      boxShadow: 'var(--shadow-md)',
-                      maxHeight: '12rem',
-                      overflowY: 'auto'
-                    }}
-                  >
-                    {filteredLocations.map((location) => (
-                      <button
-                        key={location.id}
-                        type="button"
-                        onClick={() => handleLocationSelect(location)}
-                        className="w-full px-4 py-3 text-left transition-colors"
-                        style={{ 
-                          borderBottom: '1px solid rgb(var(--color-border-light))'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-interactive-muted))'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        <div className="font-medium text-sm" style={{ color: 'rgb(var(--color-text))' }}>
-                          {location.name}
-                        </div>
-                        {location.address && (
-                          <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                            {location.address}
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {errors.location && (
-                <p className="form-error">{errors.location.message}</p>
-              )}
+              <ClubSelector
+                value={locationInput}
+                onChange={handleClubChange}
+                clubs={clubs}
+                placeholder="Search clubs or enter location"
+                error={errors.location?.message}
+                allowCustom={true}
+              />
             </div>
           </div>
         </form>
