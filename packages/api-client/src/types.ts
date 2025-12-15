@@ -22,6 +22,7 @@ export interface Match {
   date_time: string
   duration_minutes: number
   location: string
+  club_id?: string | null  // Reference to clubs table for geolocation/weather
   max_players: number
   current_players: number
   status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled'

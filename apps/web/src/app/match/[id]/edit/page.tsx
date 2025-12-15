@@ -5,28 +5,11 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, MapPin, Globe, Lock } from 'lucide-react'
 import { updateMatchSchema, type UpdateMatchInput } from '@padel-parrot/shared'
-import { getMatch, updateMatch, getCurrentUser, getClubs, type Club } from '@padel-parrot/api-client'
+import { getMatch, updateMatch, getCurrentUser, getClubs, type Club, type Match } from '@padel-parrot/api-client'
 import DatePicker from '@/components/DatePicker'
 import TimePicker from '@/components/TimePicker'
 import ClubSelector from '@/components/ClubSelector'
 import toast from 'react-hot-toast'
-
-interface Match {
-  id: string
-  title?: string
-  description?: string
-  date_time: string
-  duration_minutes: number
-  location: string
-  club_id?: string | null
-  max_players: number
-  current_players: number
-  status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled'
-  creator_id: string
-  is_public: boolean
-  created_at: string
-  updated_at: string
-}
 
 const DURATION_OPTIONS = [
   { value: 60, label: '1h' },
