@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { Phone, Plus, Calendar, MapPin, Users, Lock, Globe, ChevronDown, ChevronUp, Repeat, Disc } from 'lucide-react'
 import { formatMatchDate, formatMatchTime, formatMatchDateTime, formatMatchTitle, isMatchInPast } from '@padel-parrot/shared'
-import { sendOtp, verifyOtp, getCurrentUser, getMyMatches, getPublicMatches, updateUser, getRealtimeClient, getMatchParticipants } from '@padel-parrot/api-client'
+import { sendOtp, verifyOtp, getCurrentUser, getMyMatches, getPublicMatches, updateUser, getRealtimeClient, getMatchParticipants, getSubscriptionStatus, type Subscription } from '@padel-parrot/api-client'
 import Logo from '@/components/Logo'
 import Avatar from '@/components/Avatar'
+import TrialExpiredBanner from '@/components/TrialExpiredBanner'
 import toast from 'react-hot-toast'
 
 interface Match {
@@ -61,6 +62,7 @@ export default function HomePage() {
   const [nameInput, setNameInput] = useState('')
   const [isUpdatingName, setIsUpdatingName] = useState(false)
   const [matchParticipants, setMatchParticipants] = useState<Record<string, Participant[]>>({})
+  const [subscription, setSubscription] = useState<Subscription | null>(null)
 
   useEffect(() => {
     checkAuthStatus().finally(() => setIsCheckingAuth(false))
@@ -105,6 +107,24 @@ export default function HomePage() {
     return () => {
       supabase.removeChannel(channel)
     }
+  }, [isAuthenticated])
+
+  // Load subscription status for trial banner
+  useEffect(() => {
+    if (!isAuthenticated) return
+    
+    const loadSubscription = async () => {
+      try {
+        const { data } = await getSubscriptionStatus()
+        if (data) {
+          setSubscription(data)
+        }
+      } catch (error) {
+        console.error('Failed to load subscription:', error)
+      }
+    }
+    
+    loadSubscription()
   }, [isAuthenticated])
 
   const checkAuthStatus = async () => {
@@ -270,6 +290,10 @@ export default function HomePage() {
 
   const handleRacketFinder = () => {
     window.location.href = '/racket-finder'
+  }
+
+  const handleUpgradeToPremium = () => {
+    window.location.href = '/profile#premium'
   }
 
   const handleJoinMatch = (matchId: string) => {
@@ -604,6 +628,12 @@ export default function HomePage() {
           </div>
         </div>
       </header>
+
+      {/* Trial Expired Banner */}
+      <TrialExpiredBanner 
+        subscription={subscription} 
+        onUpgrade={handleUpgradeToPremium}
+      />
 
       {/* Main Content */}
       <main className="container-app py-6 space-y-8">

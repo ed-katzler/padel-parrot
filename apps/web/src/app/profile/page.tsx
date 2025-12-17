@@ -8,7 +8,8 @@ import { getCurrentUser, updateUser, uploadAvatar, signOut, getSubscriptionStatu
 import Avatar from '@/components/Avatar'
 import { useTheme } from '@/components/ThemeProvider'
 import { compressImage, validateImageFile } from '@/utils/imageUtils'
-import { formatSubscriptionEnd, getSubscriptionStatusLabel, getSubscriptionStatusColor } from '@/utils/premium'
+import { formatSubscriptionEnd, getSubscriptionStatusLabel, getSubscriptionStatusColor, isTrialExpired, isOnActiveTrial, getTrialDaysRemaining } from '@/utils/premium'
+import { TrialExpiredInline, TrialStatusBadge } from '@/components/TrialExpiredBanner'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
 
@@ -96,7 +97,8 @@ export default function ProfilePage() {
       
       if (subResult.data) {
         setSubscription(subResult.data)
-        const isActive = subResult.data.status === 'active' &&
+        // Include 'trialing' status for 14-day trial users
+        const isActive = (subResult.data.status === 'active' || subResult.data.status === 'trialing') &&
           (!subResult.data.current_period_end || new Date(subResult.data.current_period_end) > new Date())
         setIsPremium(isActive)
       }
@@ -775,10 +777,11 @@ export default function ProfilePage() {
           </div>
 
           {/* Premium Subscription Card */}
-          <div className="card">
+          <div className="card" id="premium">
             <div className="flex items-center gap-2 mb-4">
               <Crown className="w-5 h-5" style={{ color: isPremium ? 'rgb(234, 179, 8)' : 'rgb(var(--color-text-muted))' }} />
               <h2 className="section-header" style={{ margin: 0 }}>Premium</h2>
+              <TrialStatusBadge subscription={subscription} />
             </div>
             
             {isLoadingSubscription ? (
@@ -791,6 +794,36 @@ export default function ProfilePage() {
                   }}
                 />
               </div>
+            ) : isTrialExpired(subscription) ? (
+              <>
+                {/* Trial Expired State */}
+                <TrialExpiredInline subscription={subscription} onUpgrade={handleUpgrade} />
+                
+                <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                  Subscribe to continue receiving SMS reminders and accessing premium features.
+                </p>
+                <ul className="space-y-2 mb-4">
+                  <li className="flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    <Check className="w-4 h-4" style={{ color: 'rgb(34, 197, 94)' }} />
+                    SMS reminder day before match
+                  </li>
+                  <li className="flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    <Check className="w-4 h-4" style={{ color: 'rgb(34, 197, 94)' }} />
+                    SMS reminder 90 min before
+                  </li>
+                  <li className="flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    <Check className="w-4 h-4" style={{ color: 'rgb(34, 197, 94)' }} />
+                    Weather forecasts for matches
+                  </li>
+                </ul>
+                <button
+                  onClick={handleUpgrade}
+                  className="btn btn-primary w-full"
+                >
+                  <Crown className="w-4 h-4 mr-2" />
+                  Subscribe to Premium
+                </button>
+              </>
             ) : isPremium ? (
               <>
                 <div 
@@ -801,25 +834,30 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4" style={{ color: 'rgb(34, 197, 94)' }} />
                       <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text))' }}>
-                        Premium Active
+                        {isOnActiveTrial(subscription) ? 'Trial Active' : 'Premium Active'}
                       </span>
                     </div>
                     {subscription?.current_period_end && (
                       <p className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                        Renews {formatSubscriptionEnd(subscription.current_period_end)}
+                        {isOnActiveTrial(subscription) 
+                          ? `Trial ends ${formatSubscriptionEnd(subscription.current_period_end)}`
+                          : `Renews ${formatSubscriptionEnd(subscription.current_period_end)}`
+                        }
                       </p>
                     )}
                   </div>
-                  <button
-                    onClick={handleManageSubscription}
-                    className="text-sm font-medium flex items-center gap-1 transition-colors"
-                    style={{ color: 'rgb(var(--color-text-muted))' }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = 'rgb(var(--color-text))'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgb(var(--color-text-muted))'}
-                  >
-                    Manage
-                    <ExternalLink className="w-3 h-3" />
-                  </button>
+                  {subscription?.status === 'active' && (
+                    <button
+                      onClick={handleManageSubscription}
+                      className="text-sm font-medium flex items-center gap-1 transition-colors"
+                      style={{ color: 'rgb(var(--color-text-muted))' }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = 'rgb(var(--color-text))'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = 'rgb(var(--color-text-muted))'}
+                    >
+                      Manage
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
                 
                 {/* Notification Preferences */}
@@ -881,6 +919,29 @@ export default function ProfilePage() {
                     </button>
                   </label>
                 </div>
+                
+                {/* Trial upgrade prompt */}
+                {isOnActiveTrial(subscription) && (
+                  <div 
+                    className="mt-4 p-3 rounded-lg"
+                    style={{ 
+                      backgroundColor: 'rgb(59 130 246 / 0.1)',
+                      border: '1px solid rgb(59 130 246 / 0.2)'
+                    }}
+                  >
+                    <p className="text-xs mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                      Enjoying your trial? Subscribe now to keep your premium features.
+                    </p>
+                    <button
+                      onClick={handleUpgrade}
+                      className="text-xs font-medium flex items-center gap-1"
+                      style={{ color: 'rgb(59, 130, 246)' }}
+                    >
+                      <Crown className="w-3 h-3" />
+                      Subscribe to Premium
+                    </button>
+                  </div>
+                )}
               </>
             ) : (
               <>

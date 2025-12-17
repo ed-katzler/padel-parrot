@@ -37,9 +37,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Check if subscription is active
+    // Check if subscription is active (includes trialing status for 14-day trial)
     const isPremium = subscription 
-      && subscription.status === 'active'
+      && (subscription.status === 'active' || subscription.status === 'trialing')
       && (!subscription.current_period_end || new Date(subscription.current_period_end) > new Date())
 
     return NextResponse.json({
