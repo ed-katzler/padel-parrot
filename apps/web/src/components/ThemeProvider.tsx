@@ -67,7 +67,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   // Initialize theme on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme | null
-    const initialTheme = savedTheme || 'system'
+    // Default to 'light' for new users (no saved preference)
+    const initialTheme = savedTheme || 'light'
     setThemeState(initialTheme)
     const resolved = resolveTheme(initialTheme)
     setResolvedTheme(resolved)

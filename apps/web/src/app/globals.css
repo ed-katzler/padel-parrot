@@ -23,6 +23,9 @@
   --color-success-text: 46 125 50;
   --color-error-bg: 255 235 238;
   --color-error-text: 198 40 40;
+  --color-warning-bg: 254 243 199;   /* amber-100 */
+  --color-warning-text: 180 83 9;    /* amber-700 */
+  --color-warning-border: 251 191 36; /* amber-400 */
   
   /* Spacing scale */
   --space-1: 0.25rem;  /* 4px */
@@ -66,6 +69,9 @@
   --color-success-text: 46 125 50;
   --color-error-bg: 255 235 238;
   --color-error-text: 198 40 40;
+  --color-warning-bg: 254 243 199;
+  --color-warning-text: 180 83 9;
+  --color-warning-border: 251 191 36;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
@@ -91,6 +97,9 @@
   --color-success-text: 134 239 172; /* green-300 */
   --color-error-bg: 127 29 29;       /* red-900 */
   --color-error-text: 252 165 165;   /* red-300 */
+  --color-warning-bg: 69 26 3;       /* amber-950 */
+  --color-warning-text: 252 211 77;  /* amber-300 */
+  --color-warning-border: 180 83 9;  /* amber-700 */
   
   /* Shadows - more subtle in dark mode */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
@@ -115,6 +124,9 @@
     --color-success-text: 134 239 172;
     --color-error-bg: 127 29 29;
     --color-error-text: 252 165 165;
+    --color-warning-bg: 69 26 3;
+    --color-warning-text: 252 211 77;
+    --color-warning-border: 180 83 9;
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   }

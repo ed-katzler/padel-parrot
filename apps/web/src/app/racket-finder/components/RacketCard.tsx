@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { ExternalLink, Zap, Feather, Heart } from 'lucide-react'
 import type { Racket, AxisValue } from '@padel-parrot/api-client'
@@ -10,14 +10,17 @@ interface RacketCardProps {
   compact?: boolean
 }
 
-// Brand colors for placeholder backgrounds
-const BRAND_COLORS: Record<string, string> = {
-  'Adidas': '#000000',
-  'Babolat': '#FFD700',
-  'Bullpadel': '#E31837',
-  'Head': '#000000',
-  'Nox': '#FF6B00',
+// Brand colors for placeholder backgrounds (using visible colors for both light/dark mode)
+const BRAND_COLORS: Record<string, { light: string; dark: string }> = {
+  'Adidas': { light: '#1a1a1a', dark: '#e5e5e5' },
+  'Babolat': { light: '#d4a800', dark: '#FFD700' },
+  'Bullpadel': { light: '#E31837', dark: '#ff4d6a' },
+  'Head': { light: '#1a1a1a', dark: '#e5e5e5' },
+  'Nox': { light: '#FF6B00', dark: '#ff8533' },
 }
+
+// Default brand color for unknown brands
+const DEFAULT_BRAND_COLOR = { light: '#6B7280', dark: '#9CA3AF' }
 
 // Get brand initials for placeholder
 const getBrandInitials = (brand: string): string => {
@@ -50,9 +53,28 @@ const getAxisLabel = (axis: 'power' | 'weight' | 'feel', value: AxisValue): stri
 
 export default function RacketCard({ racket, compact = false }: RacketCardProps) {
   const [imageError, setImageError] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(false)
+  
+  // Detect theme changes
+  useEffect(() => {
+    const checkTheme = () => {
+      const theme = document.documentElement.getAttribute('data-theme')
+      setIsDarkMode(theme === 'dark')
+    }
+    
+    checkTheme()
+    
+    // Watch for theme changes
+    const observer = new MutationObserver(checkTheme)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    
+    return () => observer.disconnect()
+  }, [])
+  
   const skillLevel = racket.skill_level ? SKILL_LEVELS[racket.skill_level] : null
   const priceTier = racket.price_tier ? PRICE_TIERS[racket.price_tier] : null
-  const brandColor = BRAND_COLORS[racket.brand] || '#6B7280'
+  const brandColors = BRAND_COLORS[racket.brand] || DEFAULT_BRAND_COLOR
+  const brandColor = isDarkMode ? brandColors.dark : brandColors.light
   const showPlaceholder = !racket.image_url || imageError
 
   // Placeholder component

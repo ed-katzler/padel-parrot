@@ -40,8 +40,8 @@ export default function TrialExpiredBanner({
     <div 
       className={`relative ${className}`}
       style={{
-        backgroundColor: 'rgb(var(--color-warning-bg, 254 243 199))',
-        borderBottom: '1px solid rgb(var(--color-warning-border, 251 191 36) / 0.3)'
+        backgroundColor: 'rgb(var(--color-warning-bg))',
+        borderBottom: '1px solid rgb(var(--color-warning-border) / 0.3)'
       }}
     >
       <div className="container-app py-3">
@@ -49,11 +49,11 @@ export default function TrialExpiredBanner({
           {/* Icon */}
           <div 
             className="flex-shrink-0 p-2 rounded-full"
-            style={{ backgroundColor: 'rgb(var(--color-warning-border, 251 191 36) / 0.2)' }}
+            style={{ backgroundColor: 'rgb(var(--color-warning-border) / 0.2)' }}
           >
             <AlertCircle 
               className="w-5 h-5" 
-              style={{ color: 'rgb(var(--color-warning-text, 180 83 9))' }}
+              style={{ color: 'rgb(var(--color-warning-text))' }}
             />
           </div>
 
@@ -61,13 +61,13 @@ export default function TrialExpiredBanner({
           <div className="flex-1 min-w-0">
             <h3 
               className="text-sm font-semibold mb-1"
-              style={{ color: 'rgb(var(--color-warning-text, 180 83 9))' }}
+              style={{ color: 'rgb(var(--color-warning-text))' }}
             >
               Your Premium Trial Has Expired
             </h3>
             <p 
               className="text-sm mb-3"
-              style={{ color: 'rgb(var(--color-warning-text, 180 83 9) / 0.8)' }}
+              style={{ color: 'rgb(var(--color-warning-text) / 0.8)' }}
             >
               Upgrade now to continue enjoying SMS match reminders and other premium features.
             </p>
@@ -77,8 +77,8 @@ export default function TrialExpiredBanner({
               onClick={onUpgrade}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               style={{
-                backgroundColor: 'rgb(var(--color-warning-text, 180 83 9))',
-                color: 'white'
+                backgroundColor: 'rgb(var(--color-warning-border))',
+                color: 'rgb(var(--color-bg))'
               }}
             >
               <Crown className="w-4 h-4" />
@@ -94,7 +94,7 @@ export default function TrialExpiredBanner({
           >
             <X 
               className="w-5 h-5" 
-              style={{ color: 'rgb(var(--color-warning-text, 180 83 9) / 0.6)' }}
+              style={{ color: 'rgb(var(--color-warning-text) / 0.6)' }}
             />
           </button>
         </div>
@@ -121,25 +121,25 @@ export function TrialExpiredInline({
     <div 
       className="p-4 rounded-lg mb-4"
       style={{
-        backgroundColor: 'rgb(var(--color-warning-bg, 254 243 199))',
-        border: '1px solid rgb(var(--color-warning-border, 251 191 36) / 0.3)'
+        backgroundColor: 'rgb(var(--color-warning-bg))',
+        border: '1px solid rgb(var(--color-warning-border) / 0.3)'
       }}
     >
       <div className="flex items-start gap-3">
         <AlertCircle 
           className="w-5 h-5 flex-shrink-0 mt-0.5" 
-          style={{ color: 'rgb(var(--color-warning-text, 180 83 9))' }}
+          style={{ color: 'rgb(var(--color-warning-text))' }}
         />
         <div className="flex-1">
           <p 
             className="text-sm font-medium mb-2"
-            style={{ color: 'rgb(var(--color-warning-text, 180 83 9))' }}
+            style={{ color: 'rgb(var(--color-warning-text))' }}
           >
             Your 14-day trial has expired
           </p>
           <p 
             className="text-xs mb-3"
-            style={{ color: 'rgb(var(--color-warning-text, 180 83 9) / 0.8)' }}
+            style={{ color: 'rgb(var(--color-warning-text) / 0.8)' }}
           >
             Subscribe to Premium to continue receiving SMS notifications before your matches.
           </p>
@@ -147,8 +147,8 @@ export function TrialExpiredInline({
             onClick={onUpgrade}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
             style={{
-              backgroundColor: 'rgb(var(--color-warning-text, 180 83 9))',
-              color: 'white'
+              backgroundColor: 'rgb(var(--color-warning-border))',
+              color: 'rgb(var(--color-bg))'
             }}
           >
             <Crown className="w-3.5 h-3.5" />
@@ -191,8 +191,8 @@ export function TrialStatusBadge({ subscription }: { subscription: Subscription 
       <span 
         className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
         style={{
-          backgroundColor: isUrgent ? 'rgb(var(--color-warning-bg, 254 243 199))' : 'rgb(59 130 246 / 0.1)',
-          color: isUrgent ? 'rgb(var(--color-warning-text, 180 83 9))' : 'rgb(59, 130, 246)'
+          backgroundColor: isUrgent ? 'rgb(var(--color-warning-bg))' : 'rgb(var(--color-interactive) / 0.1)',
+          color: isUrgent ? 'rgb(var(--color-warning-text))' : 'rgb(var(--color-interactive))'
         }}
       >
         {daysRemaining === 0 ? 'Expires Today' : 
@@ -206,8 +206,8 @@ export function TrialStatusBadge({ subscription }: { subscription: Subscription 
     <span 
       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
       style={{
-        backgroundColor: 'rgb(59 130 246 / 0.1)',
-        color: 'rgb(59, 130, 246)'
+        backgroundColor: 'rgb(var(--color-interactive) / 0.1)',
+        color: 'rgb(var(--color-interactive))'
       }}
     >
       Trial Active
